@@ -3,6 +3,7 @@ from typing import OrderedDict as OrderedDictType
 from typing import Set
 
 from ordered_set import OrderedSet
+
 from text_selection.cover_applied import cover_symbols
 
 

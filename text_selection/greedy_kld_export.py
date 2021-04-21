@@ -3,9 +3,11 @@ from typing import OrderedDict as OrderedDictType
 from typing import Set
 
 from ordered_set import OrderedSet
-from text_selection.greedy_kld_applied import (
-    greedy_kld_uniform_default, greedy_kld_uniform_count,
-    greedy_kld_uniform_iterations, greedy_kld_uniform_seconds)
+
+from text_selection.greedy_kld_applied import (greedy_kld_uniform_count,
+                                               greedy_kld_uniform_default,
+                                               greedy_kld_uniform_iterations,
+                                               greedy_kld_uniform_seconds)
 from text_selection.utils import get_filtered_ngrams
 
 

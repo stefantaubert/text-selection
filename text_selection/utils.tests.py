@@ -1,4 +1,3 @@
-import pickle
 import unittest
 
 from text_selection.utils import *

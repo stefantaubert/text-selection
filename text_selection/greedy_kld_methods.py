@@ -81,7 +81,7 @@ def sort_greedy_kld_until(data: OrderedDictType[_T1, List[_T2]], target_dist: Di
 
   logger.info("Selecting data...")
   max_until = sum(until_values.values())
-  adjusted_until = int(round(min(until_value, max_until), 0))
+  adjusted_until = round(min(until_value, max_until))
   current_total = 0
   progress_bar = tqdm(total=adjusted_until, initial=current_total)
   while len(available_entries_array) > 0:
@@ -97,7 +97,7 @@ def sort_greedy_kld_until(data: OrderedDictType[_T1, List[_T2]], target_dist: Di
       available_entries_array.pop(selected_key)
       covered_array += selected_counts
       current_total = new_total
-      progress_bar.update(int(round(selected_until_value, 0)))
+      progress_bar.update(round(selected_until_value))
     else:
       break
   progress_bar.close()
@@ -152,6 +152,7 @@ def get_uniform_distribution(ngrams: Dict[_T1, List[_T2]]) -> Dict[_T2, float]:
   distr = 1 / len(unique_ngrams)
   res: Dict[_T2, float] = {k: distr for k in unique_ngrams}
   return res
+
 
 def add_missing_keys(counter: Counter, keys: Set[_T1]) -> None:
   for k in keys:

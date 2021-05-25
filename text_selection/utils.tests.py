@@ -8,6 +8,27 @@ class UnitTests(unittest.TestCase):
   def __init__(self, methodName: str) -> None:
     super().__init__(methodName)
 
+  def test_get_common_durations(self):
+    chosen_sets = [{0, 1}, {1, 2}, {0, 1, 2}]
+    durations_s = {0: 1, 1: 2, 2: 2.5}
+    res = get_common_durations(chosen_sets, durations_s)
+
+    self.assertEqual(len(res), 3)
+    self.assertEqual(res[(0, 1)], 2)
+    self.assertEqual(res[(0, 2)], 3)
+    self.assertEqual(res[(1, 2)], 4.5)
+
+  # def test_should_end_in_error(self):
+  #   durations = OrderedDict({
+  #     0: 1,
+  #     1: 7,
+  #     2: 1
+  #   })
+  #   seconds = 3
+  #   n = 3
+  #   res = get_n_divergent_seconds(durations, seconds, n)
+  #   self.assertEqual(len(res), 3)
+
   def test_find_unlike_sets_n_too_big_raises_ValueError(self):
     data = [{1, 2, 3}, {1, 2, 4}]
     with self.assertRaises(ValueError):

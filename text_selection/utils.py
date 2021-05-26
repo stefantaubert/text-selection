@@ -125,7 +125,7 @@ def get_random_subset_indices(sample_set_list: List[Set[int]], n: int) -> List[S
   chosen_indices = random.sample(range(len(sample_set_list)), n)
   while len(set(chosen_indices)) != n:
     chosen_indices = random.sample(range(len(sample_set_list)), n)
-  #chosen_sets = [sample_set_list[i] for i in range(len(sample_set_list)) if i in chosen_indices]
+  # chosen_sets = [sample_set_list[i] for i in range(len(sample_set_list)) if i in chosen_indices]
   return chosen_indices
 
 
@@ -151,6 +151,21 @@ def get_number_of_common_elements_per_set(chosen_sets: List[Set[int]]) -> Dict[i
   dict_of_common_elements = {index: list_of_numbers_of_common_elements_for_one_index(
     chosen_sets, index) for index in range(len(chosen_sets))}
   return dict_of_common_elements
+
+
+def get_common_durations(chosen_sets: List[Set[int]], durations_s: OrderedDictType[int, float]) -> Dict[Tuple[int, int], float]:
+  com_duration_dict = {}
+  for i in range(len(chosen_sets)):
+    for j in range(i + 1, len(chosen_sets)):
+      com_indices = list_of_common_elements_for_one_index(chosen_sets, i, j)
+      durs_of_com_indices = [durations_s[index] for index in com_indices]
+      com_duration_dict[(i, j)] = np.sum(durs_of_com_indices)
+  return com_duration_dict
+
+
+def list_of_common_elements_for_one_index(chosen_sets: List[Set[int]], index_1: int, index_2) -> List[int]:
+  common_index_list = chosen_sets[index_1] & chosen_sets[index_2]
+  return common_index_list
 
 
 def list_of_numbers_of_common_elements_for_one_index(chosen_sets: List[Set[int]], index: int) -> List[int]:

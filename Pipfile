@@ -16,6 +16,7 @@ ordered-set = "*"
 tqdm = "*"
 numpy = "*"
 sklearn = "*"
+pandas = "*"
 
 [requires]
 python_version = "3.8"

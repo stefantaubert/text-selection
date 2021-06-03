@@ -275,21 +275,6 @@ def get_n_divergent_seconds(durations_s: OrderedDictType[_T1, float], seconds: f
 
 
 def get_next_start_index(step_length: int, durations_s: OrderedDictType[_T1, float], prev_vec: List[_T1], data_keys: List[_T1]) -> int:
-  # der Startindex soll auf das Element in data_keys referieren, das zu dem ersten Element in prev_vec mindestens den Abstand step_length hat (d.h. genau diesen Abstand hat oder das erste Element ist, für das dieser Abstand überschritten wird). Abstand ist hierbei definiert als die aufsummierten Durations vom ersten Element in prev_vec (dieses wird nicht mit einberechnet) bis zum Element, für das der Abstand berechnet wird (dieses wird mit einberechnet).
-  # Falls kein Element in prev_vec einen Abstand >= step_length vom 1. Element in prev_vec aus gesehen hat, so soll der Index des nächsten Eintrags in data_keys zurückgegeben werden
-  """
-  Bsp.: step_length = 4
-       durations = {0: 1, 1: 2, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2}
-       prev_vec = [0, 1, 2, 3]
-       Es ist das Element in {0,...,6} gesucht, das zu 0 mindestens Abstand 4 hat
-       Das wäre hier die 2, denn Entfernung(0,2) = dur(1) + dur(2) = 2+3>4
-
-  Bsp. 2: step_length = 4
-          durations = {index: 1 for index in range(8)}
-          prev_vec = [0, 1, 2, 3]
-          data_keys = [0, 1, 2, 3, 4, 5, 6, 7]
-          Hier ist dur(1) + dur(2) + dur(3) < 4, daher wird der Index des auf 3 in data_keys folgenden Elements zurückgegeben (also die 4)
-  """
   assert len(prev_vec) > 0
   assert len(data_keys) > 0
   dur_sum = 0

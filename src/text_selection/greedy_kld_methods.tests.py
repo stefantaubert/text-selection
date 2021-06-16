@@ -1,6 +1,5 @@
 import cProfile
 import random
-from text_selection.utils import get_distribution, get_reverse_distribution
 import time
 import unittest
 from collections import OrderedDict
@@ -8,7 +7,9 @@ from typing import List
 
 import numpy as np
 from scipy.stats import entropy
+
 from text_selection.greedy_kld_methods import *
+from text_selection.utils import get_distribution, get_reverse_distribution
 
 ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
             'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']

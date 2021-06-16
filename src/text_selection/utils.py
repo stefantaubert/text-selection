@@ -54,73 +54,6 @@ def get_until_sum_set(d: OrderedSet[_T1], until_values: Dict[_T1, Union[float, i
   return res, total
 
 
-def find_unlike_sets(sample_set_list: List[Set[int]], n: int, seed: Optional[int]) -> Set[int]:
-  sample_number = len(sample_set_list)
-  if n > sample_number:
-    raise ValueError(
-      "The number of indices you want to choose is greater than the number of available sets.")
-  if n == sample_number:
-    return set(range(sample_number))
-  max_id = get_max_entry(sample_set_list)
-  vecs = vectorize_all_sets(sample_set_list, max_id)
-  k_means = KMeans(
-    n_clusters=n,
-    init='k-means++',
-    random_state=seed,
-  )
-  cluster_dists = k_means.fit_transform(vecs)
-  assert cluster_dists.shape[1] == n
-  cluster_labels = k_means.labels_
-  first_empty_cluster_index = find_empty_clusters(cluster_labels, n)
-  chosen_indices = np.argmin(cluster_dists, axis=0)
-  replace_chosen_indices_that_do_not_belong_to_corresponding_cluster(
-    cluster_labels, cluster_dists, chosen_indices, first_empty_cluster_index)
-  unselected_indices = [index for index in range(
-    sample_number) if index not in chosen_indices]
-  replace_chosen_indices_that_correspond_to_empty_clusters_with_first_unused_indices(
-    chosen_indices, unselected_indices, first_empty_cluster_index, n)
-  assert len(chosen_indices) == n
-  assert len(set(chosen_indices)) == n
-  return set(chosen_indices)
-
-
-def find_empty_clusters(cluster_labels: np.ndarray, n: int) -> int:
-  for cluster_index in range(n):
-    cluster_is_not_empty_for_this_index = any(cluster_labels == cluster_index)
-    if not cluster_is_not_empty_for_this_index:
-      first_empty_cluster_index = cluster_index
-      return first_empty_cluster_index
-  return n
-
-
-def replace_chosen_indices_that_correspond_to_empty_clusters_with_first_unused_indices(chosen_indices: np.ndarray, unselected_indices: Set, first_empty_cluster_index: int, n: int) -> None:
-  for cluster_index in range(first_empty_cluster_index, n):
-    chosen_indices[cluster_index] = unselected_indices[0]
-    unselected_indices = unselected_indices[1:]
-
-
-def replace_chosen_indices_that_do_not_belong_to_corresponding_cluster(cluster_labels: np.ndarray, cluster_dists: np.ndarray, chosen_indices: List[int], first_empty_cluster_index: int) -> None:
-  for cluster_index in range(first_empty_cluster_index):
-    while cluster_labels[chosen_indices[cluster_index]] != cluster_index:
-      cluster_dists[chosen_indices[cluster_index], cluster_index] = np.inf
-      chosen_indices[cluster_index] = np.argmin(cluster_dists[:, cluster_index])
-
-
-def vectorize_all_sets(sample_set_list: List[Set[int]], max_id: int) -> List[List[int]]:
-  vec_list = [vectorize_set(sample_set, max_id) for sample_set in sample_set_list]
-  return vec_list
-
-
-def vectorize_set(sample_set: Set[int], max_id: int) -> List[int]:
-  vec = [int(i in sample_set) for i in range(max_id + 1)]
-  return vec
-
-
-def get_max_entry(sample_set_list: List[Set[int]]) -> int:
-  max_of_each_set = [max(sample_set) for sample_set in sample_set_list]
-  return max(max_of_each_set)
-
-
 def get_random_subset_indices(sample_set_list: List[Set[int]], n: int) -> List[Set[int]]:
   chosen_indices = random.sample(range(len(sample_set_list)), n)
   while len(set(chosen_indices)) != n:
@@ -275,20 +208,24 @@ def get_n_divergent_seconds(durations_s: OrderedDictType[_T1, float], seconds: f
 
 
 def get_next_start_index(step_length: int, durations_s: OrderedDictType[_T1, float], prev_vec: List[_T1], data_keys: List[_T1]) -> int:
-  # der Startindex soll auf das Element in data_keys referieren, das zu dem ersten Element in prev_vec mindestens den Abstand step_length hat (d.h. genau diesen Abstand hat oder das erste Element ist, für das dieser Abstand überschritten wird). Abstand ist hierbei definiert als die aufsummierten Durations vom ersten Element in prev_vec (dieses wird nicht mit einberechnet) bis zum Element, für das der Abstand berechnet wird (dieses wird mit einberechnet).
-  # Falls kein Element in prev_vec einen Abstand >= step_length vom 1. Element in prev_vec aus gesehen hat, so soll der Index des nächsten Eintrags in data_keys zurückgegeben werden
   """
-  Bsp.: step_length = 4
+  start_index should reference the element in data_keys which has a distance of at least step_length to the first element
+  in prev_vec (i.e., it has a distance of exactly step_length or is the first element for which this distance is exceeded.) 
+  "Distance" in this case is defined as the sum of the durations from prev_vec's second element to the element for which the 
+  distance to the first element in prev_vec is computed. If no element in prev_vec has a distance >= step_length to the first 
+  element in prev_vec, the index of the next element in data_keys is returned.
+
+  Example 1: step_length = 4
        durations = {0: 1, 1: 2, 2: 3, 3: 1, 4: 1, 5: 2, 6: 2}
        prev_vec = [0, 1, 2, 3]
-       Es ist das Element in {0,...,6} gesucht, das zu 0 mindestens Abstand 4 hat
-       Das wäre hier die 2, denn Entfernung(0,2) = dur(1) + dur(2) = 2+3>4
+       We are looking for the Element in {0,...,6} which has a distance of at least 4 to the element 0
+       In this case it is 2, as distance(0,2) = dur(1) + dur (2) = 2 + 3 > 4
 
-  Bsp. 2: step_length = 4
+  Example 2: step_length = 4
           durations = {index: 1 for index in range(8)}
           prev_vec = [0, 1, 2, 3]
           data_keys = [0, 1, 2, 3, 4, 5, 6, 7]
-          Hier ist dur(1) + dur(2) + dur(3) < 4, daher wird der Index des auf 3 in data_keys folgenden Elements zurückgegeben (also die 4)
+          Here we have dur(1) + dur(2) + dur(3) < 4, so the index of the element following 3 in data_keys is returned (which is 4)
   """
   assert len(prev_vec) > 0
   assert len(data_keys) > 0

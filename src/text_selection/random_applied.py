@@ -4,12 +4,11 @@ from typing import OrderedDict as OrderedDictType
 from typing import Tuple, TypeVar
 
 from ordered_set import OrderedSet
-from text_selection.random_method import (sort_random,
-                                          sort_random_set_cover)
-from text_selection.utils import (find_unlike_sets,
-                                  get_first_percent,
-                                  get_n_divergent_seconds, get_until_sum_set, values_to_set)
 from tqdm import tqdm
+
+from text_selection.random_method import sort_random, sort_random_set_cover
+from text_selection.utils import (get_first_percent, get_n_divergent_seconds,
+                                  get_until_sum_set, values_to_set)
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")

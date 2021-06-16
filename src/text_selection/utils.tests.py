@@ -18,17 +18,6 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(res[(0, 2)], 3)
     self.assertEqual(res[(1, 2)], 4.5)
 
-  # def test_should_end_in_error(self):
-  #   durations = OrderedDict({
-  #     0: 1,
-  #     1: 7,
-  #     2: 1
-  #   })
-  #   seconds = 3
-  #   n = 3
-  #   res = get_n_divergent_seconds(durations, seconds, n)
-  #   self.assertEqual(len(res), 3)
-
   def test_get_chosen_sets(self):
     sample_set_list = [{1, 2, 3}, {2, 3, 4}, {5, 6, 7}, {8, 9, 0}]
     chosen_indices = {3, 0}
@@ -250,7 +239,8 @@ class UnitTests(unittest.TestCase):
 
     self.assertEqual(assert_res, res)
 
-  # region get_n_divergent_seconds
+# region get_n_divergent_seconds
+
   def test_get_right_start_index__expect_index_following_prev_vec(self):
     n_data = 8
     step_length = 4
@@ -338,6 +328,17 @@ class UnitTests(unittest.TestCase):
 
     self.assertTrue(isinstance(res, int))
     self.assertEqual(1, res)
+
+  def test_get_n_divergent_seconds__should_end_in_error(self):
+    durations = OrderedDict({
+      0: 1,
+      1: 7,
+      2: 1
+    })
+    seconds = 3
+    n = 3
+    with self.assertRaises(AssertionError):
+      get_n_divergent_seconds(durations, seconds, n)
 
   def test_get_n_divergent_seconds__one_iteration(self):
     n_data = 4
@@ -468,8 +469,9 @@ class UnitTests(unittest.TestCase):
     self.assertEqual(OrderedSet([2, 3, 4, 5]), res[1])
     self.assertEqual(OrderedSet([5, 6, 0, 1]), res[2])
 
+# endregion
 
-  # endregion
+
 if __name__ == '__main__':
   suite = unittest.TestLoader().loadTestsFromTestCase(UnitTests)
   unittest.TextTestRunner(verbosity=2).run(suite)

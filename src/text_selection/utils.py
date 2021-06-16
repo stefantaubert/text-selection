@@ -68,24 +68,6 @@ def get_chosen_sets(sample_set_list: List[Set[int]], chosen_indices: Set[int]) -
   return chosen_sets
 
 
-def get_total_number_of_common_elements(chosen_sets: List[Set[int]]) -> int:
-  common_elements_dict = get_number_of_common_elements(chosen_sets)
-  total_number = sum(common_elements_dict.values()) / 2
-  return int(total_number)
-
-
-def get_number_of_common_elements(chosen_sets: List[Set[int]]) -> Dict[int, int]:
-  dict_of_common_elements = {index: sum(list_of_numbers_of_common_elements_for_one_index(
-    chosen_sets, index)) for index in range(len(chosen_sets))}
-  return dict_of_common_elements
-
-
-def get_number_of_common_elements_per_set(chosen_sets: List[Set[int]]) -> Dict[int, List[int]]:
-  dict_of_common_elements = {index: list_of_numbers_of_common_elements_for_one_index(
-    chosen_sets, index) for index in range(len(chosen_sets))}
-  return dict_of_common_elements
-
-
 def get_common_durations(chosen_sets: List[Set[int]], durations_s: OrderedDictType[int, float]) -> Dict[Tuple[int, int], float]:
   com_duration_dict = {}
   for i in range(len(chosen_sets)):
@@ -99,12 +81,6 @@ def get_common_durations(chosen_sets: List[Set[int]], durations_s: OrderedDictTy
 def list_of_common_elements_for_one_index(chosen_sets: List[Set[int]], index_1: int, index_2) -> List[int]:
   common_index_list = chosen_sets[index_1] & chosen_sets[index_2]
   return common_index_list
-
-
-def list_of_numbers_of_common_elements_for_one_index(chosen_sets: List[Set[int]], index: int) -> List[int]:
-  common_number_list = [len(chosen_sets[index] & chosen_set)
-                        for set_index, chosen_set in enumerate(chosen_sets) if set_index != index]
-  return common_number_list
 
 
 def get_top_n(data: OrderedDictType[int, List[_T1]], top_percent: float) -> OrderedSet[_T1]:
@@ -187,6 +163,7 @@ def get_first_percent(data: OrderedSet, percent: float) -> OrderedSet:
 
 
 def get_n_divergent_seconds(durations_s: OrderedDictType[_T1, float], seconds: float, n: int) -> List[OrderedSet[_T1]]:
+  assert all(np.array(list(durations_s.values())) <= seconds)
   total_dur = sum(durations_s.values())
   assert seconds <= total_dur
   dur_to_fill = n * seconds

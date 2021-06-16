@@ -18,6 +18,5 @@ from text_selection.random_export import (n_divergent_random_seconds,
                                           random_ngrams_cover_seconds,
                                           random_percent, random_seconds,
                                           random_seconds_divergence_seeds)
-from text_selection.utils import (find_unlike_sets, get_common_durations,
-                                  get_random_subset_indices,
-                                  get_total_number_of_common_elements)
+from text_selection.utils import (get_common_durations,
+                                  get_random_subset_indices)

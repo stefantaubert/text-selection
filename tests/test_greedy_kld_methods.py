@@ -131,6 +131,109 @@ def test_sort_greedy_kld():
   assert OrderedSet([4, 5, 3, 2]) == res
 
 
+def test_merge_arrays():
+  arrays = {
+    0: np.array([0, 1, 2, 3, 4, 5]),
+    1: np.array([0, 1, 2, 3, 4, 5]),
+    2: np.array([0, 1, 2, 3, 4, 5]),
+  }
+  result = merge_arrays(arrays)
+
+  assert list(result) == [0, 3, 6, 9, 12, 15]
+
+
+def test_sort_greedy_kld_until():
+  data = OrderedDict({
+    2: [2, 3],
+    3: [1, 2, 3],
+    4: [1, 2, 3, 4],
+    5: [1, 2, 3, 4, 4],
+  })
+
+  distr = {
+    1: 0.25,
+    2: 0.25,
+    3: 0.25,
+    4: 0.25,
+  }
+
+  until_values = {
+    2: 1,
+    3: 0.9,
+    4: 0.2,
+    5: 1,
+  }
+
+  res = sort_greedy_kld_until(
+    data=data,
+    target_dist=distr,
+    until_values=until_values,
+    until_value=2,
+  )
+
+  assert OrderedSet([4, 5]) == res
+
+
+def test_sync_dict_keys_to_keys__keeps_unchanged():
+  counter = {
+    1: 5,
+    2: 5,
+  }
+  keys = {1, 2}
+
+  sync_dict_keys_to_keys(counter, keys)
+
+  assert counter.keys() == {1, 2}
+  assert counter[1] == 5
+  assert counter[2] == 5
+
+
+def test_sync_dict_keys_to_keys__adds_key():
+  counter = {
+    1: 5,
+  }
+  keys = {1, 2}
+
+  sync_dict_keys_to_keys(counter, keys)
+
+  assert counter.keys() == {1, 2}
+  assert counter[1] == 5
+  assert counter[2] == 0
+
+
+def test_sync_dict_keys_to_keys__removes_key():
+  counter = {
+    1: 5,
+    2: 5,
+  }
+  keys = {1}
+
+  sync_dict_keys_to_keys(counter, keys)
+
+  assert counter.keys() == {1}
+  assert counter[1] == 5
+
+
+def test_get_available_arrays():
+  data = OrderedDict({
+    2: [1, 2, 3],
+    3: [2, 3, 4],
+    4: [3, 4, 5],
+  })
+
+  result = get_available_arrays(
+    data=data,
+    all_keys={1, 2, 3},
+  )
+
+  assert isinstance(result, OrderedDict)
+  assert len(result) == 3
+  assert list(result.keys()) == [2, 3, 4]
+  assert list(result[2]) == [1, 1, 1]
+  assert list(result[3]) == [0, 1, 1]
+  assert list(result[4]) == [0, 0, 1]
+
+
 def test_performance():
   n_data = 500
   data = OrderedDict({i: get_random_list(random.randint(1, 50), ALPHABET) for i in range(n_data)})
@@ -158,7 +261,6 @@ def test_performance_its():
   start = time.perf_counter()
 
   with cProfile.Profile() as pr:
-      # ... do something ...
     res = sort_greedy_kld_iterations(data, distr, n_data - 1)
   pr.print_stats()
   end = time.perf_counter()
@@ -177,7 +279,6 @@ def test_performance_until():
   start = time.perf_counter()
 
   with cProfile.Profile() as pr:
-      # ... do something ...
     res = sort_greedy_kld_until(data, distr, until_values, 499)
   pr.print_stats()
   end = time.perf_counter()

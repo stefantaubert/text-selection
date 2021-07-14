@@ -113,9 +113,10 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
   assert all_keys == all_occuring_values
 
   logger.info("Preparing data...")
-  covered_array = dict_to_array_ordered_after_keys({x: 0 for x in all_keys})
   target_dist_array = dict_to_array_ordered_after_keys(target_dist)
   available_entries_array = get_available_arrays(data, all_keys)
+  preselection_array = get_available_arrays(preselection, all_keys)
+  covered_array = merge_arrays(preselection_array)
 
   logger.info("Selecting data...")
   max_until = sum(until_values.values())
@@ -170,7 +171,7 @@ def get_available_arrays(data: OrderedDictType[_T1, List[_T2]], all_keys: Set[_T
   })
 
   for k in available_entries_counter:
-    add_missing_keys(available_entries_counter[k], all_keys)
+    sync_dict_keys_to_keys(available_entries_counter[k], all_keys)
 
   available_entries_array: OrderedDictType[_T1, np.ndarray] = OrderedDict({
     k: dict_to_array_ordered_after_keys(
@@ -178,6 +179,17 @@ def get_available_arrays(data: OrderedDictType[_T1, List[_T2]], all_keys: Set[_T
   })
 
   return available_entries_array
+
+
+def merge_arrays(data: Dict[_T1, np.ndarray]) -> np.ndarray:
+  assert len(data) > 0
+  merged_array = None
+  for array in data.values():
+    if merged_array is None:
+      merged_array = array
+    else:
+      merged_array += array
+  return merged_array
 
 
 def _get_distribution(counts: np.ndarray) -> np.ndarray:
@@ -192,10 +204,16 @@ def get_uniform_distribution(ngrams: Dict[_T1, List[_T2]]) -> Dict[_T2, float]:
   return res
 
 
-def add_missing_keys(counter: Counter, keys: Set[_T1]) -> None:
+def sync_dict_keys_to_keys(counter: Dict[_T1, int], keys: Set[_T1]) -> None:
   for k in keys:
     if k not in counter:
       counter[k] = 0
+  keys_to_remove = set()
+  for existing_key in counter:
+    if existing_key not in keys:
+      keys_to_remove.add(existing_key)
+  for key_to_remove in keys_to_remove:
+    counter.pop(key_to_remove)
 
 
 def dict_to_array_ordered_after_keys(d: Dict) -> np.ndarray:

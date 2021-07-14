@@ -104,6 +104,44 @@ def sort_greedy_kld_until(data: OrderedDictType[_T1, List[_T2]], target_dist: Di
   return result
 
 
+def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T1, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], preselection: OrderedDictType[_T1, List[_T2]]) -> OrderedSet[_T1]:
+  assert isinstance(data, OrderedDict)
+  logger = getLogger(__name__)
+  result: OrderedSet[_T1] = OrderedSet()
+  all_keys = set(target_dist.keys())
+  all_occuring_values: Set[_T2] = {x for y in data.values() for x in y}
+  assert all_keys == all_occuring_values
+
+  logger.info("Preparing data...")
+  covered_array = dict_to_array_ordered_after_keys({x: 0 for x in all_keys})
+  target_dist_array = dict_to_array_ordered_after_keys(target_dist)
+  available_entries_array = get_available_arrays(data, all_keys)
+
+  logger.info("Selecting data...")
+  max_until = sum(until_values.values())
+  adjusted_until = round(min(until_value, max_until))
+  current_total = 0
+  progress_bar = tqdm(total=adjusted_until, initial=current_total)
+  while len(available_entries_array) > 0:
+    selected_key, selected_counts = get_utterance_with_min_kld(
+      data=available_entries_array,
+      covered_counts=covered_array,
+      target_dist=target_dist_array
+    )
+    selected_until_value = until_values[selected_key]
+    new_total = current_total + selected_until_value
+    if new_total <= until_value:
+      result.add(selected_key)
+      available_entries_array.pop(selected_key)
+      covered_array += selected_counts
+      current_total = new_total
+      progress_bar.update(round(selected_until_value))
+    else:
+      break
+  progress_bar.close()
+  return result
+
+
 def get_utterance_with_min_kld(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: Dict[_T1, float]) -> Tuple[_T1, np.ndarray]:
   assert isinstance(data, OrderedDict)
   divergences = {k: get_divergence_for_utterance(

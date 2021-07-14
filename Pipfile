@@ -10,6 +10,10 @@ pycodestyle = "*"
 isort = "*"
 pipenv-setup = "*"
 rope = "*"
+pytest = "*"
+pytest-xdist = "*"
+text-selection = {editable = true, path = "."}
+unittest2pytest = "*"
 
 [packages]
 ordered-set = "*"

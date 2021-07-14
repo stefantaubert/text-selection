@@ -115,8 +115,12 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
   logger.info("Preparing data...")
   target_dist_array = dict_to_array_ordered_after_keys(target_dist)
   available_entries_array = get_available_arrays(data, all_keys)
-  preselection_array = get_available_arrays(preselection, all_keys)
-  covered_array = merge_arrays(preselection_array)
+
+  if len(preselection) == 0:
+    covered_array = dict_to_array_ordered_after_keys({x: 0 for x in all_keys})
+  else:
+    preselection_array = get_available_arrays(preselection, all_keys)
+    covered_array = merge_arrays(preselection_array)
 
   logger.info("Selecting data...")
   max_until = sum(until_values.values())

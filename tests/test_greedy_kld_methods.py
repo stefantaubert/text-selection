@@ -214,6 +214,18 @@ def test_sync_dict_keys_to_keys__removes_key():
   assert counter[1] == 5
 
 
+def test_get_available_arrays__empty_input():
+  data = OrderedDict()
+
+  result = get_available_arrays(
+    data=data,
+    all_keys={1, 2, 3},
+  )
+
+  assert isinstance(result, OrderedDict)
+  assert len(result) == 0
+
+
 def test_get_available_arrays():
   data = OrderedDict({
     2: [1, 2, 3],
@@ -285,3 +297,94 @@ def test_performance_until():
   duration = end - start
 
   assert duration < 6
+
+
+def test_sort_greedy_kld_until_with_preselection__one_preselected():
+  preselection = OrderedDict({
+    1: [1],
+  })
+
+  data = OrderedDict({
+    2: [1],
+    3: [2],
+  })
+
+  distr = {
+    1: 0.5,
+    2: 0.5,
+  }
+
+  until_values = {
+    2: 1,
+    3: 1,
+  }
+
+  res = sort_greedy_kld_until_with_preselection(
+    data=data,
+    target_dist=distr,
+    until_values=until_values,
+    until_value=1,
+    preselection=preselection,
+  )
+
+  assert OrderedSet([3]) == res
+
+
+def test_sort_greedy_kld_until_with_preselection__one_preselected_but_none_of_the_target_symbols():
+  preselection = OrderedDict({
+    1: [1],
+  })
+
+  data = OrderedDict({
+    2: [1],
+    3: [2],
+  })
+
+  distr = {
+    1: 0.5,
+    2: 0.5,
+  }
+
+  until_values = {
+    2: 1,
+    3: 1,
+  }
+
+  res = sort_greedy_kld_until_with_preselection(
+    data=data,
+    target_dist=distr,
+    until_values=until_values,
+    until_value=1,
+    preselection=preselection,
+  )
+
+  assert OrderedSet([3]) == res
+
+
+def test_sort_greedy_kld_until_with_preselection__nothing_preselected():
+  preselection = OrderedDict()
+
+  data = OrderedDict({
+    2: [1],
+    3: [2],
+  })
+
+  distr = {
+    1: 0.5,
+    2: 0.5,
+  }
+
+  until_values = {
+    2: 1,
+    3: 1,
+  }
+
+  res = sort_greedy_kld_until_with_preselection(
+    data=data,
+    target_dist=distr,
+    until_values=until_values,
+    until_value=1,
+    preselection=preselection,
+  )
+
+  assert OrderedSet([2]) == res

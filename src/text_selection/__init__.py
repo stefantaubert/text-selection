@@ -6,7 +6,8 @@ from text_selection.greedy_export import (greedy_ngrams_count,
                                           greedy_ngrams_seconds)
 from text_selection.greedy_kld_export import (
     greedy_kld_uniform_ngrams_count, greedy_kld_uniform_ngrams_default,
-    greedy_kld_uniform_ngrams_iterations, greedy_kld_uniform_ngrams_seconds)
+    greedy_kld_uniform_ngrams_iterations, greedy_kld_uniform_ngrams_seconds,
+    greedy_kld_uniform_ngrams_seconds_with_preselection)
 from text_selection.metrics_export import get_rarity_ngrams
 from text_selection.random_export import (n_divergent_random_seconds,
                                           random_count, random_default,

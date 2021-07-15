@@ -5,9 +5,14 @@ from collections import OrderedDict
 from typing import List
 
 import numpy as np
+from ordered_set import OrderedSet
 from scipy.stats import entropy
-from text_selection.greedy_kld_methods import *
-from text_selection.utils import get_distribution, get_reverse_distribution
+from text_selection.greedy_kld_methods import (
+    _get_distribution, dict_to_array_ordered_after_keys, get_available_arrays,
+    get_divergence_for_utterance, get_divergences, get_smallest_divergence_keys,
+    get_uniform_distribution, get_utterance_with_min_kld, merge_arrays,
+    sort_greedy_kld, sort_greedy_kld_iterations, sort_greedy_kld_until,
+    sort_greedy_kld_until_with_preselection, sync_dict_keys_to_keys)
 
 ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
             'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -18,40 +23,21 @@ def get_random_list(length: int, chars: List[str]) -> List[str]:
   return res
 
 
-def test_get_distribution():
-  data = {
-    2: [1, 2, 3],
-    3: [1, 2],
-    4: [1],
-  }
+def test_get_distribution__empty_input():
+  counts = np.array([])
+  result = _get_distribution(counts)
 
-  x = get_distribution(data)
-
-  assert_res = {
-    1: 3 / 6,
-    2: 2 / 6,
-    3: 1 / 6,
-  }
-
-  assert assert_res == x
+  assert len(result) == 0
 
 
-def test_get_reverse_distribution():
-  data = {
-    2: [1, 2, 3],
-    3: [1, 2],
-    4: [1],
-  }
+def test_get_distribution__returns_distribution():
+  counts = np.array([3, 2, 1])
+  result = _get_distribution(counts)
 
-  x = get_reverse_distribution(data)
-
-  assert_res = {
-    1: 1 / 6,
-    2: 2 / 6,
-    3: 3 / 6,
-  }
-
-  assert assert_res == x
+  assert len(result) == 3
+  assert result[0] == 3 / 6
+  assert result[1] == 2 / 6
+  assert result[2] == 1 / 6
 
 
 def test_entropy():
@@ -264,6 +250,51 @@ def test_performance():
   assert duration < 6
 
 
+def test_get_uniform_distribution__empty_input():
+  data = OrderedDict()
+
+  result = get_uniform_distribution(data)
+
+  assert len(result) == 0
+
+
+def test_get_uniform_distribution__detects_all_keys():
+  data = OrderedDict({
+    0: [0, 3],
+    1: [5],
+  })
+
+  result = get_uniform_distribution(data)
+
+  assert len(result) == 3
+  assert result[0] == 1 / 3
+  assert result[3] == 1 / 3
+  assert result[5] == 1 / 3
+
+
+def test_dict_to_array_ordered_after_keys__empty_input():
+  data = {}
+
+  result = dict_to_array_ordered_after_keys(data)
+
+  assert len(result) == 0
+
+
+def test_dict_to_array_ordered_after_keys__is_sorted():
+  data = {
+    3: [4],
+    1: [5],
+    2: [6],
+  }
+
+  result = dict_to_array_ordered_after_keys(data)
+
+  assert len(result) == 3
+  assert result[0] == [5]
+  assert result[1] == [6]
+  assert result[2] == [4]
+
+
 def test_performance_its():
   n_data = 500
   data = OrderedDict({i: get_random_list(random.randint(1, 50), ALPHABET) for i in range(n_data)})
@@ -388,3 +419,24 @@ def test_sort_greedy_kld_until_with_preselection__nothing_preselected():
   )
 
   assert OrderedSet([2]) == res
+
+
+def test_get_smallest_divergence__one_entry_returns_this_entry():
+  divergences = OrderedDict({1: 0.5})
+
+  result = get_smallest_divergence_keys(divergences)
+
+  assert result == 1
+
+
+def test_get_smallest_divergence__two_same_entries_returns_the_first_entry():
+  divergences = OrderedDict({2: 0.5, 1: 0.5})
+  result = get_smallest_divergence_keys(divergences)
+
+  assert result == 2
+
+def test_get_smallest_divergence__two_different_entries_returns_the_smallest_one():
+  divergences = OrderedDict({2: 0.5, 1: 0.4})
+  result = get_smallest_divergence_keys(divergences)
+
+  assert result == 1

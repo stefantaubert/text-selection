@@ -44,27 +44,6 @@ def get_n_divergent_random_seconds(data: OrderedDictType[_T1, _T2], seed: int, d
   return result
 
 
-def get_random_seconds_divergence_seeds(data: OrderedDictType[_T1, List[_T2]], seed: int, durations_s: Dict[int, float], seconds: float, samples: int, n: int) -> Tuple[OrderedSet[int], List[OrderedSet[_T1]]]:
-  potential_seeds = range(samples)
-  # random.shuffle(potential_seeds)
-
-  potential_sets: List[OrderedSet[_T1]] = []
-  for sample_seed in tqdm(potential_seeds):
-    sample_set = get_random_seconds(
-      data=data,
-      seed=sample_seed,
-      durations_s=durations_s,
-      seconds=seconds,
-    )
-    potential_sets.append(sample_set)
-
-  selected_set_idxs = sorted(find_unlike_sets(potential_sets, n, seed))
-  selected_seeds = OrderedSet([potential_seeds[i] for i in selected_set_idxs])
-  assert len(selected_seeds) == len(selected_set_idxs)
-  selected_sets = [potential_sets[i] for i in selected_set_idxs]
-  return selected_seeds, selected_sets
-
-
 def get_random_seconds_cover(data: OrderedDictType[_T1, List[_T2]], seed: int, durations_s: Dict[int, float], seconds: float) -> OrderedSet[_T1]:
   available_set = values_to_set(data)
   greedy_selected = sort_random_set_cover(data=available_set, seed=seed)

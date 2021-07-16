@@ -4,14 +4,15 @@ from typing import OrderedDict as OrderedDictType
 from typing import Set
 
 from ordered_set import OrderedSet
-from text_selection.greedy_applied import (greedy_count,
-                                           greedy_cover,
+
+from text_selection.greedy_applied import (greedy_count, greedy_cover,
                                            greedy_default,
-                                           greedy_epochs,
-                                           greedy_iterations,
+                                           greedy_duration_advanced,
+                                           greedy_epochs, greedy_iterations,
                                            greedy_seconds)
-from text_selection.utils import (get_filtered_list,
-                                  get_filtered_ngrams, get_top_n)
+from text_selection.selection import SelectionMode
+from text_selection.utils import (get_filtered_list, get_filtered_ngrams,
+                                  get_top_n)
 
 
 def greedy_ngrams_cover(data: OrderedDictType[int, List[str]], already_covered: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], top_percent: Optional[float]) -> OrderedSet[int]:
@@ -46,6 +47,15 @@ def greedy_ngrams_seconds(data: OrderedDictType[int, List[str]], n_gram: int, ig
     data=get_filtered_ngrams(data, n_gram, ignore_symbols),
     durations_s=durations_s,
     seconds=seconds,
+  )
+
+
+def greedy_ngrams_durations_advanced(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], durations: Dict[int, float], target_duration: float, mode: SelectionMode) -> OrderedSet[int]:
+  return greedy_duration_advanced(
+    data=get_filtered_ngrams(data, n_gram, ignore_symbols),
+    durations=durations,
+    target_duration=target_duration,
+    mode=mode,
   )
 
 

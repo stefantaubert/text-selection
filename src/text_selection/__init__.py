@@ -2,6 +2,7 @@ from text_selection.cover_export import cover_symbols_default
 from text_selection.greedy_export import (greedy_ngrams_count,
                                           greedy_ngrams_cover,
                                           greedy_ngrams_default,
+                                          greedy_ngrams_durations_advanced,
                                           greedy_ngrams_epochs,
                                           greedy_ngrams_seconds)
 from text_selection.greedy_kld_export import (

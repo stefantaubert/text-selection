@@ -7,6 +7,7 @@ from ordered_set import OrderedSet
 from tqdm import tqdm
 
 from text_selection.selection import SelectionMode, select_key
+from text_selection.utils import values_to_set
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
@@ -86,7 +87,7 @@ def sort_greedy_until(data: OrderedDictType[_T1, Set[_T2]], until_values: Dict[_
 def sort_greedy_until_advanced(data: OrderedDictType[_T1, List[_T2]], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], mode: SelectionMode) -> OrderedSet[_T1]:
   assert isinstance(data, OrderedDict)
   result: OrderedSet[_T1] = OrderedSet()
-  available_entries = OrderedDict({k: set(v) for k, v in data.items()})
+  available_entries = values_to_set(data)
   unit_counts = {utterance_id: len(units) for utterance_id, units in data.items()}
   total = 0
   continue_while = True

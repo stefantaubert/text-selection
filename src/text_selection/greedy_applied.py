@@ -3,10 +3,12 @@ from typing import OrderedDict as OrderedDictType
 from typing import Tuple, TypeVar
 
 from ordered_set import OrderedSet
-from text_selection.greedy_methods import (get_greedy_cover,
-                                           sort_greedy,
+
+from text_selection.greedy_methods import (get_greedy_cover, sort_greedy,
                                            sort_greedy_epochs,
-                                           sort_greedy_until)
+                                           sort_greedy_until,
+                                           sort_greedy_until_advanced)
+from text_selection.selection import SelectionMode
 from text_selection.utils import values_to_set
 
 _T1 = TypeVar("_T1")
@@ -25,6 +27,18 @@ def greedy_seconds(data: OrderedDictType[_T1, List[_T2]], durations_s: Dict[int,
   available_set = values_to_set(data)
   result = sort_greedy_until(
     data=available_set, until_values=durations_s, until_value=seconds)
+  return result
+
+
+
+def greedy_duration_advanced(data: OrderedDictType[_T1, List[_T2]], durations: Dict[int, float], target_duration: float, mode: SelectionMode) -> OrderedSet[_T1]:
+  result = sort_greedy_until_advanced(
+    data=data,
+    until_values=durations,
+    until_value=target_duration,
+    mode=mode,
+  )
+
   return result
 
 

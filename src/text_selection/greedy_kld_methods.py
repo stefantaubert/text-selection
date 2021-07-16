@@ -92,6 +92,7 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
   assert all_keys == all_occuring_values
 
   logger.info("Preparing data...")
+  unit_counts = {utterance_id: len(units) for utterance_id, units in data.items()}
   target_dist_array = dict_to_array_ordered_after_keys(target_dist)
   available_entries_array = get_available_arrays(data, all_keys)
 
@@ -115,7 +116,7 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
     )
     if len(potential_keys) > 1:
       logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
-    selected_key = select_key(potential_keys, data, mode)
+    selected_key = select_key(potential_keys, unit_counts, mode)
     selected_until_value = until_values[selected_key]
     new_total = current_total + selected_until_value
     if new_total <= until_value:

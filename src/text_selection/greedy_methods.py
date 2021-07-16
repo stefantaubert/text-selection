@@ -1,10 +1,12 @@
 from collections import OrderedDict
-from typing import Dict
+from typing import Dict, List
 from typing import OrderedDict as OrderedDictType
 from typing import Set, TypeVar, Union
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
+
+from text_selection.selection import SelectionMode, select_key
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
@@ -81,6 +83,30 @@ def sort_greedy_until(data: OrderedDictType[_T1, Set[_T2]], until_values: Dict[_
   return result
 
 
+def sort_greedy_until_advanced(data: OrderedDictType[_T1, List[_T2]], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], mode: SelectionMode) -> OrderedSet[_T1]:
+  assert isinstance(data, OrderedDict)
+  result: OrderedSet[_T1] = OrderedSet()
+  available_entries = OrderedDict({k: set(v) for k, v in data.items()})
+  unit_counts = {utterance_id: len(units) for utterance_id, units in data.items()}
+  total = 0
+  continue_while = True
+  progress_bar = tqdm(total=int(round(until_value, 0)), initial=0)
+  while continue_while and len(available_entries) > 0:
+    selected_keys = get_greedy_advanced(available_entries, unit_counts, mode)
+    for selected_key in selected_keys:
+      new_total = total + until_values[selected_key]
+      if new_total <= until_value:
+        result.add(selected_key)
+        available_entries.pop(selected_key)
+        total = new_total
+        progress_bar.update(int(round(total - progress_bar.n, 0)))
+      else:
+        continue_while = False
+        break
+  progress_bar.close()
+  return result
+
+
 def get_greedy(data: OrderedDictType[_T1, Set[_T2]]) -> OrderedSet[_T1]:
   """The parameter ngrams needs to be ordered to be able to produce reproductable results."""
   assert isinstance(data, OrderedDict)
@@ -97,6 +123,40 @@ def get_greedy(data: OrderedDictType[_T1, Set[_T2]]) -> OrderedSet[_T1]:
     covered |= selected_value
 
   return result
+
+
+def get_greedy_advanced(data: OrderedDictType[_T1, Set[_T2]], unit_counts: Dict[_T1, int], mode: SelectionMode) -> OrderedSet[_T1]:
+  """The parameter ngrams needs to be ordered to be able to produce reproductable results."""
+  assert isinstance(data, OrderedDict)
+  all_ngrams = {e for s in data.values() for e in s}
+  available_entries = data.copy()
+  covered: Set[_T2] = set()
+  result: OrderedSet[_T1] = OrderedSet()
+
+  while covered != all_ngrams:
+    new_unit_counts = get_new_unit_counts(available_entries, covered)
+    potential_keys = get_most_new_units_keys(new_unit_counts)
+    selected_key = select_key(potential_keys, unit_counts, mode)
+    result.add(selected_key)
+    covered |= data[selected_key]
+    available_entries.pop(selected_key)
+
+  return result
+
+
+def get_new_unit_counts(data: OrderedDictType[_T1, Set[_T2]], covered: Set[_T2]) -> OrderedDictType[_T1, int]:
+  new_unit_counts = OrderedDict({k: get_new_units_count(v, covered) for k, v in data.items()})
+  return new_unit_counts
+
+
+def get_most_new_units_keys(new_units: OrderedDictType[_T1, int]) -> OrderedSet[_T1]:
+  assert isinstance(new_units, OrderedDict)
+  assert len(new_units) > 0
+  #selected_key, minimum_divergence = min(divergences.items(), key=lambda kv: kv[1])
+  maximum_count = max(new_units.values())
+  all_with_max_units_counts = OrderedSet([key for key, count in new_units.items()
+                                          if count == maximum_count])
+  return all_with_max_units_counts
 
 
 def get_new_units_count(subset: Set[_T2], already_covered: Set[_T2]) -> int:

@@ -9,10 +9,12 @@ from ordered_set import OrderedSet
 from scipy.stats import entropy
 from text_selection.greedy_kld_methods import (
     _get_distribution, dict_to_array_ordered_after_keys, get_available_arrays,
-    get_divergence_for_utterance, get_divergences, get_smallest_divergence_keys,
-    get_uniform_distribution, get_utterance_with_min_kld, merge_arrays,
-    sort_greedy_kld, sort_greedy_kld_iterations, sort_greedy_kld_until,
+    get_divergence_for_utterance, get_divergences,
+    get_smallest_divergence_keys, get_uniform_distribution,
+    get_utterance_with_min_kld, merge_arrays, sort_greedy_kld,
+    sort_greedy_kld_iterations, sort_greedy_kld_until,
     sort_greedy_kld_until_with_preselection, sync_dict_keys_to_keys)
+from text_selection.selection import SelectionMode
 
 ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
             'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -356,6 +358,7 @@ def test_sort_greedy_kld_until_with_preselection__one_preselected():
     until_values=until_values,
     until_value=1,
     preselection=preselection,
+    mode=SelectionMode.FIRST,
   )
 
   assert OrderedSet([3]) == res
@@ -387,6 +390,7 @@ def test_sort_greedy_kld_until_with_preselection__one_preselected_but_none_of_th
     until_values=until_values,
     until_value=1,
     preselection=preselection,
+    mode=SelectionMode.FIRST,
   )
 
   assert OrderedSet([3]) == res
@@ -416,6 +420,7 @@ def test_sort_greedy_kld_until_with_preselection__nothing_preselected():
     until_values=until_values,
     until_value=1,
     preselection=preselection,
+    mode=SelectionMode.FIRST,
   )
 
   assert OrderedSet([2]) == res
@@ -426,17 +431,18 @@ def test_get_smallest_divergence__one_entry_returns_this_entry():
 
   result = get_smallest_divergence_keys(divergences)
 
-  assert result == 1
+  assert result == OrderedSet([1])
 
 
-def test_get_smallest_divergence__two_same_entries_returns_the_first_entry():
+def test_get_smallest_divergence__two_same_entries_returns_both_entries():
   divergences = OrderedDict({2: 0.5, 1: 0.5})
   result = get_smallest_divergence_keys(divergences)
 
-  assert result == 2
+  assert result == OrderedSet([2, 1])
+
 
 def test_get_smallest_divergence__two_different_entries_returns_the_smallest_one():
   divergences = OrderedDict({2: 0.5, 1: 0.4})
   result = get_smallest_divergence_keys(divergences)
 
-  assert result == 1
+  assert result == OrderedSet([1])

@@ -129,6 +129,7 @@ def get_greedy(data: OrderedDictType[_T1, Set[_T2]]) -> OrderedSet[_T1]:
 def get_greedy_advanced(data: OrderedDictType[_T1, Set[_T2]], unit_counts: Dict[_T1, int], mode: SelectionMode) -> OrderedSet[_T1]:
   """The parameter ngrams needs to be ordered to be able to produce reproductable results."""
   assert isinstance(data, OrderedDict)
+  logger = getLogger(__name__)
   all_ngrams = {e for s in data.values() for e in s}
   available_entries = data.copy()
   covered: Set[_T2] = set()
@@ -137,6 +138,8 @@ def get_greedy_advanced(data: OrderedDictType[_T1, Set[_T2]], unit_counts: Dict[
   while covered != all_ngrams:
     new_unit_counts = get_new_unit_counts(available_entries, covered)
     potential_keys = get_most_new_units_keys(new_unit_counts)
+    if len(potential_keys) > 1:
+      logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
     selected_key = select_key(potential_keys, unit_counts, mode)
     result.add(selected_key)
     covered |= data[selected_key]

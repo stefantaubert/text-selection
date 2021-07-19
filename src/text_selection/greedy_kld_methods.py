@@ -83,7 +83,7 @@ def sort_greedy_kld_until(data: OrderedDictType[_T1, List[_T2]], target_dist: Di
   return selection
 
 
-def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T1, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], preselection: OrderedDictType[_T1, List[_T2]], mode: SelectionMode) -> OrderedSet[_T1]:
+def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], preselection: OrderedDictType[_T1, List[_T2]], mode: SelectionMode) -> OrderedSet[_T1]:
   assert isinstance(data, OrderedDict)
   logger = getLogger(__name__)
   result: OrderedSet[_T1] = OrderedSet()
@@ -106,9 +106,13 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
   logger.info("Selecting data...")
   max_until = sum(until_values.values())
   adjusted_until = round(min(until_value, max_until))
-  current_total = 0
+  current_total = 0.0
   progress_bar = tqdm(total=adjusted_until, initial=current_total)
-  while len(available_entries_array) > 0:
+  while True:
+    if len(available_entries_array) == 0:
+      logger.warning(
+        f"Aborting selection as no further data is available! Selected: {current_total:.1f}/{until_value:.1f} ({current_total/until_value*100:.2f}%).")
+      break
     potential_keys = get_utterance_with_min_kld(
       data=available_entries_array,
       covered_counts=covered_array,

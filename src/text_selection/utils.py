@@ -14,7 +14,7 @@ from sklearn.cluster import KMeans
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
 
-DurationBoundary: Tuple[float, float]
+DurationBoundary = Tuple[float, float]
 
 
 def get_ngrams(sentence_symbols: List[str], n: int) -> List[Tuple[str]]:

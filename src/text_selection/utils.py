@@ -2,6 +2,7 @@ import math
 import random
 from collections import Counter, OrderedDict
 from logging import getLogger
+from math import inf
 from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple, TypeVar, Union
@@ -12,6 +13,8 @@ from sklearn.cluster import KMeans
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
+
+DurationBoundary: Tuple[float, float]
 
 
 def get_ngrams(sentence_symbols: List[str], n: int) -> List[Tuple[str]]:
@@ -52,6 +55,19 @@ def get_until_sum_set(d: OrderedSet[_T1], until_values: Dict[_T1, Union[float, i
     total += current_val
 
   return res, total
+
+
+def filter_after_duration(corpus: Dict[_T1, float], min_duration_incl: float, max_duration_excl: float) -> Set[_T1]:
+  assert min_duration_incl >= 0
+  assert max_duration_excl >= 0
+
+  filtered_utterance_indicies = set()
+
+  for utterance_id, utterance_duration in corpus.items():
+    if min_duration_incl <= utterance_duration < max_duration_excl:
+      filtered_utterance_indicies.add(utterance_id)
+
+  return filtered_utterance_indicies
 
 
 def get_random_subset_indices(sample_set_list: List[Set[int]], n: int) -> List[Set[int]]:
@@ -114,7 +130,7 @@ def get_reverse_distribution(ngrams: Dict[_T1, List[_T2]]) -> Dict[_T2, float]:
   return distr
 
 
-def get_filtered_ngrams(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]]) -> OrderedDictType[int, List[Tuple]]:
+def get_filtered_ngrams(data: OrderedDictType[_T1, List[str]], n_gram: int, ignore_symbols: Optional[Set[_T2]]) -> OrderedDictType[_T1, List[Tuple[_T2, ...]]]:
   assert isinstance(data, OrderedDict)
 
   logger = getLogger(__name__)
@@ -154,6 +170,23 @@ def get_filtered_ngrams(data: OrderedDictType[int, List[str]], n_gram: int, igno
   return available_ngrams
 
 
+def filter_data_durations(data: OrderedDictType[_T1, List[Tuple[_T2, ...]]], durations: Dict[_T1, float], boundary: DurationBoundary) -> OrderedDictType[int, List[Tuple[_T2, ...]]]:
+  logger = getLogger(__name__)
+  boundary_min, boundary_max = boundary
+  filtered_utterance_ids = filter_after_duration(durations, boundary_min, boundary_max)
+  not_selected_utterances_out_of_boundary = len(data) - len(filtered_utterance_ids)
+
+  if not_selected_utterances_out_of_boundary > 0:
+    logger.warning(
+        f"Missed out utterances due to duration boundary [{boundary_min},{boundary_max}]: {not_selected_utterances_out_of_boundary}/{len(data)} ({not_selected_utterances_out_of_boundary/len(data)*100:.2f}%)")
+  else:
+    logger.debug(
+      f"Didn't missed out any utterances through boundary [{boundary_min},{boundary_max}].")
+
+  result = OrderedDict({k: v for k, v in data.items() if k in filtered_utterance_ids})
+  return result
+
+
 def get_first_percent(data: OrderedSet, percent: float) -> OrderedSet:
   proportion = len(data) / 100 * percent
   # rounding is strange see: https://docs.python.org/3/library/functions.html#round
@@ -187,9 +220,9 @@ def get_n_divergent_seconds(durations_s: OrderedDictType[_T1, float], seconds: f
 def get_next_start_index(step_length: int, durations_s: OrderedDictType[_T1, float], prev_vec: List[_T1], data_keys: List[_T1]) -> int:
   """
   start_index should reference the element in data_keys which has a distance of at least step_length to the first element
-  in prev_vec (i.e., it has a distance of exactly step_length or is the first element for which this distance is exceeded.) 
-  "Distance" in this case is defined as the sum of the durations from prev_vec's second element to the element for which the 
-  distance to the first element in prev_vec is computed. If no element in prev_vec has a distance >= step_length to the first 
+  in prev_vec (i.e., it has a distance of exactly step_length or is the first element for which this distance is exceeded.)
+  "Distance" in this case is defined as the sum of the durations from prev_vec's second element to the element for which the
+  distance to the first element in prev_vec is computed. If no element in prev_vec has a distance >= step_length to the first
   element in prev_vec, the index of the next element in data_keys is returned.
 
   Example 1: step_length = 4

@@ -528,3 +528,22 @@ def test_get_n_divergent_seconds__with_many_different_durations():
   assert OrderedSet([5, 6, 0, 1]) == res[2]
 
 # endregion
+
+
+def test_filter_after_duration__includes_from_excludes_to():
+  durations = {
+    0: 1,
+    1: 2,
+    2: 3,
+    3: 2.9999,
+    4: 1,
+    5: 2,
+  }
+
+  result = filter_after_duration(
+    corpus=durations,
+    max_duration_excl=3,
+    min_duration_incl=2,
+  )
+
+  assert result == {1, 3, 5}

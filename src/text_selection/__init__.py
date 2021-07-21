@@ -20,5 +20,6 @@ from text_selection.random_export import (n_divergent_random_seconds,
                                           random_ngrams_cover_seconds,
                                           random_percent, random_seconds)
 from text_selection.selection import SelectionMode
-from text_selection.utils import (get_common_durations,
+from text_selection.utils import (DurationBoundary, filter_after_duration,
+                                  filter_data_durations, get_common_durations,
                                   get_random_subset_indices)

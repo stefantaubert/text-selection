@@ -1,3 +1,4 @@
+from math import inf
 from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set
@@ -9,7 +10,8 @@ from text_selection.greedy_kld_applied import (
     greedy_kld_uniform_iterations, greedy_kld_uniform_seconds,
     greedy_kld_uniform_seconds_with_preselection)
 from text_selection.selection import SelectionMode
-from text_selection.utils import get_filtered_ngrams
+from text_selection.utils import (DurationBoundary, filter_data_durations,
+                                  get_filtered_ngrams)
 
 
 def greedy_kld_uniform_ngrams_default(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]]) -> OrderedSet[int]:
@@ -36,8 +38,10 @@ def greedy_kld_uniform_ngrams_seconds(data: OrderedDictType[int, List[str]], n_g
   )
 
 
-def greedy_kld_uniform_ngrams_seconds_with_preselection(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], durations_s: Dict[int, float], seconds: float, preselection: OrderedDictType[int, List[str]], mode: SelectionMode) -> OrderedSet[int]:
+def greedy_kld_uniform_ngrams_seconds_with_preselection(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], durations_s: Dict[int, float], seconds: float, preselection: OrderedDictType[int, List[str]], mode: SelectionMode, duration_boundary: DurationBoundary = (0, inf)) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
+  data_ngrams = filter_data_durations(data_ngrams, durations_s, duration_boundary)
+
   return greedy_kld_uniform_seconds_with_preselection(
     data=data_ngrams,
     durations_s=durations_s,

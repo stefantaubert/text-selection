@@ -178,10 +178,10 @@ def filter_data_durations(data: OrderedDictType[_T1, List[Tuple[_T2, ...]]], dur
 
   if not_selected_utterances_out_of_boundary > 0:
     logger.warning(
-        f"Missed out utterances due to duration boundary [{boundary_min},{boundary_max}]: {not_selected_utterances_out_of_boundary}/{len(data)} ({not_selected_utterances_out_of_boundary/len(data)*100:.2f}%)")
+        f"Missed out utterances due to duration boundary [{boundary_min},{boundary_max}): {not_selected_utterances_out_of_boundary}/{len(data)} ({not_selected_utterances_out_of_boundary/len(data)*100:.2f}%)")
   else:
     logger.debug(
-      f"Didn't missed out any utterances through boundary [{boundary_min},{boundary_max}].")
+      f"Didn't missed out any utterances through boundary [{boundary_min},{boundary_max}).")
 
   result = OrderedDict({k: v for k, v in data.items() if k in filtered_utterance_ids})
   return result

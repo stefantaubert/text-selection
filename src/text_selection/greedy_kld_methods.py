@@ -103,6 +103,10 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
     preselection_array = get_available_arrays(preselection, all_keys)
     covered_array = merge_arrays(preselection_array)
 
+    preselection_distr = _get_distribution(covered_array)
+    preselection_kld = entropy(preselection_distr, target_dist_array)
+    logger.info(f"Preselection Kullback-Leibler divergence: {preselection_kld}")
+
   logger.info("Selecting data...")
   max_until = sum(until_values.values())
   adjusted_until = round(min(until_value, max_until))

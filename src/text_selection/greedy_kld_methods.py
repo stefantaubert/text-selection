@@ -99,6 +99,8 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
   # The probability is really high that only one key is figured out, therefore it is useless to use any selection modes. If shortest or longest should be used the unfiltered count of symbols needs to be passed as extra parameter which increases complexity of the method.
   selection_mode = SelectionMode.FIRST
   logger = getLogger(__name__)
+  if mp:
+    logger.info("Using multiprocessing...")
   result: OrderedSet[_T1] = OrderedSet()
   all_keys_in_targed_distr = set(target_dist.keys())
   # all_occuring_values: Set[_T2] = {x for y in data.values() for x in y}

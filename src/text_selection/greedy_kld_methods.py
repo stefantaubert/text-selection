@@ -41,7 +41,8 @@ def sort_greedy_kld(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2
     potential_keys = get_utterance_with_min_kld(
       data=available_entries_array,
       covered_counts=covered_array,
-      target_dist=target_dist_array
+      target_dist=target_dist_array,
+      mp=False,
     )
     selected_key = select_first(potential_keys)
     result.add(selected_key)
@@ -70,6 +71,7 @@ def sort_greedy_kld_iterations(data: OrderedDictType[_T1, List[_T2]], target_dis
       data=available_entries_array,
       covered_counts=covered_array,
       target_dist=target_dist_array,
+      mp=False,
     )
     selected_key = select_first(potential_keys)
     result.add(selected_key)
@@ -85,12 +87,13 @@ def sort_greedy_kld_until(data: OrderedDictType[_T1, List[_T2]], target_dist: Di
     until_values=until_values,
     until_value=until_value,
     preselection=OrderedDict(),
+    mp=False,
   )
 
   return selection
 
 
-def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], preselection: OrderedDictType[_T1, List[_T2]]) -> OrderedSet[_T1]:
+def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], preselection: OrderedDictType[_T1, List[_T2]], mp: bool) -> OrderedSet[_T1]:
   assert isinstance(data, OrderedDict)
   assert isinstance(preselection, OrderedDict)
   # The probability is really high that only one key is figured out, therefore it is useless to use any selection modes. If shortest or longest should be used the unfiltered count of symbols needs to be passed as extra parameter which increases complexity of the method.
@@ -139,6 +142,7 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
       data=available_entries_array,
       covered_counts=covered_array,
       target_dist=target_dist_array,
+      mp=mp,
     )
     if len(potential_keys) > 1:
       logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
@@ -164,8 +168,9 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
   return result
 
 
-def get_utterance_with_min_kld(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedSet[_T1]:
-  divergences = get_divergences(data, covered_counts, target_dist)
+def get_utterance_with_min_kld(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray, mp: bool) -> OrderedSet[_T1]:
+  get_divergences_method = get_divergences_mp if mp else get_divergences
+  divergences = get_divergences_method(data, covered_counts, target_dist)
   all_with_minimum_divergence = get_smallest_divergence_keys(divergences)
   return all_with_minimum_divergence
 
@@ -185,67 +190,20 @@ def get_divergences(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.n
 def get_divergences_mp(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedDictType[_T1, float]:
   assert isinstance(data, OrderedDict)
 
+  logger = getLogger(__name__)
+  thread_count = cpu_count() - 1
+  chunksize = math.ceil(len(data) / thread_count)
+  logger.debug(f"Using {thread_count} threads with {chunksize} chunks...")
+
   meth = partial(get_divergence_for_utterance_mp,
                  covered_counts=covered_counts, target_dist=target_dist)
-  logger = getLogger(__name__)
-  thread_count = cpu_count() - 1
-  #thread_count = 5
-  chunksize = math.ceil(len(data) / thread_count)
-  logger.info(f"Using {thread_count} threads with {chunksize} chunks...")
-
-  start = time.perf_counter()
   # res = process_map(meth, data.items(), max_workers=thread_count, chunksize=chunksize) # is equivalent but a bit slower
-  with ProcessPoolExecutor(max_workers=thread_count) as p:
-    res = list(tqdm(p.map(meth, data.items(), chunksize=chunksize), total=len(data)))
-  end = time.perf_counter()
-  print(f"Duration: {end-start}")
+  with ProcessPoolExecutor(max_workers=thread_count) as ex:
+    res = dict(tqdm(ex.map(meth, data.items(), chunksize=chunksize), total=len(data)))
 
-  # with mp.Pool(thread_count) as pool:
-  #   res = list(tqdm(pool.imap_unordered(meth, data.items(), chunksize=chunksize), total=len(data)))
-    #res = pool.map(meth, data.items(), chunksize=chunksize)
-
-  divergences = dict(res)
-
-  result = OrderedDict({k: divergences[k] for k in data})
+  result: OrderedDictType[_T1, float] = OrderedDict({k: res[k] for k in data})
 
   return result
-
-
-def get_divergences_mp_prep(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedDictType[_T1, float]:
-  assert isinstance(data, OrderedDict)
-
-  tmp = {}
-  for k, utterance_counts in tqdm(data.items()):
-    counts = covered_counts + utterance_counts
-    distr = _get_distribution(counts)
-    tmp[k] = distr
-
-  meth = partial(get_kld, target_dist=target_dist)
-  logger = getLogger(__name__)
-  thread_count = cpu_count() - 1
-  #thread_count = 5
-  chunksize = math.ceil(len(tmp) / thread_count)
-  logger.info(f"Using {thread_count} threads with {chunksize}...")
-  res = process_map(meth, tmp.items(), max_workers=thread_count, chunksize=chunksize)
-  # with mp.Pool(thread_count) as pool:
-  #   res = list(tqdm(pool.imap(meth, tmp.items()), total=len(tmp)))
-  #res = pool.map(meth, data.items())
-
-  divergences = dict(res)
-
-  result = OrderedDict({k: divergences[k] for k in data})
-
-  return result
-
-
-def get_kld(kv, target_dist) -> Tuple[_T1, float]:
-  key, distr = kv
-  none_of_targed_ngrams_exist = all(np.isnan(distr))
-  if none_of_targed_ngrams_exist:
-    return math.inf
-
-  res = entropy(distr, target_dist)
-  return key, res
 
 
 def get_smallest_divergence_keys(divergences: OrderedDictType[_T1, float]) -> OrderedSet[_T1]:
@@ -266,12 +224,16 @@ def get_divergence_for_utterance_mp(kv_pair: Tuple[_T1, np.ndarray], covered_cou
 def get_divergence_for_utterance(covered_counts: np.ndarray, utterance_counts: np.ndarray, target_dist: np.ndarray) -> float:
   counts = covered_counts + utterance_counts
   distr = _get_distribution(counts)
+  res = get_kld(distr, target_dist)
+  return res
 
-  none_of_targed_ngrams_exist = all(np.isnan(distr))
+
+def get_kld(dist: np.ndarray, target_dist: np.ndarray) -> Tuple[_T1, float]:
+  none_of_targed_ngrams_exist = all(np.isnan(dist))
   if none_of_targed_ngrams_exist:
     return math.inf
 
-  res = entropy(distr, target_dist)
+  res = entropy(dist, target_dist)
   return res
 
 

@@ -2,6 +2,7 @@ import cProfile
 import random
 import time
 from collections import OrderedDict
+from logging import getLogger
 from typing import List
 
 import numpy as np
@@ -9,7 +10,7 @@ from ordered_set import OrderedSet
 from scipy.stats import entropy
 from text_selection.greedy_kld_methods import (
     _get_distribution, dict_to_array_ordered_after_keys, get_available_arrays,
-    get_divergence_for_utterance, get_divergences,
+    get_divergence_for_utterance, get_divergences, get_divergences_mp,
     get_smallest_divergence_keys, get_uniform_distribution,
     get_utterance_with_min_kld, merge_arrays, sort_greedy_kld,
     sort_greedy_kld_iterations, sort_greedy_kld_until,
@@ -23,6 +24,88 @@ ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'
 def get_random_list(length: int, chars: List[str]) -> List[str]:
   res = [random.choice(chars) for _ in range(length)]
   return res
+
+
+def test_get_divergences():
+  data = OrderedDict({
+    0: np.array([1, 0]),
+    1: np.array([0, 1]),
+  })
+
+  covered_counts = np.array([1, 0])
+  target_distr = np.array([0.5, 0.5])
+
+  result = get_divergences(data, covered_counts, target_distr)
+
+  assert result.keys() == {0, 1}
+  assert result[0] == 0.6931471805599453
+  assert result[1] == 0.0
+
+
+def test_get_divergences_mp():
+  data = OrderedDict({
+    0: np.array([1, 0]),
+    1: np.array([0, 1]),
+  })
+
+  covered_counts = np.array([1, 0])
+  target_distr = np.array([0.5, 0.5])
+
+  result = get_divergences_mp(data, covered_counts, target_distr)
+
+  assert result.keys() == {0, 1}
+  assert result[0] == 0.6931471805599453
+  assert result[1] == 0.0
+
+
+def test_get_divergences_mp__stress_test():
+  np.random.seed(1111)
+  utterance_count = 10000
+  utterance_len = 100
+  max_ngram = 100
+  data = OrderedDict({
+    k + 1: np.array(np.random.randint(0, max_ngram, utterance_len)) for k in range(utterance_count)
+  })
+
+  covered_counts = np.array([0] * max_ngram)
+  target_distr = np.array([1 / max_ngram] * max_ngram)
+
+  start = time.perf_counter()
+  result = get_divergences_mp(data, covered_counts, target_distr)
+  end = time.perf_counter()
+  duration = end - start
+  logger = getLogger(__name__)
+  logger.info(f"Duration: {duration}")
+
+  assert 0 not in result
+  assert result[1] == 0.23035848513245613
+  assert len(result) == utterance_count
+  assert 0.09 < duration < 0.13
+
+
+def test_get_divergences__stress_test():
+  np.random.seed(1111)
+  utterance_count = 10000
+  utterance_len = 100
+  max_ngram = 100
+  data = OrderedDict({
+    k + 1: np.array(np.random.randint(0, max_ngram, utterance_len)) for k in range(utterance_count)
+  })
+
+  covered_counts = np.array([0] * max_ngram)
+  target_distr = np.array([1 / max_ngram] * max_ngram)
+
+  start = time.perf_counter()
+  result = get_divergences(data, covered_counts, target_distr)
+  end = time.perf_counter()
+  duration = end - start
+  logger = getLogger(__name__)
+  logger.info(f"Duration: {duration}")
+
+  assert 0 not in result
+  assert result[1] == 0.23035848513245613
+  assert len(result) == utterance_count
+  assert 0.22 < duration < 0.26
 
 
 def test_get_distribution__empty_input():
@@ -501,6 +584,7 @@ def test_sort_greedy_kld_until_with_preselection__irrelevant_ngrams_were_ignored
   )
 
   assert OrderedSet([5, 7]) == res
+
 
 def test_sort_greedy_kld_until_with_preselection__warning_on_not_existing_ngrams_compared_to_targed_distr():
   preselection = OrderedDict({

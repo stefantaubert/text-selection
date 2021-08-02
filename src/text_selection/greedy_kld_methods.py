@@ -1,14 +1,21 @@
 import math
+import multiprocessing.dummy as mp
+import time
 from collections import Counter, OrderedDict
+from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
+from functools import partial
 from logging import getLogger
+from multiprocessing import cpu_count
 from typing import Dict, List
 from typing import OrderedDict as OrderedDictType
-from typing import Set, TypeVar, Union
+from typing import Set, Tuple, TypeVar, Union
 
 import numpy as np
 from ordered_set import OrderedSet
 from scipy.stats import entropy
 from tqdm import tqdm, trange
+from tqdm.contrib.concurrent import process_map
 
 from text_selection.selection import SelectionMode, select_first, select_key
 
@@ -169,10 +176,76 @@ def get_divergences(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.n
       covered_counts=covered_counts,
       utterance_counts=utterance_counts,
       target_dist=target_dist,
-    ) for k, utterance_counts in data.items()
+    ) for k, utterance_counts in tqdm(data.items())
   })
 
   return divergences
+
+
+def get_divergences_mp(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedDictType[_T1, float]:
+  assert isinstance(data, OrderedDict)
+
+  meth = partial(get_divergence_for_utterance_mp,
+                 covered_counts=covered_counts, target_dist=target_dist)
+  logger = getLogger(__name__)
+  thread_count = cpu_count() - 1
+  #thread_count = 5
+  chunksize = math.ceil(len(data) / thread_count)
+  logger.info(f"Using {thread_count} threads with {chunksize} chunks...")
+
+  start = time.perf_counter()
+  # res = process_map(meth, data.items(), max_workers=thread_count, chunksize=chunksize) # is equivalent but a bit slower
+  with ProcessPoolExecutor(max_workers=thread_count) as p:
+    res = list(tqdm(p.map(meth, data.items(), chunksize=chunksize), total=len(data)))
+  end = time.perf_counter()
+  print(f"Duration: {end-start}")
+
+  # with mp.Pool(thread_count) as pool:
+  #   res = list(tqdm(pool.imap_unordered(meth, data.items(), chunksize=chunksize), total=len(data)))
+    #res = pool.map(meth, data.items(), chunksize=chunksize)
+
+  divergences = dict(res)
+
+  result = OrderedDict({k: divergences[k] for k in data})
+
+  return result
+
+
+def get_divergences_mp_prep(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedDictType[_T1, float]:
+  assert isinstance(data, OrderedDict)
+
+  tmp = {}
+  for k, utterance_counts in tqdm(data.items()):
+    counts = covered_counts + utterance_counts
+    distr = _get_distribution(counts)
+    tmp[k] = distr
+
+  meth = partial(get_kld, target_dist=target_dist)
+  logger = getLogger(__name__)
+  thread_count = cpu_count() - 1
+  #thread_count = 5
+  chunksize = math.ceil(len(tmp) / thread_count)
+  logger.info(f"Using {thread_count} threads with {chunksize}...")
+  res = process_map(meth, tmp.items(), max_workers=thread_count, chunksize=chunksize)
+  # with mp.Pool(thread_count) as pool:
+  #   res = list(tqdm(pool.imap(meth, tmp.items()), total=len(tmp)))
+  #res = pool.map(meth, data.items())
+
+  divergences = dict(res)
+
+  result = OrderedDict({k: divergences[k] for k in data})
+
+  return result
+
+
+def get_kld(kv, target_dist) -> Tuple[_T1, float]:
+  key, distr = kv
+  none_of_targed_ngrams_exist = all(np.isnan(distr))
+  if none_of_targed_ngrams_exist:
+    return math.inf
+
+  res = entropy(distr, target_dist)
+  return key, res
 
 
 def get_smallest_divergence_keys(divergences: OrderedDictType[_T1, float]) -> OrderedSet[_T1]:
@@ -183,6 +256,11 @@ def get_smallest_divergence_keys(divergences: OrderedDictType[_T1, float]) -> Or
   all_with_minimum_divergence = OrderedSet([key for key, divergence in divergences.items()
                                             if divergence == minimum_divergence])
   return all_with_minimum_divergence
+
+
+def get_divergence_for_utterance_mp(kv_pair: Tuple[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> Tuple[_T1, float]:
+  key, utterance_counts = kv_pair
+  return key, get_divergence_for_utterance(covered_counts, utterance_counts, target_dist)
 
 
 def get_divergence_for_utterance(covered_counts: np.ndarray, utterance_counts: np.ndarray, target_dist: np.ndarray) -> float:
@@ -226,7 +304,7 @@ def merge_arrays(data: Dict[_T1, np.ndarray]) -> np.ndarray:
 
 
 def _get_distribution(counts: np.ndarray) -> np.ndarray:
-  assert all(x >= 0 for x in counts)
+  # assert all(x >= 0 for x in counts) # too slow
   sum_counts = np.sum(counts)
   new_dist = np.divide(counts, sum_counts)
   return new_dist

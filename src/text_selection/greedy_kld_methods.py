@@ -1,3 +1,4 @@
+import math
 from collections import Counter, OrderedDict
 from logging import getLogger
 from typing import Dict, List
@@ -187,6 +188,11 @@ def get_smallest_divergence_keys(divergences: OrderedDictType[_T1, float]) -> Or
 def get_divergence_for_utterance(covered_counts: np.ndarray, utterance_counts: np.ndarray, target_dist: np.ndarray) -> float:
   counts = covered_counts + utterance_counts
   distr = _get_distribution(counts)
+
+  none_of_targed_ngrams_exist = all(np.isnan(distr))
+  if none_of_targed_ngrams_exist:
+    return math.inf
+
   res = entropy(distr, target_dist)
   return res
 
@@ -220,8 +226,21 @@ def merge_arrays(data: Dict[_T1, np.ndarray]) -> np.ndarray:
 
 
 def _get_distribution(counts: np.ndarray) -> np.ndarray:
-  new_dist = np.divide(counts, np.sum(counts))
+  assert all(x >= 0 for x in counts)
+  sum_counts = np.sum(counts)
+  new_dist = np.divide(counts, sum_counts)
   return new_dist
+
+# def _get_distribution(counts: np.ndarray) -> np.ndarray:
+#   assert all(x >= 0 for x in counts)
+
+#   sum_counts = np.sum(counts)
+
+#   if sum_counts == 0:
+#     return counts
+#   else:
+#     new_dist = np.divide(counts, sum_counts)
+#     return new_dist
 
 
 def get_uniform_distribution(ngrams: Dict[_T1, List[_T2]]) -> Dict[_T2, float]:

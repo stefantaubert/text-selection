@@ -1,5 +1,7 @@
 from ordered_set import OrderedSet
-from text_selection.greedy_kld_export import greedy_kld_uniform_ngrams_default
+from text_selection.greedy_kld_export import (
+    greedy_kld_uniform_ngrams_default,
+    greedy_kld_uniform_ngrams_seconds_with_preselection)
 from text_selection.utils import *
 
 
@@ -34,3 +36,120 @@ def test_greedy_kld_uniform_ngrams__two_grams_all_equal__return_same_order():
   )
 
   assert OrderedSet([1, 2, 3]) == res
+
+
+def test_sort_greedy_kld_until_with_preselection__without_preselection():
+  preselection = OrderedDict()
+  data = OrderedDict({
+    5: ["a", "b"],
+    6: ["b"],
+    7: ["c"],
+  })
+
+  durations = {
+    5: 1.0,
+    6: 1.0,
+    7: 1.0,
+  }
+
+  target_duration = 2.0
+
+  res = greedy_kld_uniform_ngrams_seconds_with_preselection(
+    data=data,
+    durations_s=durations,
+    seconds=target_duration,
+    preselection=preselection,
+    ignore_symbols={"b"},
+    n_gram=1,
+  )
+
+  assert OrderedSet([5, 7]) == res
+
+
+def test_sort_greedy_kld_until_with_preselection__with_preselection():
+  preselection = OrderedDict({
+    5: ["a", "b"],
+  })
+
+  data = OrderedDict({
+    6: ["b"],
+    7: ["c"],
+  })
+
+  durations = {
+    6: 1.0,
+    7: 1.0,
+  }
+
+  target_duration = 1.0
+
+  res = greedy_kld_uniform_ngrams_seconds_with_preselection(
+    data=data,
+    durations_s=durations,
+    seconds=target_duration,
+    preselection=preselection,
+    ignore_symbols={"b"},
+    n_gram=1,
+  )
+
+  assert OrderedSet([7]) == res
+
+
+def test_sort_greedy_kld_until_with_preselection__with_preselection_and_one_utterance_without_any_relevant_symbols():
+  preselection = OrderedDict({
+    5: ["a", "b"],
+  })
+
+  data = OrderedDict({
+    6: ["b"],
+    7: ["c"],
+    8: ["d"],
+  })
+
+  durations = {
+    6: 1.0,
+    7: 1.0,
+    8: 1.0,
+  }
+
+  target_duration = 2.0
+
+  res = greedy_kld_uniform_ngrams_seconds_with_preselection(
+    data=data,
+    durations_s=durations,
+    seconds=target_duration,
+    preselection=preselection,
+    ignore_symbols={"b", "d"},
+    n_gram=1,
+  )
+
+  assert OrderedSet([7, 6]) == res
+
+
+def test_sort_greedy_kld_until_with_preselection__only_ignored_symbols():
+  preselection = OrderedDict({
+    5: ["a", "b"],
+  })
+
+  data = OrderedDict({
+    6: ["b"],
+    7: ["b"],
+  })
+
+  durations = {
+    6: 1.0,
+    7: 1.0,
+  }
+
+  target_duration = 1.0
+
+  res = greedy_kld_uniform_ngrams_seconds_with_preselection(
+    data=data,
+    durations_s=durations,
+    seconds=target_duration,
+    preselection=preselection,
+    ignore_symbols={"b"},
+    n_gram=1,
+  )
+
+  assert OrderedSet([6]) == res

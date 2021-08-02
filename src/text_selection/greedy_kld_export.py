@@ -41,12 +41,13 @@ def greedy_kld_uniform_ngrams_seconds(data: OrderedDictType[int, List[str]], n_g
 def greedy_kld_uniform_ngrams_seconds_with_preselection(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], durations_s: Dict[int, float], seconds: float, preselection: OrderedDictType[int, List[str]], mode: SelectionMode, duration_boundary: DurationBoundary = (0, inf)) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
   data_ngrams = filter_data_durations(data_ngrams, durations_s, duration_boundary)
+  preselection_ngrams = get_filtered_ngrams(preselection, n_gram, ignore_symbols)
 
   return greedy_kld_uniform_seconds_with_preselection(
     data=data_ngrams,
     durations_s=durations_s,
     seconds=seconds,
-    preselection=preselection,
+    preselection=preselection_ngrams,
     mode=mode,
   )
 

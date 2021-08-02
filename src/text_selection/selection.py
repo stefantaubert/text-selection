@@ -13,7 +13,7 @@ class SelectionMode(IntEnum):
   LONGEST = 3
 
 
-def select_key(potential_keys: OrderedSet[_T1], data_lens: Optional[Dict[_T1, int]], mode: SelectionMode):
+def select_key(potential_keys: OrderedSet[_T1], unit_counts: Optional[Dict[_T1, int]], mode: SelectionMode):
   assert len(potential_keys) > 0
   if len(potential_keys) == 1:
     return potential_keys[0]
@@ -22,11 +22,11 @@ def select_key(potential_keys: OrderedSet[_T1], data_lens: Optional[Dict[_T1, in
   if mode == SelectionMode.LAST:
     return select_last(potential_keys)
   if mode == SelectionMode.SHORTEST:
-    assert data_lens is not None
-    return select_shortest(potential_keys, data_lens)
+    assert unit_counts is not None
+    return select_shortest(potential_keys, unit_counts)
   if mode == SelectionMode.LONGEST:
-    assert data_lens is not None
-    return select_longest(potential_keys, data_lens)
+    assert unit_counts is not None
+    return select_longest(potential_keys, unit_counts)
   raise Exception()
 
 

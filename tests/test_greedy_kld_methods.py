@@ -358,7 +358,6 @@ def test_sort_greedy_kld_until_with_preselection__one_preselected():
     until_values=until_values,
     until_value=1,
     preselection=preselection,
-    mode=SelectionMode.FIRST,
   )
 
   assert OrderedSet([3]) == res
@@ -390,7 +389,6 @@ def test_sort_greedy_kld_until_with_preselection__one_preselected_but_none_of_th
     until_values=until_values,
     until_value=1,
     preselection=preselection,
-    mode=SelectionMode.FIRST,
   )
 
   assert OrderedSet([3]) == res
@@ -420,7 +418,6 @@ def test_sort_greedy_kld_until_with_preselection__nothing_preselected():
     until_values=until_values,
     until_value=1,
     preselection=preselection,
-    mode=SelectionMode.FIRST,
   )
 
   assert OrderedSet([2]) == res
@@ -448,7 +445,6 @@ def test_sort_greedy_kld_until_with_preselection__too_few_data():
     until_values=durations,
     until_value=target_duration,
     preselection=preselection,
-    mode=SelectionMode.FIRST,
   )
 
   assert OrderedSet([5]) == res
@@ -470,10 +466,72 @@ def test_sort_greedy_kld_until_with_preselection__empty_input():
     until_values=until_values,
     until_value=2,
     preselection=preselection,
-    mode=SelectionMode.FIRST,
   )
 
   assert OrderedSet() == res
+
+
+def test_sort_greedy_kld_until_with_preselection__irrelevant_ngrams_were_ignored():
+  preselection = OrderedDict()
+  data = OrderedDict({
+    5: ["a", "b"],
+    6: ["b"],
+    7: ["c"],
+  })
+
+  durations = {
+    5: 1.0,
+    6: 1.0,
+    7: 1.0,
+  }
+
+  target_duration = 2.0
+
+  target_distribution = {
+    "a": 1.0,
+    "c": 1.0,
+  }
+
+  res = sort_greedy_kld_until_with_preselection(
+    data=data,
+    target_dist=target_distribution,
+    until_values=durations,
+    until_value=target_duration,
+    preselection=preselection,
+  )
+
+  assert OrderedSet([5, 7]) == res
+
+def test_sort_greedy_kld_until_with_preselection__warning_on_not_existing_ngrams_compared_to_targed_distr():
+  preselection = OrderedDict({
+    4: ["a"],
+  })
+
+  data = OrderedDict({
+    5: ["b"],
+  })
+
+  durations = {
+    5: 1.0,
+  }
+
+  target_duration = 1.0
+
+  target_distribution = {
+    "a": 1.0,
+    "b": 1.0,
+    "c": 1.0,
+  }
+
+  res = sort_greedy_kld_until_with_preselection(
+    data=data,
+    target_dist=target_distribution,
+    until_values=durations,
+    until_value=target_duration,
+    preselection=preselection,
+  )
+
+  assert OrderedSet([5]) == res
 
 
 def test_get_smallest_divergence__one_entry_returns_this_entry():

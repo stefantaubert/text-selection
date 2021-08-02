@@ -452,6 +452,28 @@ def test_sort_greedy_kld_until_with_preselection__too_few_data():
   assert OrderedSet(["2"]) == res
 
 
+def test_sort_greedy_kld_until_with_preselection__empty_input():
+  preselection = OrderedDict()
+  data = OrderedDict()
+
+  distr = {}
+
+  until_values = {
+    "2": 1,
+  }
+
+  res = sort_greedy_kld_until_with_preselection(
+    data=data,
+    target_dist=distr,
+    until_values=until_values,
+    until_value=2,
+    preselection=preselection,
+    mode=SelectionMode.FIRST,
+  )
+
+  assert OrderedSet() == res
+
+
 def test_get_smallest_divergence__one_entry_returns_this_entry():
   divergences = OrderedDict({1: 0.5})
 

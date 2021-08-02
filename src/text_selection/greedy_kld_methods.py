@@ -107,7 +107,7 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
   max_until = sum(until_values.values())
   adjusted_until = round(min(until_value, max_until))
   current_total = 0.0
-  progress_bar = tqdm(total=adjusted_until, initial=current_total)
+  progress_bar = tqdm(total=adjusted_until, initial=round(current_total))
   while True:
     if len(available_entries_array) == 0:
       logger.warning(
@@ -132,16 +132,21 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
     else:
       break
   progress_bar.close()
+
+  final_distr = _get_distribution(covered_array)
+  final_kld = entropy(final_distr, target_dist_array)
+  logger.info(f"Obtained Kullback-Leibler divergence: {final_kld}")
+
   return result
 
 
-def get_utterance_with_min_kld(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: Dict[_T1, float]) -> OrderedSet[_T1]:
+def get_utterance_with_min_kld(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedSet[_T1]:
   divergences = get_divergences(data, covered_counts, target_dist)
   all_with_minimum_divergence = get_smallest_divergence_keys(divergences)
   return all_with_minimum_divergence
 
 
-def get_divergences(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: Dict[_T1, float]) -> OrderedDictType[_T1, float]:
+def get_divergences(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedDictType[_T1, float]:
   assert isinstance(data, OrderedDict)
   divergences = OrderedDict({k: get_divergence_for_utterance(
       covered_counts=covered_counts,
@@ -163,7 +168,7 @@ def get_smallest_divergence_keys(divergences: OrderedDictType[_T1, float]) -> Or
   return all_with_minimum_divergence
 
 
-def get_divergence_for_utterance(covered_counts: np.ndarray, utterance_counts: np.ndarray, target_dist: Dict[_T1, float]) -> float:
+def get_divergence_for_utterance(covered_counts: np.ndarray, utterance_counts: np.ndarray, target_dist: np.ndarray) -> float:
   counts = covered_counts + utterance_counts
   distr = _get_distribution(counts)
   res = entropy(distr, target_dist)

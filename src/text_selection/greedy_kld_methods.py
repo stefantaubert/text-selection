@@ -181,7 +181,7 @@ def get_divergences(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.n
       covered_counts=covered_counts,
       utterance_counts=utterance_counts,
       target_dist=target_dist,
-    ) for k, utterance_counts in tqdm(data.items())
+    ) for k, utterance_counts in data.items()
   })
 
   return divergences
@@ -199,7 +199,8 @@ def get_divergences_mp(data: OrderedDictType[_T1, np.ndarray], covered_counts: n
                  covered_counts=covered_counts, target_dist=target_dist)
   # res = process_map(meth, data.items(), max_workers=thread_count, chunksize=chunksize) # is equivalent but a bit slower
   with ProcessPoolExecutor(max_workers=thread_count) as ex:
-    res = dict(tqdm(ex.map(meth, data.items(), chunksize=chunksize), total=len(data)))
+    #res = dict(tqdm(ex.map(meth, data.items(), chunksize=chunksize), total=len(data)))
+    res = dict(ex.map(meth, data.items(), chunksize=chunksize))
 
   result: OrderedDictType[_T1, float] = OrderedDict({k: res[k] for k in data})
 

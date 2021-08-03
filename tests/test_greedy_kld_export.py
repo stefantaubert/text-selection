@@ -1,6 +1,6 @@
 from ordered_set import OrderedSet
 from text_selection.greedy_kld_export import (
-    greedy_kld_uniform_ngrams_default,
+    greedy_kld_uniform_ngrams_default, greedy_kld_uniform_ngrams_parts,
     greedy_kld_uniform_ngrams_seconds_with_preselection)
 from text_selection.utils import *
 
@@ -153,3 +153,22 @@ def test_sort_greedy_kld_until_with_preselection__only_ignored_symbols():
   )
 
   assert OrderedSet([6]) == res
+
+
+def test_greedy_kld_uniform_ngrams_parts():
+  data = OrderedDict({
+    1: ["a"],  # part 1
+    2: ["a"],  # part 1
+    3: ["b"],  # part 2
+    4: ["b"],  # part 2
+  })
+
+  res = greedy_kld_uniform_ngrams_parts(
+    data=data,
+    n_gram=1,
+    ignore_symbols={},
+    take_per_part=1,
+    parts_count=2,
+  )
+
+  assert OrderedSet([1, 3, 2, 4]) == res

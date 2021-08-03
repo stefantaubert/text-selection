@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from math import inf
 from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
@@ -7,11 +8,22 @@ from ordered_set import OrderedSet
 
 from text_selection.greedy_kld_applied import (
     greedy_kld_uniform_count, greedy_kld_uniform_default,
-    greedy_kld_uniform_iterations, greedy_kld_uniform_seconds,
-    greedy_kld_uniform_seconds_with_preselection)
+    greedy_kld_uniform_iterations, greedy_kld_uniform_parts,
+    greedy_kld_uniform_seconds, greedy_kld_uniform_seconds_with_preselection)
 from text_selection.selection import SelectionMode
 from text_selection.utils import (DurationBoundary, filter_data_durations,
                                   get_filtered_ngrams)
+
+
+def greedy_kld_uniform_ngrams_parts(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], parts_count: int, take_per_part: int) -> OrderedSet[int]:
+  data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
+  lengths = OrderedDict({k: len(v) for k, v in data.items()})
+  return greedy_kld_uniform_parts(
+    data=data_ngrams,
+    take_per_part=take_per_part,
+    parts_count=parts_count,
+    lengths=lengths,
+  )
 
 
 def greedy_kld_uniform_ngrams_default(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]]) -> OrderedSet[int]:

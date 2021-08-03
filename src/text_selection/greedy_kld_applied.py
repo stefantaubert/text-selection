@@ -1,15 +1,28 @@
 from logging import getLogger
-from typing import Dict, List, OrderedDict, TypeVar
+from typing import Dict, List, OrderedDict, TypeVar, Union
 
 from ordered_set import OrderedSet
 
 from text_selection.greedy_kld_methods import (
     get_uniform_distribution, sort_greedy_kld, sort_greedy_kld_iterations,
-    sort_greedy_kld_until, sort_greedy_kld_until_with_preselection)
+    sort_greedy_kld_until, sort_greedy_kld_until_with_preselection,
+    sort_kld_parts)
 from text_selection.selection import SelectionMode
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
+
+
+def greedy_kld_uniform_parts(data: Dict[_T1, List[_T2]], parts_count: int, take_per_part: int, lengths: OrderedDict[_T1, Union[int, float]]) -> OrderedSet[_T1]:
+  uniform_distr = get_uniform_distribution(data)
+  greedy_selected = sort_kld_parts(
+    data=data,
+    target_dist=uniform_distr,
+    parts_count=parts_count,
+    take_per_part=take_per_part,
+    lengths=lengths,
+  )
+  return greedy_selected
 
 
 def greedy_kld_uniform_default(data: OrderedDict[_T1, List[_T2]]) -> OrderedSet[_T1]:
@@ -60,6 +73,7 @@ def greedy_kld_uniform_seconds_with_preselection(data: OrderedDict[_T1, List[_T2
   )
 
   return greedy_selected
+
 
 def greedy_kld_uniform_count(data: OrderedDict[_T1, List[_T2]], chars: Dict[int, int], total_count: int) -> OrderedSet[_T1]:
   uniform_distr = get_uniform_distribution(data)

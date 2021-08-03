@@ -1,13 +1,10 @@
 import math
-import multiprocessing.dummy as mp
-import time
 from collections import Counter, OrderedDict
 from concurrent.futures.process import ProcessPoolExecutor
-from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from logging import getLogger
 from multiprocessing import cpu_count
-from typing import Dict, List
+from typing import Any, Dict, List
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple, TypeVar, Union
 
@@ -15,12 +12,96 @@ import numpy as np
 from ordered_set import OrderedSet
 from scipy.stats import entropy
 from tqdm import tqdm, trange
-from tqdm.contrib.concurrent import process_map
 
 from text_selection.selection import SelectionMode, select_first, select_key
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
+
+
+def split_into_equal_parts(keys: OrderedSet[_T1], parts_count: int) -> List[OrderedSet[_T1]]:
+  assert parts_count > 0
+  tmp: OrderedDictType[int, OrderedSet[_T1]] = OrderedDict({
+    part_id: OrderedSet() for part_id in range(parts_count)
+  })
+
+  current_part_id = 0
+  for key in keys:
+    tmp[current_part_id].add(key)
+    current_part_id += 1
+    if current_part_id == parts_count:
+      current_part_id = 0
+  result = list(tmp.values())
+  return result
+
+
+def get_keys_sort_after_value(data: OrderedDictType[_T1, Union[int, float]]) -> OrderedSet[_T1]:
+  # required to have predictable results when equal entries exist in values
+  assert isinstance(data, OrderedDict)
+  if len(data) == 0:
+    return OrderedSet()
+  sorted_keys, _ = list(zip(*sorted(data.items(), key=lambda kv: kv[1])))
+  result = OrderedSet(sorted_keys)
+  return result
+
+
+# def apply_sorting(sorted_keys: OrderedSet[_T1], data: Dict[_T1, _T2]) -> OrderedDictType[_T1, _T2]:
+#   assert set(sorted_keys) == set(data.keys())
+#   result = OrderedDict({k: data[k] for k in sorted_keys})
+#   return result
+
+
+def sort_kld_parts(data: Dict[_T1, List[_T2]], target_dist: Dict[_T2, float], parts_count: int, take_per_part: int, lengths: OrderedDictType[_T1, Union[int, float]]) -> OrderedSet[_T1]:
+  logger = getLogger(__name__)
+
+  selection_mode = SelectionMode.FIRST
+  result: OrderedSet[_T1] = OrderedSet()
+  all_keys_in_targed_distr = set(target_dist.keys())
+
+  logger.info("Preparing data...")
+  target_dist_array = dict_to_array_ordered_after_keys(target_dist)
+  covered_array = dict_to_array_ordered_after_keys({x: 0 for x in all_keys_in_targed_distr})
+
+  sorted_keys = get_keys_sort_after_value(lengths)
+  parts = split_into_equal_parts(sorted_keys, parts_count)
+
+  parts_data: List[np.ndarray] = []
+  for part in parts:
+    data_part = OrderedDict({k: data[k] for k in part})
+    data_arrays = get_available_arrays(data_part, all_keys_in_targed_distr)
+    parts_data.append(data_arrays)
+
+  logger.info("Selecting data...")
+  progress_bar = tqdm(total=len(data))
+
+  while len(result) != len(data):
+    for part in parts_data:
+      available_entries_array = part
+      for _ in range(take_per_part):
+        if len(available_entries_array) == 0:
+          continue
+        potential_keys = get_utterance_with_min_kld(
+          data=available_entries_array,
+          covered_counts=covered_array,
+          target_dist=target_dist_array,
+          mp=False,
+        )
+
+        if len(potential_keys) > 1:
+          logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
+        selected_key = select_key(potential_keys, unit_counts=None, mode=selection_mode)
+
+        result.add(selected_key)
+        covered_array += available_entries_array[selected_key]
+        available_entries_array.pop(selected_key)
+        progress_bar.update()
+  progress_bar.close()
+
+  final_distr = _get_distribution(covered_array)
+  final_kld = entropy(final_distr, target_dist_array)
+  logger.info(f"Obtained Kullback-Leibler divergence: {final_kld}")
+
+  return result
 
 
 def sort_greedy_kld(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2, float]) -> OrderedSet[_T1]:

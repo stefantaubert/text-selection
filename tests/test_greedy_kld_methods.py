@@ -11,10 +11,11 @@ from scipy.stats import entropy
 from text_selection.greedy_kld_methods import (
     _get_distribution, dict_to_array_ordered_after_keys, get_available_arrays,
     get_divergence_for_utterance, get_divergences, get_divergences_mp,
-    get_smallest_divergence_keys, get_uniform_distribution,
-    get_utterance_with_min_kld, merge_arrays, sort_greedy_kld,
-    sort_greedy_kld_iterations, sort_greedy_kld_until,
-    sort_greedy_kld_until_with_preselection, sync_dict_keys_to_keys)
+    get_keys_sort_after_value, get_smallest_divergence_keys,
+    get_uniform_distribution, get_utterance_with_min_kld, merge_arrays,
+    sort_greedy_kld, sort_greedy_kld_iterations, sort_greedy_kld_until,
+    sort_greedy_kld_until_with_preselection, sort_kld_parts,
+    sync_dict_keys_to_keys)
 from text_selection.selection import SelectionMode
 
 ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
@@ -441,6 +442,7 @@ def test_sort_greedy_kld_until_with_preselection__one_preselected():
     until_values=until_values,
     until_value=1,
     preselection=preselection,
+    mp=False,
   )
 
   assert OrderedSet([3]) == res
@@ -472,6 +474,7 @@ def test_sort_greedy_kld_until_with_preselection__one_preselected_but_none_of_th
     until_values=until_values,
     until_value=1,
     preselection=preselection,
+    mp=False,
   )
 
   assert OrderedSet([3]) == res
@@ -501,6 +504,7 @@ def test_sort_greedy_kld_until_with_preselection__nothing_preselected():
     until_values=until_values,
     until_value=1,
     preselection=preselection,
+    mp=False,
   )
 
   assert OrderedSet([2]) == res
@@ -528,6 +532,7 @@ def test_sort_greedy_kld_until_with_preselection__too_few_data():
     until_values=durations,
     until_value=target_duration,
     preselection=preselection,
+    mp=False,
   )
 
   assert OrderedSet([5]) == res
@@ -549,6 +554,7 @@ def test_sort_greedy_kld_until_with_preselection__empty_input():
     until_values=until_values,
     until_value=2,
     preselection=preselection,
+    mp=False,
   )
 
   assert OrderedSet() == res
@@ -581,6 +587,7 @@ def test_sort_greedy_kld_until_with_preselection__irrelevant_ngrams_were_ignored
     until_values=durations,
     until_value=target_duration,
     preselection=preselection,
+    mp=False,
   )
 
   assert OrderedSet([5, 7]) == res
@@ -613,6 +620,7 @@ def test_sort_greedy_kld_until_with_preselection__warning_on_not_existing_ngrams
     until_values=durations,
     until_value=target_duration,
     preselection=preselection,
+    mp=False,
   )
 
   assert OrderedSet([5]) == res
@@ -638,3 +646,222 @@ def test_get_smallest_divergence__two_different_entries_returns_the_smallest_one
   result = get_smallest_divergence_keys(divergences)
 
   assert result == OrderedSet([1])
+
+
+def test_sort_kld_parts__one_part():
+  data = {
+    5: ["a"],
+  }
+
+  lengths = OrderedDict({
+    5: 1,
+  })
+
+  target_distribution = {
+    "a": 1.0,
+  }
+
+  res = sort_kld_parts(
+    data=data,
+    target_dist=target_distribution,
+    take_per_part=1,
+    lengths=lengths,
+    parts_count=1,
+  )
+
+  assert OrderedSet([5]) == res
+
+
+def test_sort_kld_parts__two_parts_take_one():
+  data = {
+    1: ["a"],  # part 1
+    2: ["a"],  # part 2
+    3: ["b"],  # part 1
+    4: ["b"],  # part 2
+  }
+
+  lengths = OrderedDict({
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+  })
+
+  target_distribution = {
+    "a": 0.5,
+    "b": 0.5,
+  }
+
+  res = sort_kld_parts(
+    data=data,
+    target_dist=target_distribution,
+    take_per_part=1,
+    lengths=lengths,
+    parts_count=2,
+  )
+
+  assert OrderedSet([1, 4, 3, 2]) == res
+
+
+def test_sort_kld_parts__two_parts_take_two():
+  data = {
+    1: ["a"],  # part 1
+    2: ["a"],  # part 2
+    3: ["b"],  # part 1
+    4: ["b"],  # part 2
+  }
+
+  lengths = OrderedDict({
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+  })
+
+  target_distribution = {
+    "a": 0.5,
+    "b": 0.5,
+  }
+
+  res = sort_kld_parts(
+    data=data,
+    target_dist=target_distribution,
+    take_per_part=2,
+    lengths=lengths,
+    parts_count=2,
+  )
+
+  assert OrderedSet([1, 3, 2, 4]) == res
+
+
+def test_sort_kld_parts__two_parts_take_three__skips_non_existing_third():
+  data = {
+    1: ["a"],  # part 1
+    2: ["a"],  # part 2
+    3: ["b"],  # part 1
+    4: ["b"],  # part 2
+  }
+
+  lengths = OrderedDict({
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+  })
+
+  target_distribution = {
+    "a": 0.5,
+    "b": 0.5,
+  }
+
+  res = sort_kld_parts(
+    data=data,
+    target_dist=target_distribution,
+    take_per_part=3,
+    lengths=lengths,
+    parts_count=2,
+  )
+
+  assert OrderedSet([1, 3, 2, 4]) == res
+
+
+def test_sort_kld_parts__five_parts_take_one__ignores_fifth_part():
+  data = {
+    1: ["a"],  # part 1
+    2: ["a"],  # part 2
+    3: ["b"],  # part 3
+    4: ["b"],  # part 4
+  }
+
+  lengths = OrderedDict({
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+  })
+
+  target_distribution = {
+    "a": 0.5,
+    "b": 0.5,
+  }
+
+  res = sort_kld_parts(
+    data=data,
+    target_dist=target_distribution,
+    take_per_part=1,
+    lengths=lengths,
+    parts_count=5,
+  )
+
+  assert OrderedSet([1, 2, 3, 4]) == res
+
+
+def test_sort_kld_parts__one_part_take_one__makes_four_rounds():
+  data = {
+    1: ["a"],  # part 1
+    2: ["a"],  # part 1
+    3: ["b"],  # part 1
+    4: ["b"],  # part 1
+  }
+
+  lengths = OrderedDict({
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+  })
+
+  target_distribution = {
+    "a": 0.5,
+    "b": 0.5,
+  }
+
+  res = sort_kld_parts(
+    data=data,
+    target_dist=target_distribution,
+    take_per_part=1,
+    lengths=lengths,
+    parts_count=1,
+  )
+
+  assert OrderedSet([1, 3, 2, 4]) == res
+
+
+def test_sort_after_value__empty_input():
+  lengths = OrderedDict()
+
+  result = get_keys_sort_after_value(lengths)
+
+  assert result == OrderedSet()
+
+
+def test_sort_after_value__one_entry():
+  lengths = OrderedDict({
+    2: 5,
+  })
+
+  result = get_keys_sort_after_value(lengths)
+
+  assert result == OrderedSet([2])
+
+
+def test_sort_after_value_two_distinct_entries():
+  lengths = OrderedDict({
+    2: 5,
+    1: 4,
+  })
+
+  result = get_keys_sort_after_value(lengths)
+
+  assert result == OrderedSet([1, 2])
+
+
+def test_sort_after_value_two_equal_entries__returns_first_in_dict():
+  lengths = OrderedDict({
+    2: 5,
+    1: 5,
+  })
+
+  result = get_keys_sort_after_value(lengths)
+
+  assert result == OrderedSet([2, 1])

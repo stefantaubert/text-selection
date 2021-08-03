@@ -15,7 +15,7 @@ from text_selection.greedy_kld_methods import (
     get_uniform_distribution, get_utterance_with_min_kld, merge_arrays,
     sort_greedy_kld, sort_greedy_kld_iterations, sort_greedy_kld_until,
     sort_greedy_kld_until_with_preselection, sort_kld_parts,
-    sync_dict_keys_to_keys)
+    split_into_equal_parts, sync_dict_keys_to_keys)
 from text_selection.selection import SelectionMode
 
 ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
@@ -675,8 +675,8 @@ def test_sort_kld_parts__one_part():
 def test_sort_kld_parts__two_parts_take_one():
   data = {
     1: ["a"],  # part 1
-    2: ["a"],  # part 2
-    3: ["b"],  # part 1
+    2: ["a"],  # part 1
+    3: ["b"],  # part 2
     4: ["b"],  # part 2
   }
 
@@ -700,14 +700,14 @@ def test_sort_kld_parts__two_parts_take_one():
     parts_count=2,
   )
 
-  assert OrderedSet([1, 4, 3, 2]) == res
+  assert OrderedSet([1, 3, 2, 4]) == res
 
 
 def test_sort_kld_parts__two_parts_take_two():
   data = {
     1: ["a"],  # part 1
-    2: ["a"],  # part 2
-    3: ["b"],  # part 1
+    2: ["a"],  # part 1
+    3: ["b"],  # part 2
     4: ["b"],  # part 2
   }
 
@@ -731,15 +731,15 @@ def test_sort_kld_parts__two_parts_take_two():
     parts_count=2,
   )
 
-  assert OrderedSet([1, 3, 2, 4]) == res
+  assert OrderedSet([1, 2, 3, 4]) == res
 
 
 def test_sort_kld_parts__two_parts_take_three__skips_non_existing_third():
   data = {
     1: ["a"],  # part 1
-    2: ["a"],  # part 2
-    3: ["b"],  # part 1
-    4: ["b"],  # part 2
+    2: ["b"],  # part 1
+    3: ["b"],  # part 2
+    4: ["a"],  # part 2
   }
 
   lengths = OrderedDict({
@@ -762,7 +762,7 @@ def test_sort_kld_parts__two_parts_take_three__skips_non_existing_third():
     parts_count=2,
   )
 
-  assert OrderedSet([1, 3, 2, 4]) == res
+  assert OrderedSet([1, 2, 3, 4]) == res
 
 
 def test_sort_kld_parts__five_parts_take_one__ignores_fifth_part():
@@ -865,3 +865,60 @@ def test_sort_after_value_two_equal_entries__returns_first_in_dict():
   result = get_keys_sort_after_value(lengths)
 
   assert result == OrderedSet([2, 1])
+
+
+def test_split_into_equal_parts__empty_set():
+  keys = OrderedSet()
+
+  result = split_into_equal_parts(keys, parts_count=1)
+
+  assert result == []
+
+
+def test_split_into_equal_parts__one_entry_one_part():
+  keys = OrderedSet([1])
+
+  result = split_into_equal_parts(keys, parts_count=1)
+
+  assert len(result) == 1
+  assert result[0] == OrderedSet([1])
+
+
+def test_split_into_equal_parts__one_entry_two_parts__returns_one_part():
+  keys = OrderedSet([1])
+
+  result = split_into_equal_parts(keys, parts_count=2)
+
+  assert len(result) == 1
+  assert result[0] == OrderedSet([1])
+
+
+def test_split_into_equal_parts__two_entries_two_parts():
+  keys = OrderedSet([1, 2])
+
+  result = split_into_equal_parts(keys, parts_count=2)
+
+  assert len(result) == 2
+  assert result[0] == OrderedSet([1])
+  assert result[1] == OrderedSet([2])
+
+
+def test_split_into_equal_parts__three_entries_two_parts__first_part_gets_two_entries():
+  keys = OrderedSet([1, 2, 3])
+
+  result = split_into_equal_parts(keys, parts_count=2)
+
+  assert len(result) == 2
+  assert result[0] == OrderedSet([1, 2])
+  assert result[1] == OrderedSet([3])
+
+
+def test_split_into_equal_parts__five_entries_three_parts__first_two_parts_get_two_entries():
+  keys = OrderedSet([1, 2, 3, 4, 5])
+
+  result = split_into_equal_parts(keys, parts_count=3)
+
+  assert len(result) == 3
+  assert result[0] == OrderedSet([1, 2])
+  assert result[1] == OrderedSet([3, 4])
+  assert result[2] == OrderedSet([5])

@@ -21,18 +21,30 @@ _T2 = TypeVar("_T2")
 
 def split_into_equal_parts(keys: OrderedSet[_T1], parts_count: int) -> List[OrderedSet[_T1]]:
   assert parts_count > 0
-  tmp: OrderedDictType[int, OrderedSet[_T1]] = OrderedDict({
-    part_id: OrderedSet() for part_id in range(parts_count)
-  })
+  if len(keys) == 0:
+    return []
 
-  current_part_id = 0
-  for key in keys:
-    tmp[current_part_id].add(key)
-    current_part_id += 1
-    if current_part_id == parts_count:
-      current_part_id = 0
-  result = list(tmp.values())
+  chunk_size = math.ceil(len(keys) / parts_count)
+
+  result = [keys[i:i + chunk_size] for i in range(0, len(keys), chunk_size)]
+
   return result
+
+
+# def split_into_equal_parts_diverse_lengths_per_set(keys: OrderedSet[_T1], parts_count: int) -> List[OrderedSet[_T1]]:
+#   assert parts_count > 0
+#   tmp: OrderedDictType[int, OrderedSet[_T1]] = OrderedDict({
+#     part_id: OrderedSet() for part_id in range(parts_count)
+#   })
+
+#   current_part_id = 0
+#   for key in keys:
+#     tmp[current_part_id].add(key)
+#     current_part_id += 1
+#     if current_part_id == parts_count:
+#       current_part_id = 0
+#   result = list(tmp.values())
+#   return result
 
 
 def get_keys_sort_after_value(data: OrderedDictType[_T1, Union[int, float]]) -> OrderedSet[_T1]:

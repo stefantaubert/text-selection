@@ -18,6 +18,7 @@ DurationBoundary = Tuple[float, float]
 
 
 def get_ngrams(sentence_symbols: List[str], n: int) -> List[Tuple[str]]:
+  # TODO: import from text-utils
   if n < 1:
     raise Exception()
 

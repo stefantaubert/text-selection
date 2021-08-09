@@ -2,14 +2,12 @@ import math
 import random
 from collections import Counter, OrderedDict
 from logging import getLogger
-from math import inf
 from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple, TypeVar, Union
 
 import numpy as np
 from ordered_set import OrderedSet
-from sklearn.cluster import KMeans
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")

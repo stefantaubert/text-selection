@@ -1,10 +1,8 @@
 import math
 from collections import Counter, OrderedDict
-from concurrent.futures.process import ProcessPoolExecutor
-from functools import partial
 from logging import getLogger
-from multiprocessing import cpu_count
-from typing import Any, Dict, List
+from multiprocessing import Pool
+from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple, TypeVar, Union
 
@@ -63,7 +61,7 @@ def get_keys_sort_after_value(data: OrderedDictType[_T1, Union[int, float]]) -> 
 #   return result
 
 
-def sort_kld_parts(data: Dict[_T1, List[_T2]], target_dist: Dict[_T2, float], parts_count: int, take_per_part: int, lengths: OrderedDictType[_T1, Union[int, float]]) -> OrderedSet[_T1]:
+def sort_kld_parts(data: Dict[_T1, List[_T2]], target_dist: Dict[_T2, float], parts_count: int, take_per_part: int, lengths: OrderedDictType[_T1, Union[int, float]], n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[_T1]:
   logger = getLogger(__name__)
 
   selection_mode = SelectionMode.FIRST
@@ -96,7 +94,9 @@ def sort_kld_parts(data: Dict[_T1, List[_T2]], target_dist: Dict[_T2, float], pa
           data=available_entries_array,
           covered_counts=covered_array,
           target_dist=target_dist_array,
-          mp=False,
+          maxtasksperchild=maxtasksperchild,
+          n_jobs=n_jobs,
+          chunksize=chunksize,
         )
 
         if len(potential_keys) > 1:
@@ -116,7 +116,7 @@ def sort_kld_parts(data: Dict[_T1, List[_T2]], target_dist: Dict[_T2, float], pa
   return result
 
 
-def sort_greedy_kld(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2, float]) -> OrderedSet[_T1]:
+def sort_greedy_kld(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2, float], n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[_T1]:
   assert isinstance(data, OrderedDict)
   logger = getLogger(__name__)
   result: OrderedSet[_T1] = OrderedSet()
@@ -135,7 +135,9 @@ def sort_greedy_kld(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2
       data=available_entries_array,
       covered_counts=covered_array,
       target_dist=target_dist_array,
-      mp=False,
+      maxtasksperchild=maxtasksperchild,
+      n_jobs=n_jobs,
+      chunksize=chunksize,
     )
     selected_key = select_first(potential_keys)
     result.add(selected_key)
@@ -144,7 +146,7 @@ def sort_greedy_kld(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2
   return result
 
 
-def sort_greedy_kld_iterations(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T1, float], iterations: int) -> OrderedSet[_T1]:
+def sort_greedy_kld_iterations(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T1, float], iterations: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[_T1]:
   assert isinstance(data, OrderedDict)
   logger = getLogger(__name__)
   result: OrderedSet[_T1] = OrderedSet()
@@ -164,7 +166,9 @@ def sort_greedy_kld_iterations(data: OrderedDictType[_T1, List[_T2]], target_dis
       data=available_entries_array,
       covered_counts=covered_array,
       target_dist=target_dist_array,
-      mp=False,
+      maxtasksperchild=maxtasksperchild,
+      n_jobs=n_jobs,
+      chunksize=chunksize,
     )
     selected_key = select_first(potential_keys)
     result.add(selected_key)
@@ -173,27 +177,27 @@ def sort_greedy_kld_iterations(data: OrderedDictType[_T1, List[_T2]], target_dis
   return result
 
 
-def sort_greedy_kld_until(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T1, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int]) -> OrderedSet[_T1]:
+def sort_greedy_kld_until(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T1, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[_T1]:
   selection = sort_greedy_kld_until_with_preselection(
     data=data,
     target_dist=target_dist,
     until_values=until_values,
     until_value=until_value,
     preselection=OrderedDict(),
-    mp=False,
+    chunksize=chunksize,
+    maxtasksperchild=maxtasksperchild,
+    n_jobs=n_jobs,
   )
 
   return selection
 
 
-def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], preselection: OrderedDictType[_T1, List[_T2]], mp: bool) -> OrderedSet[_T1]:
+def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]], target_dist: Dict[_T2, float], until_values: Dict[_T1, Union[float, int]], until_value: Union[float, int], preselection: OrderedDictType[_T1, List[_T2]], n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[_T1]:
   assert isinstance(data, OrderedDict)
   assert isinstance(preselection, OrderedDict)
   # The probability is really high that only one key is figured out, therefore it is useless to use any selection modes. If shortest or longest should be used the unfiltered count of symbols needs to be passed as extra parameter which increases complexity of the method.
   selection_mode = SelectionMode.FIRST
   logger = getLogger(__name__)
-  if mp:
-    logger.info("Using multiprocessing...")
   result: OrderedSet[_T1] = OrderedSet()
   all_keys_in_targed_distr = set(target_dist.keys())
   # all_occuring_values: Set[_T2] = {x for y in data.values() for x in y}
@@ -223,6 +227,10 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
     logger.warning(
       f"Some keys from targed distribution do not exist in data and preselection: {'.'.join(sorted(missing_keys_in_data_and_preselection))}")
 
+  # if chunksize is None:
+  #   chunksize = math.ceil(len(data) / n_jobs) / 2
+  # logger.debug(f"Using {n_jobs} processes each handling chunks of {chunksize} for total data count {len(data)}.")
+
   logger.info("Selecting data...")
   max_until = sum(until_values.values())
   adjusted_until = round(min(until_value, max_until))
@@ -237,7 +245,9 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
       data=available_entries_array,
       covered_counts=covered_array,
       target_dist=target_dist_array,
-      mp=mp,
+      maxtasksperchild=maxtasksperchild,
+      n_jobs=n_jobs,
+      chunksize=chunksize,
     )
     if len(potential_keys) > 1:
       logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
@@ -263,39 +273,63 @@ def sort_greedy_kld_until_with_preselection(data: OrderedDictType[_T1, List[_T2]
   return result
 
 
-def get_utterance_with_min_kld(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray, mp: bool) -> OrderedSet[_T1]:
-  get_divergences_method = get_divergences_mp if mp else get_divergences
-  divergences = get_divergences_method(data, covered_counts, target_dist)
+def get_utterance_with_min_kld(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[_T1]:
+  divergences = get_divergences(data, covered_counts, target_dist,
+                                n_jobs, maxtasksperchild, chunksize)
   all_with_minimum_divergence = get_smallest_divergence_keys(divergences)
   return all_with_minimum_divergence
 
 
-def get_divergences(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedDictType[_T1, float]:
-  assert isinstance(data, OrderedDict)
-  divergences = OrderedDict({k: get_divergence_for_utterance(
-      covered_counts=covered_counts,
-      utterance_counts=utterance_counts,
-      target_dist=target_dist,
-    ) for k, utterance_counts in data.items()
-  })
-
-  return divergences
+process_data: OrderedDictType[_T1, np.ndarray] = None
+process_covered_counts: OrderedDictType[_T1, np.ndarray] = None
+process_target_dist: OrderedDictType[_T1, np.ndarray] = None
 
 
-def get_divergences_mp(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> OrderedDictType[_T1, float]:
+def init_pool(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> None:
+  global process_data
+  global process_covered_counts
+  global process_target_dist
+  process_data = data
+  process_covered_counts = covered_counts
+  process_target_dist = target_dist
+
+
+def get_divergence_for_utterance(key: _T1) -> Tuple[_T1, float]:
+  global process_data
+  global process_covered_counts
+  global process_target_dist
+  utterance_counts = process_data[key]
+  counts = process_covered_counts + utterance_counts
+  distr = _get_distribution(counts)
+  kld = get_kld(distr, process_target_dist)
+  return key, kld
+
+
+def get_divergences(data: OrderedDictType[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedDictType[_T1, float]:
   assert isinstance(data, OrderedDict)
 
   logger = getLogger(__name__)
-  thread_count = cpu_count() - 1
-  chunksize = math.ceil(len(data) / thread_count)
-  logger.debug(f"Using {thread_count} threads with {chunksize} chunks...")
+  # thread_count = cpu_count() - 1
+  # chunksize = math.ceil(len(data) / thread_count)
+  # logger.debug(f"Using {thread_count} threads with {chunksize} chunks...")
 
-  meth = partial(get_divergence_for_utterance_mp,
-                 covered_counts=covered_counts, target_dist=target_dist)
+  logger.info("Calculating Kullback-Leibler divergences...")
+  with Pool(
+    processes=n_jobs,
+    initializer=init_pool,
+    initargs=(data, covered_counts, target_dist),
+    maxtasksperchild=maxtasksperchild,
+  ) as pool:
+    res: Dict[_T1, float] = dict(tqdm(
+      pool.imap_unordered(get_divergence_for_utterance, data.keys(), chunksize=chunksize),
+      total=len(data),
+    ))
+  logger.info("Done.")
+
   # res = process_map(meth, data.items(), max_workers=thread_count, chunksize=chunksize) # is equivalent but a bit slower
-  with ProcessPoolExecutor(max_workers=thread_count) as ex:
-    #res = dict(tqdm(ex.map(meth, data.items(), chunksize=chunksize), total=len(data)))
-    res = dict(ex.map(meth, data.items(), chunksize=chunksize))
+  # with ProcessPoolExecutor(max_workers=thread_count) as ex:
+  #   #res = dict(tqdm(ex.map(meth, data.items(), chunksize=chunksize), total=len(data)))
+  #   res = dict(ex.map(meth, data.items(), chunksize=chunksize))
 
   result: OrderedDictType[_T1, float] = OrderedDict({k: res[k] for k in data})
 
@@ -312,19 +346,7 @@ def get_smallest_divergence_keys(divergences: OrderedDictType[_T1, float]) -> Or
   return all_with_minimum_divergence
 
 
-def get_divergence_for_utterance_mp(kv_pair: Tuple[_T1, np.ndarray], covered_counts: np.ndarray, target_dist: np.ndarray) -> Tuple[_T1, float]:
-  key, utterance_counts = kv_pair
-  return key, get_divergence_for_utterance(covered_counts, utterance_counts, target_dist)
-
-
-def get_divergence_for_utterance(covered_counts: np.ndarray, utterance_counts: np.ndarray, target_dist: np.ndarray) -> float:
-  counts = covered_counts + utterance_counts
-  distr = _get_distribution(counts)
-  res = get_kld(distr, target_dist)
-  return res
-
-
-def get_kld(dist: np.ndarray, target_dist: np.ndarray) -> Tuple[_T1, float]:
+def get_kld(dist: np.ndarray, target_dist: np.ndarray) -> float:
   none_of_targed_ngrams_exist = all(np.isnan(dist))
   if none_of_targed_ngrams_exist:
     return math.inf

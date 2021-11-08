@@ -1,4 +1,5 @@
 import cProfile
+import math
 import random
 import time
 from collections import OrderedDict
@@ -10,10 +11,9 @@ from ordered_set import OrderedSet
 from scipy.stats import entropy
 from text_selection.greedy_kld_methods import (
     _get_distribution, dict_to_array_ordered_after_keys, get_available_arrays,
-    get_divergence_for_utterance, get_divergences, get_divergences_mp,
-    get_keys_sort_after_value, get_smallest_divergence_keys,
-    get_uniform_distribution, get_utterance_with_min_kld, merge_arrays,
-    sort_greedy_kld, sort_greedy_kld_iterations, sort_greedy_kld_until,
+    get_divergences, get_keys_sort_after_value, get_smallest_divergence_keys,
+    get_uniform_distribution, merge_arrays, sort_greedy_kld,
+    sort_greedy_kld_iterations, sort_greedy_kld_until,
     sort_greedy_kld_until_with_preselection, sort_kld_parts,
     split_into_equal_parts, sync_dict_keys_to_keys)
 from text_selection.selection import SelectionMode
@@ -27,22 +27,6 @@ def get_random_list(length: int, chars: List[str]) -> List[str]:
   return res
 
 
-def test_get_divergences():
-  data = OrderedDict({
-    0: np.array([1, 0]),
-    1: np.array([0, 1]),
-  })
-
-  covered_counts = np.array([1, 0])
-  target_distr = np.array([0.5, 0.5])
-
-  result = get_divergences(data, covered_counts, target_distr)
-
-  assert result.keys() == {0, 1}
-  assert result[0] == 0.6931471805599453
-  assert result[1] == 0.0
-
-
 def test_get_divergences_mp():
   data = OrderedDict({
     0: np.array([1, 0]),
@@ -52,7 +36,12 @@ def test_get_divergences_mp():
   covered_counts = np.array([1, 0])
   target_distr = np.array([0.5, 0.5])
 
-  result = get_divergences_mp(data, covered_counts, target_distr)
+  result = get_divergences(
+    data, covered_counts, target_distr,
+    n_jobs=16,
+    maxtasksperchild=None,
+    chunksize=1,
+  )
 
   assert result.keys() == {0, 1}
   assert result[0] == 0.6931471805599453
@@ -61,7 +50,7 @@ def test_get_divergences_mp():
 
 def test_get_divergences_mp__stress_test():
   np.random.seed(1111)
-  utterance_count = 10000
+  utterance_count = 1000000
   utterance_len = 100
   max_ngram = 100
   data = OrderedDict({
@@ -72,7 +61,13 @@ def test_get_divergences_mp__stress_test():
   target_distr = np.array([1 / max_ngram] * max_ngram)
 
   start = time.perf_counter()
-  result = get_divergences_mp(data, covered_counts, target_distr)
+  result = get_divergences(
+    data, covered_counts, target_distr,
+    n_jobs=16,
+    maxtasksperchild=None,
+    chunksize=math.ceil(utterance_count / 16),
+  )
+
   end = time.perf_counter()
   duration = end - start
   logger = getLogger(__name__)
@@ -81,32 +76,7 @@ def test_get_divergences_mp__stress_test():
   assert 0 not in result
   assert result[1] == 0.23035848513245613
   assert len(result) == utterance_count
-  assert 0.09 < duration < 0.13
-
-
-def test_get_divergences__stress_test():
-  np.random.seed(1111)
-  utterance_count = 10000
-  utterance_len = 100
-  max_ngram = 100
-  data = OrderedDict({
-    k + 1: np.array(np.random.randint(0, max_ngram, utterance_len)) for k in range(utterance_count)
-  })
-
-  covered_counts = np.array([0] * max_ngram)
-  target_distr = np.array([1 / max_ngram] * max_ngram)
-
-  start = time.perf_counter()
-  result = get_divergences(data, covered_counts, target_distr)
-  end = time.perf_counter()
-  duration = end - start
-  logger = getLogger(__name__)
-  logger.info(f"Duration: {duration}")
-
-  assert 0 not in result
-  assert result[1] == 0.23035848513245613
-  assert len(result) == utterance_count
-  assert 0.22 < duration < 0.26
+  assert 4 < duration < 6
 
 
 def test_get_distribution__empty_input():
@@ -178,7 +148,7 @@ def test_greedy__works():
     3: [("Irrelevante", "i"), ("Worte", "w")],
   })
 
-  res = sort_greedy_kld(data, target_dist)
+  res = sort_greedy_kld(data, target_dist, n_jobs=1, maxtasksperchild=None, chunksize=1)
 
   assert OrderedSet([1, 2, 3]) == res
 
@@ -198,7 +168,7 @@ def test_sort_greedy_kld():
     4: 0.25,
   }
 
-  res = sort_greedy_kld(data, distr)
+  res = sort_greedy_kld(data, distr, n_jobs=1, maxtasksperchild=None, chunksize=1)
 
   assert OrderedSet([4, 5, 3, 2]) == res
 
@@ -241,6 +211,7 @@ def test_sort_greedy_kld_until():
     target_dist=distr,
     until_values=until_values,
     until_value=2,
+    n_jobs=1, maxtasksperchild=None, chunksize=1,
   )
 
   assert OrderedSet([4, 5]) == res
@@ -324,16 +295,16 @@ def test_performance():
 
   distr = get_uniform_distribution(data)
 
-  start = time.perf_counter()
-
   with cProfile.Profile() as pr:
       # ... do something ...
-    res = sort_greedy_kld(data, distr)
+    start = time.perf_counter()
+    res = sort_greedy_kld(data, distr, n_jobs=1, maxtasksperchild=None, chunksize=500)
+    end = time.perf_counter()
   pr.print_stats()
-  end = time.perf_counter()
   duration = end - start
 
-  assert duration < 6
+  #assert duration < 6
+  assert duration < 14
 
 
 def test_get_uniform_distribution__empty_input():
@@ -390,7 +361,8 @@ def test_performance_its():
   start = time.perf_counter()
 
   with cProfile.Profile() as pr:
-    res = sort_greedy_kld_iterations(data, distr, n_data - 1)
+    res = sort_greedy_kld_iterations(
+      data, distr, n_data - 1, n_jobs=1, maxtasksperchild=None, chunksize=1)
   pr.print_stats()
   end = time.perf_counter()
   duration = end - start
@@ -408,7 +380,8 @@ def test_performance_until():
   start = time.perf_counter()
 
   with cProfile.Profile() as pr:
-    res = sort_greedy_kld_until(data, distr, until_values, 499)
+    res = sort_greedy_kld_until(data, distr, until_values, 499,
+                                n_jobs=1, maxtasksperchild=None, chunksize=1)
   pr.print_stats()
   end = time.perf_counter()
   duration = end - start
@@ -442,7 +415,9 @@ def test_sort_greedy_kld_until_with_preselection__one_preselected():
     until_values=until_values,
     until_value=1,
     preselection=preselection,
-    mp=False,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([3]) == res
@@ -474,7 +449,9 @@ def test_sort_greedy_kld_until_with_preselection__one_preselected_but_none_of_th
     until_values=until_values,
     until_value=1,
     preselection=preselection,
-    mp=False,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([3]) == res
@@ -504,7 +481,9 @@ def test_sort_greedy_kld_until_with_preselection__nothing_preselected():
     until_values=until_values,
     until_value=1,
     preselection=preselection,
-    mp=False,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([2]) == res
@@ -532,7 +511,9 @@ def test_sort_greedy_kld_until_with_preselection__too_few_data():
     until_values=durations,
     until_value=target_duration,
     preselection=preselection,
-    mp=False,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([5]) == res
@@ -554,7 +535,9 @@ def test_sort_greedy_kld_until_with_preselection__empty_input():
     until_values=until_values,
     until_value=2,
     preselection=preselection,
-    mp=False,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet() == res
@@ -587,7 +570,9 @@ def test_sort_greedy_kld_until_with_preselection__irrelevant_ngrams_were_ignored
     until_values=durations,
     until_value=target_duration,
     preselection=preselection,
-    mp=False,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([5, 7]) == res
@@ -620,7 +605,9 @@ def test_sort_greedy_kld_until_with_preselection__warning_on_not_existing_ngrams
     until_values=durations,
     until_value=target_duration,
     preselection=preselection,
-    mp=False,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([5]) == res
@@ -667,6 +654,7 @@ def test_sort_kld_parts__one_part():
     take_per_part=1,
     lengths=lengths,
     parts_count=1,
+    n_jobs=1, maxtasksperchild=None, chunksize=1,
   )
 
   assert OrderedSet([5]) == res
@@ -698,6 +686,7 @@ def test_sort_kld_parts__two_parts_take_one():
     take_per_part=1,
     lengths=lengths,
     parts_count=2,
+    n_jobs=1, maxtasksperchild=None, chunksize=1,
   )
 
   assert OrderedSet([1, 3, 2, 4]) == res
@@ -729,6 +718,7 @@ def test_sort_kld_parts__two_parts_take_two():
     take_per_part=2,
     lengths=lengths,
     parts_count=2,
+    n_jobs=1, maxtasksperchild=None, chunksize=1,
   )
 
   assert OrderedSet([1, 2, 3, 4]) == res
@@ -760,6 +750,7 @@ def test_sort_kld_parts__two_parts_take_three__skips_non_existing_third():
     take_per_part=3,
     lengths=lengths,
     parts_count=2,
+    n_jobs=1, maxtasksperchild=None, chunksize=1,
   )
 
   assert OrderedSet([1, 2, 3, 4]) == res
@@ -791,6 +782,7 @@ def test_sort_kld_parts__five_parts_take_one__ignores_fifth_part():
     take_per_part=1,
     lengths=lengths,
     parts_count=5,
+    n_jobs=1, maxtasksperchild=None, chunksize=1,
   )
 
   assert OrderedSet([1, 2, 3, 4]) == res
@@ -822,6 +814,7 @@ def test_sort_kld_parts__one_part_take_one__makes_four_rounds():
     take_per_part=1,
     lengths=lengths,
     parts_count=1,
+    n_jobs=1, maxtasksperchild=None, chunksize=1,
   )
 
   assert OrderedSet([1, 3, 2, 4]) == res

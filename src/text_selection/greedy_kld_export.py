@@ -14,7 +14,7 @@ from text_selection.utils import (DurationBoundary, filter_data_durations,
                                   get_filtered_ngrams)
 
 
-def greedy_kld_uniform_ngrams_parts(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], parts_count: int, take_per_part: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[int]:
+def greedy_kld_uniform_ngrams_parts(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], parts_count: int, take_per_part: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int]) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
   lengths = OrderedDict({k: len(v) for k, v in data.items()})
   return greedy_kld_uniform_parts(
@@ -28,7 +28,7 @@ def greedy_kld_uniform_ngrams_parts(data: OrderedDictType[int, List[str]], n_gra
   )
 
 
-def greedy_kld_uniform_ngrams_default(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[int]:
+def greedy_kld_uniform_ngrams_default(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int]) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
   return greedy_kld_uniform_default(
     data=data_ngrams,
@@ -38,7 +38,7 @@ def greedy_kld_uniform_ngrams_default(data: OrderedDictType[int, List[str]], n_g
   )
 
 
-def greedy_kld_uniform_ngrams_iterations(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], iterations: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[int]:
+def greedy_kld_uniform_ngrams_iterations(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], iterations: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int]) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
   return greedy_kld_uniform_iterations(
     data=data_ngrams,
@@ -49,7 +49,7 @@ def greedy_kld_uniform_ngrams_iterations(data: OrderedDictType[int, List[str]], 
   )
 
 
-def greedy_kld_uniform_ngrams_seconds(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], durations_s: Dict[int, float], seconds: float, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[int]:
+def greedy_kld_uniform_ngrams_seconds(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], durations_s: Dict[int, float], seconds: float, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int]) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
   return greedy_kld_uniform_seconds(
     data=data_ngrams,
@@ -61,7 +61,7 @@ def greedy_kld_uniform_ngrams_seconds(data: OrderedDictType[int, List[str]], n_g
   )
 
 
-def greedy_kld_uniform_ngrams_seconds_with_preselection(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], durations_s: Dict[int, float], seconds: float, preselection: OrderedDictType[int, List[str]], duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[int]:
+def greedy_kld_uniform_ngrams_seconds_with_preselection(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], durations_s: Dict[int, float], seconds: float, preselection: OrderedDictType[int, List[str]], duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int]) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
   data_ngrams = filter_data_durations(data_ngrams, durations_s, duration_boundary)
   preselection_ngrams = get_filtered_ngrams(preselection, n_gram, ignore_symbols)
@@ -77,7 +77,7 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection(data: OrderedDictType[in
   )
 
 
-def greedy_kld_uniform_ngrams_count(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], chars: Dict[int, int], total_count: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[int]:
+def greedy_kld_uniform_ngrams_count(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], chars: Dict[int, int], total_count: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int]) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
   return greedy_kld_uniform_count(
     data=data_ngrams,

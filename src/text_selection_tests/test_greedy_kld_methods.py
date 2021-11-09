@@ -10,12 +10,12 @@ import numpy as np
 from ordered_set import OrderedSet
 from scipy.stats import entropy
 from text_selection.greedy_kld_methods import (
-    _get_distribution, dict_to_array_ordered_after_keys, get_available_arrays,
+    __get_distribution, dict_to_array_ordered, get_available_arrays,
     get_divergences, get_keys_sort_after_value, get_smallest_divergence_keys,
     get_uniform_distribution, merge_arrays, sort_greedy_kld,
     sort_greedy_kld_iterations, sort_greedy_kld_until,
     sort_greedy_kld_until_with_preselection, sort_kld_parts,
-    split_into_equal_parts, sync_dict_keys_to_keys)
+    split_into_equal_parts, sync_dict_keys_to_keys_inplace)
 from text_selection.selection import SelectionMode
 
 ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
@@ -48,7 +48,7 @@ def test_get_divergences_mp():
   assert result[1] == 0.0
 
 
-def test_get_divergences_mp__stress_test():
+def xtest_get_divergences_mp__stress_test():
   np.random.seed(1111)
   utterance_count = 1000000
   utterance_len = 100
@@ -81,14 +81,14 @@ def test_get_divergences_mp__stress_test():
 
 def test_get_distribution__empty_input():
   counts = np.array([])
-  result = _get_distribution(counts)
+  result = __get_distribution(counts)
 
   assert len(result) == 0
 
 
 def test_get_distribution__returns_distribution():
   counts = np.array([3, 2, 1])
-  result = _get_distribution(counts)
+  result = __get_distribution(counts)
 
   assert len(result) == 3
   assert result[0] == 3 / 6
@@ -224,7 +224,7 @@ def test_sync_dict_keys_to_keys__keeps_unchanged():
   }
   keys = {1, 2}
 
-  sync_dict_keys_to_keys(counter, keys)
+  sync_dict_keys_to_keys_inplace(counter, keys)
 
   assert counter.keys() == {1, 2}
   assert counter[1] == 5
@@ -237,7 +237,7 @@ def test_sync_dict_keys_to_keys__adds_key():
   }
   keys = {1, 2}
 
-  sync_dict_keys_to_keys(counter, keys)
+  sync_dict_keys_to_keys_inplace(counter, keys)
 
   assert counter.keys() == {1, 2}
   assert counter[1] == 5
@@ -251,37 +251,35 @@ def test_sync_dict_keys_to_keys__removes_key():
   }
   keys = {1}
 
-  sync_dict_keys_to_keys(counter, keys)
+  sync_dict_keys_to_keys_inplace(counter, keys)
 
   assert counter.keys() == {1}
   assert counter[1] == 5
 
 
 def test_get_available_arrays__empty_input():
-  data = OrderedDict()
+  data = dict()
 
   result = get_available_arrays(
     data=data,
-    all_keys={1, 2, 3},
+    target_symbols_ordered=OrderedSet([1, 2, 3])
   )
 
-  assert isinstance(result, OrderedDict)
   assert len(result) == 0
 
 
 def test_get_available_arrays():
-  data = OrderedDict({
+  data = {
     2: [1, 2, 3],
     3: [2, 3, 4],
     4: [3, 4, 5],
-  })
+  }
 
   result = get_available_arrays(
     data=data,
-    all_keys={1, 2, 3},
+    target_symbols_ordered=OrderedSet([1, 2, 3])
   )
 
-  assert isinstance(result, OrderedDict)
   assert len(result) == 3
   assert list(result.keys()) == [2, 3, 4]
   assert list(result[2]) == [1, 1, 1]
@@ -289,7 +287,7 @@ def test_get_available_arrays():
   assert list(result[4]) == [0, 0, 1]
 
 
-def test_performance():
+def xtest_performance():
   n_data = 500
   data = OrderedDict({i: get_random_list(random.randint(1, 50), ALPHABET) for i in range(n_data)})
 
@@ -331,8 +329,9 @@ def test_get_uniform_distribution__detects_all_keys():
 
 def test_dict_to_array_ordered_after_keys__empty_input():
   data = {}
+  order = OrderedSet()
 
-  result = dict_to_array_ordered_after_keys(data)
+  result = dict_to_array_ordered(data, order)
 
   assert len(result) == 0
 
@@ -343,8 +342,9 @@ def test_dict_to_array_ordered_after_keys__is_sorted():
     1: [5],
     2: [6],
   }
+  order = OrderedSet([1, 2, 3])
 
-  result = dict_to_array_ordered_after_keys(data)
+  result = dict_to_array_ordered(data, order)
 
   assert len(result) == 3
   assert result[0] == [5]
@@ -352,7 +352,7 @@ def test_dict_to_array_ordered_after_keys__is_sorted():
   assert result[2] == [4]
 
 
-def test_performance_its():
+def xtest_performance_its():
   n_data = 500
   data = OrderedDict({i: get_random_list(random.randint(1, 50), ALPHABET) for i in range(n_data)})
 
@@ -370,7 +370,7 @@ def test_performance_its():
   assert duration < 6
 
 
-def test_performance_until():
+def xtest_performance_until():
   n_data = 500
   data = OrderedDict({i: get_random_list(random.randint(1, 50), ALPHABET) for i in range(n_data)})
   until_values = {i: 1 for i in range(n_data)}
@@ -487,6 +487,39 @@ def test_sort_greedy_kld_until_with_preselection__nothing_preselected():
   )
 
   assert OrderedSet([2]) == res
+
+
+def test_sort_greedy_kld_until_with_preselection__multiple_candidates_key_order_is_preserved():
+  preselection = OrderedDict()
+
+  data = OrderedDict({
+    7: ("i"),
+    8: ("k",),
+    3: ("k",),
+  })
+
+  distr = {
+    "k": 1.0,
+  }
+
+  until_values = {
+    7: 1,
+    8: 1,
+    3: 1,
+  }
+
+  res = sort_greedy_kld_until_with_preselection(
+    data=data,
+    target_dist=distr,
+    until_values=until_values,
+    until_value=1,
+    preselection=preselection,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
+  )
+
+  assert OrderedSet([8]) == res
 
 
 def test_sort_greedy_kld_until_with_preselection__too_few_data():

@@ -8,6 +8,7 @@ from typing import Set, Tuple, TypeVar, Union
 
 import numpy as np
 from ordered_set import OrderedSet
+from tqdm import tqdm
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
@@ -135,7 +136,7 @@ def get_filtered_ngrams(data: OrderedDictType[_T1, List[str]], n_gram: int, igno
   logger = getLogger(__name__)
   logger.info(f"Calculating {n_gram}-grams...")
   available_ngrams: OrderedDictType[int, List[Tuple]] = OrderedDict({
-    k: get_ngrams(v, n_gram) for k, v in data.items()
+    k: get_ngrams(v, n_gram) for k, v in tqdm(data.items())
   })
 
   occurring_symbols = {x for y in data.values() for x in y}

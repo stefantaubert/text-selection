@@ -26,9 +26,14 @@ def greedy_ngrams_cover(data: OrderedDictType[int, List[str]], already_covered: 
     all_data = data_ngrams.copy()
     all_data.update(already_covered_ngrams)
     top_ngrams = get_top_n(all_data, top_percent)
-    data_ngrams = OrderedDict({k: get_filtered_list(v, top_ngrams) for k, v in data_ngrams.items()})
-    already_covered_ngrams = OrderedDict({k: get_filtered_list(
-      v, top_ngrams) for k, v in already_covered_ngrams.items()})
+    data_ngrams = OrderedDict([
+      (k, get_filtered_list(v, top_ngrams))
+      for k, v in data_ngrams.items()
+    ])
+    already_covered_ngrams = OrderedDict([
+      (k, get_filtered_list(v, top_ngrams))
+      for k, v in already_covered_ngrams.items()
+    ])
 
   return greedy_cover(
     data=data_ngrams,

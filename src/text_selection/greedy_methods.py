@@ -1,5 +1,5 @@
-from logging import getLogger
 from collections import OrderedDict
+from logging import getLogger
 from typing import Dict, List
 from typing import OrderedDict as OrderedDictType
 from typing import Set, TypeVar, Union
@@ -16,9 +16,9 @@ _T2 = TypeVar("_T2")
 
 def get_greedy_cover(data: OrderedDictType[_T1, Set[_T2]], already_covered: Set[_T2]) -> OrderedSet[_T1]:
   assert isinstance(data, OrderedDict)
-  data_containing_only_new_units = OrderedDict(
-    {k: v for k, v in data.items() if len(v.difference(already_covered)) > 0}
-  )
+  data_containing_only_new_units = OrderedDict([
+    (k, v) for k, v in data.items() if len(v.difference(already_covered)) > 0
+  ])
   all_already_covered = len(data_containing_only_new_units) == 0
 
   if all_already_covered:
@@ -150,7 +150,7 @@ def get_greedy_advanced(data: OrderedDictType[_T1, Set[_T2]], unit_counts: Dict[
 
 
 def get_new_unit_counts(data: OrderedDictType[_T1, Set[_T2]], covered: Set[_T2]) -> OrderedDictType[_T1, int]:
-  new_unit_counts = OrderedDict({k: get_new_units_count(v, covered) for k, v in data.items()})
+  new_unit_counts = OrderedDict([(k, get_new_units_count(v, covered)) for k, v in data.items()])
   return new_unit_counts
 
 

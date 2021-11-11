@@ -23,5 +23,5 @@ def get_rarity_list(utterance: List[_T2], distribution: Dict[_T2, float]) -> flo
 
 
 def get_rarity_data(data: OrderedDictType[_T1, List[_T2]], distribution: Dict[_T2, float]) -> OrderedDictType[_T1, float]:
-  res = OrderedDict({k: get_rarity_list(v, distribution) for k, v in data.items()})
+  res = OrderedDict([(k, get_rarity_list(v, distribution)) for k, v in data.items()])
   return res

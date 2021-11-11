@@ -32,10 +32,12 @@ def get_random_seconds(data: OrderedDictType[_T1, List[_T2]], seed: int, duratio
 
 
 def get_n_divergent_random_seconds(data: OrderedDictType[_T1, _T2], seed: int, durations_s: Dict[_T1, float], seconds: float, n: int) -> List[OrderedSet[_T1]]:
-  durations_s_occuring_in_data = OrderedDict({k: v for k, v in durations_s.items() if k in data})
+  durations_s_occuring_in_data = OrderedDict([(k, v) for k, v in durations_s.items() if k in data])
   durations_s_occuring_in_data_idx = sort_random(data=durations_s_occuring_in_data, seed=seed)
-  durations_s_occuring_in_data = OrderedDict(
-    {k: durations_s_occuring_in_data[k] for k in durations_s_occuring_in_data_idx})
+  durations_s_occuring_in_data = OrderedDict([
+    (k, durations_s_occuring_in_data[k])
+    for k in durations_s_occuring_in_data_idx
+  ])
   result = get_n_divergent_seconds(
     durations_s=durations_s_occuring_in_data,
     seconds=seconds,

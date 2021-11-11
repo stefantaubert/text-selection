@@ -16,7 +16,7 @@ from text_selection.utils import (DurationBoundary, filter_data_durations,
 
 def greedy_kld_uniform_ngrams_parts(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], parts_count: int, take_per_part: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int]) -> OrderedSet[int]:
   data_ngrams = get_filtered_ngrams(data, n_gram, ignore_symbols)
-  lengths = OrderedDict({k: len(v) for k, v in data.items()})
+  lengths = OrderedDict([(k, len(v)) for k, v in data.items()])
   return greedy_kld_uniform_parts(
     data=data_ngrams,
     take_per_part=take_per_part,

@@ -39,7 +39,7 @@ def filter_ngrams(ngrams: List[Tuple[_T2]], ignore_symbol_ids: Set[_T1]) -> List
 
 
 def values_to_set(d: OrderedDictType[_T1, _T2]) -> OrderedDictType[_T1, _T2]:
-  res: OrderedDictType[_T1, _T2] = OrderedDict({k: set(v) for k, v in d.items()})
+  res: OrderedDictType[_T1, _T2] = OrderedDict([(k, set(v)) for k, v in d.items()])
   return res
 
 
@@ -123,7 +123,7 @@ def get_distribution(ngrams: Dict[_T1, List[_T2]]) -> Dict[_T2, float]:
 def get_reverse_distribution(ngrams: Dict[_T1, List[_T2]]) -> Dict[_T2, float]:
   ngrams_counter = Counter(x for y in ngrams.values() for x in y)
   keys_sorted = list(sorted(ngrams_counter.keys()))
-  od = OrderedDict({k: ngrams_counter[k] for k in keys_sorted})
+  od = OrderedDict([(k, ngrams_counter[k]) for k in keys_sorted])
   vals = list(od.values())
   sum_vals = sum(vals)
   distr: Dict[_T2, float] = {k: vals[i] / sum_vals for i, k in enumerate(reversed(keys_sorted))}
@@ -135,9 +135,9 @@ def get_filtered_ngrams(data: OrderedDictType[_T1, List[str]], n_gram: int, igno
 
   logger = getLogger(__name__)
   logger.info(f"Calculating {n_gram}-grams...")
-  available_ngrams: OrderedDictType[int, List[Tuple]] = OrderedDict({
-    k: get_ngrams(v, n_gram) for k, v in tqdm(data.items())
-  })
+  available_ngrams: OrderedDictType[int, List[Tuple]] = OrderedDict([
+    (k, get_ngrams(v, n_gram)) for k, v in tqdm(data.items())
+  ])
 
   occurring_symbols = {x for y in data.values() for x in y}
   occurring_symbols_count = len(occurring_symbols)
@@ -157,9 +157,9 @@ def get_filtered_ngrams(data: OrderedDictType[_T1, List[str]], n_gram: int, igno
     if len(occuring_ignore_symbols) > 0:
       logger.info(
         f"Removing {n_gram}-grams which contain: {' '.join(list(sorted(occuring_ignore_symbols)))}...")
-      available_ngrams: OrderedDictType[int, List[Tuple]] = OrderedDict({
-        k: filter_ngrams(v, occuring_ignore_symbols) for k, v in available_ngrams.items()
-      })
+      available_ngrams: OrderedDictType[int, List[Tuple]] = OrderedDict([
+        (k, filter_ngrams(v, occuring_ignore_symbols)) for k, v in available_ngrams.items()
+      ])
 
       new_occurring_ngrams = {x for y in available_ngrams.values() for x in y}
       new_occurring_ngrams_count = len(new_occurring_ngrams)
@@ -183,7 +183,7 @@ def filter_data_durations(data: OrderedDictType[_T1, List[Tuple[_T2, ...]]], dur
     logger.debug(
       f"Didn't missed out any utterances through boundary [{boundary_min},{boundary_max}) -> kept {len(filtered_utterance_ids)} entries.")
 
-  result = OrderedDict({k: v for k, v in data.items() if k in filtered_utterance_ids})
+  result = OrderedDict([(k, v) for k, v in data.items() if k in filtered_utterance_ids])
   return result
 
 

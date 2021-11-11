@@ -63,7 +63,7 @@ def filter_after_duration(corpus: Dict[_T1, float], min_duration_incl: float, ma
 
   filtered_utterance_indicies = set()
 
-  for utterance_id, utterance_duration in corpus.items():
+  for utterance_id, utterance_duration in tqdm(corpus.items()):
     if min_duration_incl <= utterance_duration < max_duration_excl:
       filtered_utterance_indicies.add(utterance_id)
 
@@ -185,6 +185,25 @@ def filter_data_durations(data: OrderedDictType[_T1, List[Tuple[_T2, ...]]], dur
 
   result = OrderedDict([(k, v) for k, v in data.items() if k in filtered_utterance_ids])
   return result
+
+
+def filter_data_durations_number_inplace(data: OrderedDictType[_T1, Tuple[int, ...]], durations: Dict[_T1, float], boundary: DurationBoundary) -> None:
+  logger = getLogger(__name__)
+  boundary_min, boundary_max = boundary
+  filtered_utterance_ids = filter_after_duration(durations, boundary_min, boundary_max)
+  not_selected_utterances_out_of_boundary = len(data) - len(filtered_utterance_ids)
+
+  if not_selected_utterances_out_of_boundary > 0:
+    logger.warning(
+        f"Missed out utterances due to duration boundary [{boundary_min},{boundary_max}): {not_selected_utterances_out_of_boundary}/{len(data)} ({not_selected_utterances_out_of_boundary/len(data)*100:.2f}%) -> retrieved {len(filtered_utterance_ids)} entries.")
+  else:
+    logger.debug(
+      f"Didn't missed out any utterances through boundary [{boundary_min},{boundary_max}) -> kept {len(filtered_utterance_ids)} entries.")
+
+  logger.info("Removing...")
+  remove = set(data.keys()) - filtered_utterance_ids
+  for utterance_id in tqdm(remove):
+    data.pop(utterance_id)
 
 
 def get_first_percent(data: OrderedSet, percent: float) -> OrderedSet:

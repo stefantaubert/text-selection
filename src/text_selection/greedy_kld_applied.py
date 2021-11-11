@@ -80,6 +80,8 @@ def greedy_kld_uniform_seconds(data: OrderedDict[_T1, List[_T2]], durations_s: D
 
 
 def get_chunksize_for_data(data: OrderedDict, n_jobs: int) -> int:
+  if len(data) == 0:
+    return 1
   chunksize = math.ceil(len(data) / n_jobs)
   return chunksize
 

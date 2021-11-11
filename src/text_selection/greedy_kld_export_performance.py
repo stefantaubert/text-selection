@@ -94,6 +94,7 @@ def get_filtered_ngrams_numbers(data: OrderedDictType[int, Tuple[str, ...]], n_g
   ])
 
   n_jobs = cpu_count()
+  # todo smaller chunksize
   chunksize = get_chunksize_for_data(data, n_jobs)
   method_proxy = partial(
     main,

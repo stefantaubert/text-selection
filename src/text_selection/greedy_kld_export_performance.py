@@ -4,7 +4,7 @@ from collections import Counter, OrderedDict
 from functools import partial
 from logging import getLogger
 from multiprocessing import Pool
-from typing import Dict, Optional
+from typing import Dict, Iterator, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple, Union
 
@@ -15,15 +15,80 @@ from scipy.stats import entropy
 from tqdm import tqdm
 
 from text_selection.greedy_kld_applied import get_chunksize_for_data
-from text_selection.greedy_kld_methods import (__get_distribution,
-                                               dict_to_array_ordered,
+from text_selection.greedy_kld_methods import (dict_to_array_ordered,
                                                sync_dict_keys_to_keys_inplace)
-from text_selection.selection import SelectionMode, order_keys, select_key
+from text_selection.selection import (FirstKeySelector, KeySelector,
+                                      SelectionMode, order_keys, select_key)
 from text_selection.utils import DurationBoundary, get_ngrams
 
 NGramNr = int
 NGramNrs = np.ndarray
 NGram = Tuple[str, ...]
+
+
+def get_distribution_array(counts: np.ndarray) -> np.ndarray:
+  # assert all(x >= 0 for x in counts) # too slow
+  sum_counts = np.sum(counts)
+  new_dist = np.divide(counts, sum_counts)
+  return new_dist
+
+
+class KldIterator(Iterator[int]):
+  def __init__(self, data: np.ndarray, target_dist: np.ndarray, preselection: np.ndarray, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
+    super().__init__()
+    self.key_selector = key_selector
+    # defines the order for what the selection is based on
+    self.available_data_keys_ordered = OrderedSet(range(len(data)))
+    self.data = data
+    self.covered_array = preselection.copy()
+    self.target_dist = target_dist
+    self.n_jobs = n_jobs
+    self.maxtasksperchild = maxtasksperchild
+    self.chunksize = chunksize
+    self.batches = batches
+
+  def __iter__(self) -> Iterator[int]:
+    return self
+
+  def get_current_kld(self) -> float:
+    current_distribution = get_distribution_array(self.covered_array)
+    kld = entropy(current_distribution, self.target_dist)
+    return kld
+
+  def __next__(self) -> int:
+    if len(self.available_data_keys_ordered) == 0:
+      raise StopIteration()
+
+    divergences = get_divergences_np_based2(
+      data=self.data,
+      keys=self.available_data_keys_ordered,
+      covered_counts=self.covered_array,
+      target_dist=self.target_dist,
+      maxtasksperchild=self.maxtasksperchild,
+      n_jobs=self.n_jobs,
+      chunksize=self.chunksize,
+      batches=self.batches,
+    )
+
+    # minima_indicies = np.argmin(divergences, axis=0)
+    min_div = divergences.min()
+    minima_indicies = np.flatnonzero(divergences == min_div)
+    potential_keys = OrderedSet(
+      self.available_data_keys_ordered[index] for index in minima_indicies
+    )
+
+    # potential_keys = get_smallest_divergence_keys(divergences)
+    # potential_keys = order_keys(potential_keys, self.available_data_keys_ordered)
+
+    if len(potential_keys) > 1:
+      logger = getLogger(__name__)
+      logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
+
+    selected_key = self.key_selector.select_key(potential_keys)
+    assert 0 <= selected_key < len(self.data)
+    self.covered_array += self.data[selected_key]
+    self.available_data_keys_ordered.remove(selected_key)
+    return selected_key
 
 
 def get_uniform_distribution_ngrams(ngrams: OrderedSet[NGramNr]) -> Dict[NGramNr, float]:
@@ -155,7 +220,7 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
 
   preselected_ngrams_count: int = np.sum(preselection_counts, axis=0)
   if preselected_ngrams_count > 0:
-    preselection_distr = __get_distribution(preselection_counts)
+    preselection_distr = get_distribution_array(preselection_counts)
     preselection_kld = entropy(preselection_distr, target_distribution_array)
     logger.info(f"Preselection Kullback-Leibler divergence: {preselection_kld}")
 
@@ -164,7 +229,7 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
     assert k in select_from_durations_s
     until_values[index] = select_from_durations_s[k]
 
-  greedy_selected = sort_greedy_kld_until_with_preselection_np_based(
+  iterator = KldIterator(
     data=np_counts,
     target_dist=target_distribution_array,
     chunksize=chunksize,
@@ -172,13 +237,85 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
     n_jobs=n_jobs,
     batches=batches,
     preselection=preselection_counts,
+    key_selector=FirstKeySelector(),
+  )
+
+  greedy_selected, enough_data_was_available = iterate_durations(
+    iterator=iterator,
     until_value=seconds,
     until_values=until_values,
   )
 
+  if not enough_data_was_available:
+    logger.warning(
+      f"Aborted since no further data had been available!")
+
+  # greedy_selected = sort_greedy_kld_until_with_preselection_np_based(
+  #   data=np_counts,
+  #   target_dist=target_distribution_array,
+  #   chunksize=chunksize,
+  #   maxtasksperchild=maxtasksperchild,
+  #   n_jobs=n_jobs,
+  #   batches=batches,
+  #   preselection=preselection_counts,
+  # )
+
+  logger.info(f"Obtained Kullback-Leibler divergence: {iterator.get_current_kld()}")
+
   result = OrderedSet([select_from_keys[index] for index in greedy_selected])
 
   return result
+
+# class DurationIterator(Iterator[int]):
+#   def __init__(self, iterator: Iterator[int], until_values: np.ndarray, until_value: Union[int, float]) -> None:
+#     super().__init__()
+#     self.iterator = iter(iterator)
+#     self.max_until = sum(until_values)
+#     self.adjusted_until = round(min(until_value, self.max_until))
+#     current_total = 0.0
+
+#   def __iter__(self) -> Iterator[int]:
+#     return self
+#   def __next__(self) -> int:
+#     selected_key = next(self.iterator)
+#     assert 0 <= selected_key < len(self.until_values)
+#     selected_until_value = self.until_values[selected_key]
+#     new_total = self.current_total + selected_until_value
+#     if new_total <= self.until_value:
+#       return selected_key,
+#       iterated_values.append(selected_key)
+#       current_total = new_total
+#       progress_bar.update(round(selected_until_value))
+#       if current_total == until_value:
+#         enough_data_was_available = True
+#     else:
+#       enough_data_was_available = True
+#       break
+#     return value
+
+
+def iterate_durations(iterator: Iterator[int], until_values: np.ndarray, until_value: Union[int, float]) -> Tuple[List[int], bool]:
+  iterated_values: List[int] = []
+  enough_data_was_available = False
+  max_until = sum(until_values)
+  adjusted_until = round(min(until_value, max_until))
+  current_total = 0.0
+  with tqdm(total=adjusted_until, initial=round(current_total)) as progress_bar:
+    for selected_key in iterator:
+      assert 0 <= selected_key < len(until_values)
+      selected_until_value = until_values[selected_key]
+      new_total = current_total + selected_until_value
+      if new_total <= until_value:
+        iterated_values.append(selected_key)
+        current_total = new_total
+        progress_bar.update(round(selected_until_value))
+        if current_total == until_value:
+          enough_data_was_available = True
+      else:
+        enough_data_was_available = True
+        break
+  # Selected: {current_total:.1f}/{until_value:.1f} ({current_total/until_value*100:.2f}%).
+  return iterated_values, enough_data_was_available
 
 
 process_data_ngrams: Dict[int, NGramNr] = None
@@ -196,7 +333,6 @@ def main_np_counts(i_k: Tuple[int, int]) -> Tuple[int, np.ndarray]:
   global process_data_ngrams
   global process_ngram_nrs
   i, k = i_k
-
   ngrams = process_data_ngrams[k]
   counts = get_count_array(ngrams, process_ngram_nrs)
   return i, counts
@@ -384,23 +520,20 @@ def sort_greedy_kld_until_with_preselection_np_based(data: np.ndarray, target_di
       else:
         break
 
-  final_distr = __get_distribution(covered_array)
+  final_distr = get_distribution_array(covered_array)
   final_kld = entropy(final_distr, target_dist)
   logger.info(f"Obtained Kullback-Leibler divergence: {final_kld}")
 
   return result
 
 
-def get_utterance_with_min_kld_np_based(data: np.ndarray, keys: Set[int], covered_counts: np.ndarray, target_dist: np.ndarray, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> Set[int]:
-  divergences = get_divergences_np_based(data, keys, covered_counts, target_dist,
-                                         n_jobs, maxtasksperchild, chunksize)
-  all_with_minimum_divergence = get_smallest_divergence_keys(divergences)
-  return all_with_minimum_divergence
-
-
-def get_divergences_np_based(data: np.ndarray, keys: Set[int], covered_counts: np.ndarray, target_dist: np.ndarray, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> Dict[int, float]:
+def get_divergences_np_based(data: np.ndarray, keys: OrderedSet[int], covered_counts: np.ndarray, target_dist: np.ndarray, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> Dict[int, float]:
   # logger.debug(f"Using {thread_count} threads with {chunksize} chunks...")
   # logger.info("Calculating Kullback-Leibler divergences...")
+
+  chunksize = get_chunksize(len(keys), n_jobs, chunksize, batches)
+  log_mp_params(n_jobs, chunksize, maxtasksperchild, len(keys))
+
   with Pool(
     processes=n_jobs,
     initializer=init_pool_np_based,
@@ -410,6 +543,30 @@ def get_divergences_np_based(data: np.ndarray, keys: Set[int], covered_counts: n
     result: Dict[int, float] = dict(pool.imap_unordered(
       get_divergence_for_utterance_np_based, keys, chunksize=chunksize
     ))
+
+  return result
+
+
+def get_divergences_np_based2(data: np.ndarray, keys: OrderedSet[int], covered_counts: np.ndarray, target_dist: np.ndarray, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> np.ndarray:
+  # logger.debug(f"Using {thread_count} threads with {chunksize} chunks...")
+  # logger.info("Calculating Kullback-Leibler divergences...")
+
+  chunksize = get_chunksize(len(keys), n_jobs, chunksize, batches)
+  log_mp_params(n_jobs, chunksize, maxtasksperchild, len(keys))
+
+  result = np.zeros(shape=(len(keys)))
+
+  with Pool(
+    processes=n_jobs,
+    initializer=init_pool_np_based,
+    initargs=(data, covered_counts, target_dist),
+    maxtasksperchild=maxtasksperchild,
+  ) as pool:
+    iterator = pool.imap_unordered(
+      get_divergence_for_utterance_np_based2, enumerate(keys), chunksize=chunksize
+    )
+    for index, kld in iterator:
+      result[index] = kld
 
   return result
 
@@ -428,6 +585,19 @@ def init_pool_np_based(data: np.ndarray, covered_counts: np.ndarray, target_dist
   process_target_dist_np_based = target_dist
 
 
+def get_divergence_for_utterance_np_based2(index_key: Tuple[int, int]) -> Tuple[int, float]:
+  global process_data_np_based
+  global process_covered_counts_np_based
+  global process_target_dist_np_based
+  index, key = index_key
+  assert key < len(process_data_np_based)
+  utterance_counts = process_data_np_based[key]
+  counts = process_covered_counts_np_based + utterance_counts
+  distr = get_distribution_array(counts)
+  kld = get_kld(distr, process_target_dist_np_based)
+  return index, kld
+
+
 def get_divergence_for_utterance_np_based(key: int) -> Tuple[int, float]:
   global process_data_np_based
   global process_covered_counts_np_based
@@ -435,7 +605,7 @@ def get_divergence_for_utterance_np_based(key: int) -> Tuple[int, float]:
   assert key < len(process_data_np_based)
   utterance_counts = process_data_np_based[key]
   counts = process_covered_counts_np_based + utterance_counts
-  distr = __get_distribution(counts)
+  distr = get_distribution_array(counts)
   kld = get_kld(distr, process_target_dist_np_based)
   return key, kld
 

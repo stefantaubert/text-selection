@@ -42,6 +42,19 @@ def select_key(potential_keys: OrderedSet[_T1], unit_counts: Optional[Dict[_T1, 
   raise Exception()
 
 
+class KeySelector():
+  def select_key(self, keys: OrderedSet[_T1]) -> _T1:
+    raise NotImplementedError()
+
+
+class FirstKeySelector(KeySelector):
+  def select_key(self, keys: OrderedSet[_T1]) -> _T1:
+    assert isinstance(keys, OrderedSet)
+    assert len(keys) > 0
+    first = keys[0]
+    return first
+
+
 def select_first(potential_keys: OrderedSet[_T1]) -> _T1:
   assert isinstance(potential_keys, OrderedSet)
   assert len(potential_keys) > 0

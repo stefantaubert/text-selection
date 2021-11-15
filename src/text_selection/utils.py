@@ -2,7 +2,7 @@ import math
 import random
 from collections import Counter, OrderedDict
 from logging import getLogger
-from typing import Dict, List, Optional
+from typing import Dict, Generator, Iterator, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple, TypeVar, Union
 
@@ -26,6 +26,18 @@ def get_ngrams(sentence_symbols: List[str], n: int) -> List[Tuple[str]]:
     tmp = tuple(sentence_symbols[i:i + n])
     res.append(tmp)
   return res
+
+
+def get_ngrams_generator(sentence_symbols: List[str], n: int) -> Generator[Tuple[str, ...], None, None]:
+  # TODO: import from text-utils
+  if n < 1:
+    raise Exception()
+
+  result = (
+    tuple(sentence_symbols[i:i + n])
+    for i in range(len(sentence_symbols) - n + 1)
+  )
+  return result
 
 
 def get_filtered_list(l: List[_T1], take_only: Set[_T1]) -> List[_T1]:

@@ -236,6 +236,12 @@ def get_n_divergent_seconds(durations_s: OrderedDictType[_T1, float], seconds: f
   return res
 
 
+def log_mp_params(n_jobs: int, chunksize: int, maxtasksperchild: Optional[int], data_count: int) -> None:
+  logger = getLogger(__name__)
+  logger.info(
+    f"Using {n_jobs} processes with chunks of size {chunksize} for {data_count} utterances and maxtask per child: {maxtasksperchild}.")
+
+
 def get_next_start_index(step_length: int, durations_s: OrderedDictType[_T1, float], prev_vec: List[_T1], data_keys: List[_T1]) -> int:
   """
   start_index should reference the element in data_keys which has a distance of at least step_length to the first element

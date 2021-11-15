@@ -9,6 +9,7 @@ from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple, Union
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 from ordered_set import OrderedSet
 from scipy.stats import entropy
 from tqdm import tqdm
@@ -20,15 +21,16 @@ from text_selection.greedy_kld_methods import (__get_distribution,
 from text_selection.selection import SelectionMode, order_keys, select_key
 from text_selection.utils import DurationBoundary, get_ngrams
 
-NGram = int
-NGrams = np.ndarray
+NGramNr = int
+NGramNrs = np.ndarray
+NGram = Tuple[str, ...]
 
 
-def get_uniform_distribution_ngrams(ngrams: Dict[Tuple[str, ...], NGrams]) -> Dict[NGram, float]:
+def get_uniform_distribution_ngrams(ngrams: OrderedSet[NGramNr]) -> Dict[NGramNr, float]:
   if len(ngrams) == 0:
     return dict()
   distr = 1 / len(ngrams)
-  res: Dict[NGram, float] = {ngram_nr: distr for _, ngram_nr in ngrams.items()}
+  res: Dict[NGramNr, float] = {ngram_nr: distr for ngram_nr in ngrams}
   return res
 
 
@@ -45,7 +47,7 @@ def get_chunksize(data_count: int, n_jobs: int, chunksize: Optional[int], batche
   return chunksize
 
 
-def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tuple[str, ...]], select_from_keys: OrderedSet[int], preselection_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: int, chunksize: Optional[int], batches: Optional[int]) -> OrderedSet[int]:
+def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tuple[str, ...]], select_from_keys: OrderedSet[int], preselection_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> OrderedSet[int]:
   logger = getLogger(__name__)
 
   select_from_keys = get_duration_keys(select_from_durations_s, select_from_keys, duration_boundary)
@@ -55,42 +57,35 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
   logger.info(f"Collecting preselection symbols...")
   preselection_symbols = get_unique_symbols(data, preselection_keys)
   target_symbols = data_symbols | preselection_symbols
-  if ignore_symbols is None:
+  if ignore_symbols is not None:
     target_symbols -= ignore_symbols
 
+  logger.info(f"Calculating all possible {n_gram}-grams...")
+  possible_ngrams = list(tqdm(
+    itertools.product(sorted(target_symbols), repeat=n_gram),
+    total=len(target_symbols) ** n_gram,
+  ))
+  ngram_nr_to_ngram: Dict[NGram, NGramNr] = {
+    k: i for i, k in enumerate(possible_ngrams)
+  }
+  all_ngram_nrs = OrderedSet(ngram_nr_to_ngram.values())
+
   logger.info(f"Calculating {n_gram}-grams...")
-  data_ngrams, ngram_nr_to_ngram = get_ngrams_from_data(
+  data_ngrams = get_ngrams_from_data(
     data=data,
     keys=select_from_keys,
     n_gram=n_gram,
-    target_symbols=target_symbols,
+    ngram_nr_to_ngram=ngram_nr_to_ngram,
     n_jobs=n_jobs,
     maxtasksperchild=maxtasksperchild,
     chunksize=chunksize,
     batches=batches,
   )
-
-  preselection_ngrams, ngram_nr_to_ngram_preselection = get_ngrams_from_data(
-    data=data,
-    keys=preselection_keys,
-    n_gram=n_gram,
-    target_symbols=target_symbols,
-    n_jobs=n_jobs,
-    maxtasksperchild=maxtasksperchild,
-    chunksize=chunksize,
-    batches=batches,
-  )
-
-  assert ngram_nr_to_ngram == ngram_nr_to_ngram_preselection
-  all_n_grams = ngram_nr_to_ngram
-
-  if chunksize is None:
-    chunksize = get_chunksize_for_data(data_ngrams, n_jobs)
 
   np_counts = get_counts_array(
     data_ngrams,
-    select_from_keys,
-    all_n_grams,
+    data_ngrams.keys(),
+    ngram_nrs=all_ngram_nrs,
     n_jobs=n_jobs,
     chunksize=chunksize,
     maxtasksperchild=maxtasksperchild,
@@ -98,19 +93,68 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
   )
   del data_ngrams
 
-  ngram_nrs = OrderedSet(all_n_grams.values())
+  # remove empty rows
+  empty_entry_ids = np.where(~np_counts.any(axis=1))[0]
+  if len(empty_entry_ids > 0):
+    logger.info(f"Removing {len(empty_entry_ids)} empty row(s) out of {len(np_counts)} rows...")
+    for empty_entry_id in reversed(sorted(empty_entry_ids)):
+      remove_key = select_from_keys[empty_entry_id]
+      select_from_keys.remove(remove_key)
+    np_counts = np.delete(np_counts, empty_entry_ids, axis=0)
+    logger.info("Done.")
 
-  logger = getLogger(__name__)
-  uniform_distr = get_uniform_distribution_ngrams(all_n_grams)
+  # preselected_ngrams = tuple(ngram for ngrams in preselection_ngrams.values() for ngram in ngrams)
+  # preselection_counts = get_count_array(preselected_ngrams, all_ngram_nrs)
+
+  preselection_ngrams = get_ngrams_from_data(
+    data=data,
+    keys=preselection_keys,
+    n_gram=n_gram,
+    ngram_nr_to_ngram=ngram_nr_to_ngram,
+    n_jobs=n_jobs,
+    maxtasksperchild=maxtasksperchild,
+    chunksize=chunksize,
+    batches=batches,
+  )
+
+  pre_np_counts = get_counts_array(
+    preselection_ngrams,
+    preselection_ngrams.keys(),
+    ngram_nrs=all_ngram_nrs,
+    n_jobs=n_jobs,
+    chunksize=chunksize,
+    maxtasksperchild=maxtasksperchild,
+    batches=batches,
+  )
+  del preselection_ngrams
+
+  preselection_counts: NDArray = np.sum(pre_np_counts, axis=0)
+  del pre_np_counts
+
+  # remove empty columns, can only occur on n_gram > 1
+  data_counts: NDArray = np.sum(np_counts, axis=0)
+  all_counts: NDArray = data_counts + preselection_counts
+  remove_ngrams = np.where(all_counts == 0)[0]
+  if len(remove_ngrams) > 0:
+    logger.info(f"Removing {len(remove_ngrams)} out of {len(all_ngram_nrs)} columns...")
+    for remove_ngram_nr in remove_ngrams:
+      all_ngram_nrs.remove(remove_ngram_nr)
+    np_counts = np.delete(np_counts, remove_ngrams, axis=1)
+    preselection_counts = np.delete(preselection_counts, remove_ngrams, axis=0)
+    logger.info("Done.")
+
+  ngrams_str = [f"\"{''.join(ngram)}\"" for ngram,
+                ngram_nr in ngram_nr_to_ngram.items() if ngram_nr in all_ngram_nrs]
+  logger.info(
+    f"Obtained {len(all_ngram_nrs)} {n_gram}-gram(s): {', '.join(ngrams_str)}.")
+
+  uniform_distr = get_uniform_distribution_ngrams(all_ngram_nrs)
   if len(uniform_distr) > 0:
-    logger.info(f"Target uniform distribution: {list(uniform_distr.values())[0]}")
+    logger.info(f"Target (uniform) distribution: {list(uniform_distr.values())[0]}")
+  target_distribution_array = dict_to_array_ordered(uniform_distr, all_ngram_nrs)
 
-  target_distribution_array = dict_to_array_ordered(uniform_distr, ngram_nrs)
-
-  preselected_ngrams = tuple(ngram for ngrams in preselection_ngrams.values() for ngram in ngrams)
-  preselection_counts = get_available_array(preselected_ngrams, ngram_nrs)
-
-  if len(preselected_ngrams) > 0:
+  preselected_ngrams_count: int = np.sum(preselection_counts, axis=0)
+  if preselected_ngrams_count > 0:
     preselection_distr = __get_distribution(preselection_counts)
     preselection_kld = entropy(preselection_distr, target_distribution_array)
     logger.info(f"Preselection Kullback-Leibler divergence: {preselection_kld}")
@@ -120,15 +164,13 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
     assert k in select_from_durations_s
     until_values[index] = select_from_durations_s[k]
 
-  chunksize = get_chunksize(len(np_counts), n_jobs, chunksize, batches)
-  log_mp_params(n_jobs, chunksize, maxtasksperchild, len(np_counts))
-
   greedy_selected = sort_greedy_kld_until_with_preselection_np_based(
     data=np_counts,
     target_dist=target_distribution_array,
     chunksize=chunksize,
     maxtasksperchild=maxtasksperchild,
     n_jobs=n_jobs,
+    batches=batches,
     preselection=preselection_counts,
     until_value=seconds,
     until_values=until_values,
@@ -139,11 +181,11 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
   return result
 
 
-process_data_ngrams: Dict[int, NGram] = None
-process_ngram_nrs: OrderedSet[NGram] = None
+process_data_ngrams: Dict[int, NGramNr] = None
+process_ngram_nrs: OrderedSet[NGramNr] = None
 
 
-def init_pool_np_counts(data_ngrams: Dict[int, NGram], ngram_nrs: OrderedSet[NGram]) -> None:
+def init_pool_np_counts(data_ngrams: Dict[int, NGramNr], ngram_nrs: OrderedSet[NGramNr]) -> None:
   global process_data_ngrams
   global process_ngram_nrs
   process_data_ngrams = data_ngrams
@@ -156,20 +198,19 @@ def main_np_counts(i_k: Tuple[int, int]) -> Tuple[int, np.ndarray]:
   i, k = i_k
 
   ngrams = process_data_ngrams[k]
-  counts = get_available_array(ngrams, process_ngram_nrs)
+  counts = get_count_array(ngrams, process_ngram_nrs)
   return i, counts
 
 
-def log_mp_params(n_jobs: int, chunksize: int, maxtasksperchild: int, data_count: int) -> None:
+def log_mp_params(n_jobs: int, chunksize: int, maxtasksperchild: Optional[int], data_count: int) -> None:
   logger = getLogger(__name__)
   logger.info(
     f"Using {n_jobs} processes with chunks of size {chunksize} for {data_count} utterances and maxtask per child: {maxtasksperchild}.")
 
 
-def get_counts_array(data_ngrams: Dict[int, NGram], select_from_keys: Set[int], all_n_grams: Dict[Tuple[str, ...], NGram], n_jobs: int, chunksize: Optional[int], maxtasksperchild: int, batches: Optional[int]):
+def get_counts_array(data_ngrams: Dict[int, NGramNr], select_from_keys: Set[int], ngram_nrs: OrderedSet[NGramNr], n_jobs: int, chunksize: Optional[int], maxtasksperchild: Optional[int], batches: Optional[int]) -> NDArray:
   logger = getLogger(__name__)
-  logger.info("Calculating counts array..")
-  ngram_nrs = OrderedSet(all_n_grams.values())
+  logger.info("Calculating counts array...")
   np_counts = np.zeros(shape=(len(select_from_keys), len(ngram_nrs)), dtype=np.uint32)
 
   chunksize = get_chunksize(len(select_from_keys), n_jobs, chunksize, batches)
@@ -193,6 +234,8 @@ def get_counts_array(data_ngrams: Dict[int, NGram], select_from_keys: Set[int], 
 
 def get_duration_keys(durations: Dict[int, float], keys: Set[int], boundary: DurationBoundary) -> OrderedSet[int]:
   logger = getLogger(__name__)
+  all_keys_exist_in_durations = len(durations.keys() - keys) == 0
+  assert all_keys_exist_in_durations
   boundary_min, boundary_max = boundary
   logger.info("Getting entries maching duration boundary...")
   filtered_utterance_ids = get_keys_in_duration_boundary(
@@ -224,11 +267,11 @@ def get_keys_in_duration_boundary(corpus: Dict[int, float], keys: OrderedSet[int
   return filtered_utterance_indicies
 
 
-process_ngram_nr_to_ngram: Dict[Tuple[str, ...], NGram] = None
+process_ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr] = None
 process_data: OrderedDictType[int, Tuple[str, ...]] = None
 
 
-def main(key: int, n: int) -> Tuple[int, NGrams]:
+def main(key: int, n: int) -> Tuple[int, NGramNrs]:
   global process_data
   global process_ngram_nr_to_ngram
   n_gram = process_data[key]
@@ -245,7 +288,7 @@ def main(key: int, n: int) -> Tuple[int, NGrams]:
   return key, ngrams_int
 
 
-def init_pool_ngrams(data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGram]) -> None:
+def init_pool_ngrams(data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr]) -> None:
   global process_data
   global process_ngram_nr_to_ngram
   process_data = data
@@ -257,60 +300,54 @@ def get_unique_symbols(data: Dict[int, Tuple[str, ...]], keys: Set[int]) -> Set[
   return occurring_symbols
 
 
-def get_ngrams_from_data(data: OrderedDictType[int, Tuple[str, ...]], keys: Set[int], target_symbols: Set[str], n_gram: int, n_jobs: int, maxtasksperchild: int, chunksize: Optional[int], batches: Optional[int]) -> Tuple[Dict[int, NGrams], Dict[Tuple[str, ...], NGrams]]:
+def get_ngrams_from_data(data: OrderedDictType[int, Tuple[str, ...]], keys: Set[int], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNrs], n_gram: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> Dict[int, NGramNrs]:
   logger = getLogger(__name__)
 
-  logger.info(f"Calculating all possible {n_gram}-grams...")
-  possible_ngrams = list(tqdm(itertools.permutations(
-    target_symbols, r=n_gram), total=len(target_symbols) ** n_gram))
-
-  ngram_nr_to_ngram: Dict[Tuple[str, ...], NGrams] = {
-    k: i for i, k in enumerate(possible_ngrams)
-  }
-
-  if len(keys) == 0 or (chunksize is not None and chunksize <= 0):
-    chunksize = 1
-  if batches is not None:
-    chunksize = math.ceil(len(keys) / n_jobs / batches)
-
-  if chunksize == 0:
-    chunksize = 1
+  if len(data) == 0:
+    return dict()
 
   method_proxy = partial(
     main,
     n=n_gram,
   )
+
   logger.info(f"Getting {n_gram}-grams...")
+  chunksize = get_chunksize(len(keys), n_jobs, chunksize, batches)
+  log_mp_params(n_jobs, chunksize, maxtasksperchild, len(keys))
+
   with Pool(
       processes=n_jobs,
       initializer=init_pool_ngrams,
       initargs=(data, ngram_nr_to_ngram),
       maxtasksperchild=maxtasksperchild,
     ) as pool:
-    available_ngrams: Dict[int, NGrams] = OrderedDict(tqdm(
+    available_ngrams: Dict[int, NGramNrs] = dict(tqdm(
       pool.imap_unordered(method_proxy, keys, chunksize=chunksize),
       total=len(keys),
     ))
-  logger.info("Done.")
 
-  return available_ngrams, ngram_nr_to_ngram
+  return available_ngrams
 
 
-def get_available_array(ngrams: NGrams, target_symbols_ordered: OrderedSet[NGram]) -> np.ndarray:
+def get_count_array(ngrams: NGramNrs, target_symbols_ordered: OrderedSet[NGramNr]) -> np.ndarray:
   counts = Counter(ngrams)
   sync_dict_keys_to_keys_inplace(counts, target_symbols_ordered)
   return dict_to_array_ordered(counts, target_symbols_ordered)
 
 
-def sort_greedy_kld_until_with_preselection_np_based(data: np.ndarray, target_dist: np.ndarray, until_values: np.ndarray, until_value: Union[float, int], preselection: np.ndarray, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> OrderedSet[int]:
+def sort_greedy_kld_until_with_preselection_np_based(data: np.ndarray, target_dist: np.ndarray, until_values: np.ndarray, until_value: Union[float, int], preselection: np.ndarray, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> OrderedSet[int]:
   logger = getLogger(__name__)
   selection_mode = SelectionMode.FIRST
   result: OrderedSet[int] = OrderedSet()
   # defines the order for what the selection is based on
-  available_data_keys_ordered = OrderedSet(list(range(len(data))))
+  available_data_keys_ordered = OrderedSet(range(len(data)))
   covered_array = preselection.copy()
 
   logger.info("Selecting data...")
+
+  chunksize = get_chunksize(len(data), n_jobs, chunksize, batches)
+  log_mp_params(n_jobs, chunksize, maxtasksperchild, len(data))
+
   max_until = sum(until_values)
   adjusted_until = round(min(until_value, max_until))
   current_total = 0.0

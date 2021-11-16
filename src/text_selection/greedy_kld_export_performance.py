@@ -31,20 +31,38 @@ def get_distribution_array(counts: np.ndarray) -> np.ndarray:
   return new_dist
 
 
+class DistributionFactory():
+  def get(self, count: int) -> np.ndarray:
+    raise NotImplementedError()
+
+
+class UniformDistributionFactory(DistributionFactory):
+  def get(self, count: int) -> np.ndarray:
+    if count == 0:
+      result = np.zeros(shape=(0), dtype=np.float32)
+      return result
+    distr = 1 / count
+    result = np.full(shape=(count), dtype=np.float64, fill_value=1)
+    result = np.divide(result, count)
+    return result
+
+
 class KldCoreIterator(Iterator[int]):
-  def __init__(self, data: np.ndarray, target_dist: np.ndarray, preselection: np.ndarray, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
+  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], distribution_factory: DistributionFactory, preselection: np.ndarray, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
     super().__init__()
     self.key_selector = key_selector
     # defines the order for what the selection is based on
-    self.available_data_keys_ordered = OrderedSet(range(len(data)))
+    # self.available_data_keys_ordered = OrderedSet(range(len(data)))
+    self.available_data_keys_ordered = data_indicies
     self.data = data
     self.covered_array = preselection.copy()
-    self.target_dist = target_dist
     self.n_jobs = n_jobs
     self.maxtasksperchild = maxtasksperchild
     self.chunksize = chunksize
     self.batches = batches
     self.pool: pool.Pool = None
+    self.target_dist = distribution_factory.get(data.shape[1])
+    self.last_selected_key: Optional[int] = None
 
   def start(self):
     self.pool = Pool(
@@ -53,6 +71,9 @@ class KldCoreIterator(Iterator[int]):
       initargs=(self.data, self.covered_array, self.target_dist),
       maxtasksperchild=self.maxtasksperchild,
     )
+
+  def get_target_distribution(self) -> np.ndarray:
+    return self.target_dist
 
   def stop(self):
     self.pool.terminate()
@@ -92,11 +113,17 @@ class KldCoreIterator(Iterator[int]):
     return self
 
   def get_current_kld(self) -> float:
+    # preselected_ngrams_count: int = np.sum(self.covered_array, axis=0)
+    # if preselected_ngrams_count > 0:
     current_distribution = get_distribution_array(self.covered_array)
-    kld = entropy(current_distribution, self.target_dist)
+    kld = get_kld(current_distribution, self.target_dist)
     return kld
 
   def __next__(self) -> int:
+    if self.last_selected_key is not None:
+      self.covered_array += self.data[self.last_selected_key]
+      self.available_data_keys_ordered.remove(self.last_selected_key)
+
     if len(self.available_data_keys_ordered) == 0:
       raise StopIteration()
 
@@ -117,19 +144,10 @@ class KldCoreIterator(Iterator[int]):
 
     selected_key = self.key_selector.select_key(potential_keys)
     assert 0 <= selected_key < len(self.data)
-    self.covered_array += self.data[selected_key]
-    self.available_data_keys_ordered.remove(selected_key)
+    self.last_selected_key = selected_key
+    # self.covered_array += self.data[selected_key]
+    # self.available_data_keys_ordered.remove(selected_key)
     return selected_key
-
-
-def get_uniform_distribution(ngrams: OrderedSet[NGramNr]) -> np.ndarray:
-  assert len(ngrams) > 0
-  # if len(ngrams) == 0:
-  #   result = np.zeros(shape=(len(ngrams)), dtype=np.float32)
-  #   return result
-  distr = 1 / len(ngrams)
-  result = np.full(shape=(len(ngrams)), dtype=np.float32, fill_value=distr)
-  return result
 
 
 def get_chunksize(data_count: int, n_jobs: int, chunksize: Optional[int], batches: Optional[int]) -> int:
@@ -172,9 +190,13 @@ def greedy_kld_uniform_ngrams(data: Dict[int, Tuple[str, ...]], select_from_keys
 
 
 class NGramExtractor():
-  def __init__(self, data: Dict[int, Tuple[str, ...]]) -> None:
+  def __init__(self, data: Dict[int, Tuple[str, ...]], n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
     self.data = data
     self.fitted = False
+    self.n_jobs = n_jobs
+    self.maxtasksperchild = maxtasksperchild
+    self.chunksize = chunksize
+    self.batches = batches
 
   def fit(self, consider_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]]) -> None:
     consider_keys_exist_in_data = consider_keys.issubset(self.data.keys())
@@ -195,9 +217,21 @@ class NGramExtractor():
     nummerated_ngrams = generate_nummerated_ngrams(possible_ngrams)
     self.ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = OrderedDict(tqdm(nummerated_ngrams))
     self.all_ngram_nrs: OrderedSet[NGramNr] = OrderedSet(self.ngram_nr_to_ngram.values())
+    self.all_ngrams: OrderedSet[NGram] = OrderedSet(self.ngram_nr_to_ngram.keys())
+
+    ngrams_str = [
+      f"\"{''.join(n_gram)}\"" for n_gram in self.all_ngrams]
+
+    logger.info(
+      f"Obtained {len(self.all_ngrams)} different {self.n_gram}-gram(s): {', '.join(ngrams_str)}.")
     self.fitted = True
 
-  def predict(self, keys: Set[int], n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> np.ndarray:
+  @property
+  def fitted_ngrams(self) -> OrderedSet[NGram]:
+    assert self.fitted
+    return self.all_ngrams
+
+  def predict(self, keys: Set[int]) -> np.ndarray:
     assert self.fitted
     keys_are_subset_of_fitted_keys = keys.issubset(self.consider_keys)
     assert keys_are_subset_of_fitted_keys
@@ -209,8 +243,8 @@ class NGramExtractor():
     logger = getLogger(__name__)
     logger.info(f"Calculating {self.n_gram}-grams...")
 
-    chunksize = get_chunksize(len(keys), n_jobs, chunksize, batches)
-    log_mp_params(n_jobs, chunksize, maxtasksperchild, len(keys))
+    final_chunksize = get_chunksize(len(keys), self.n_jobs, self.chunksize, self.batches)
+    log_mp_params(self.n_jobs, final_chunksize, self.maxtasksperchild, len(keys))
 
     method_proxy = partial(
       get_ngram_counts_from_data_entry,
@@ -218,13 +252,13 @@ class NGramExtractor():
     )
 
     with Pool(
-        processes=n_jobs,
+        processes=self.n_jobs,
         initializer=get_ngrams_counts_from_data_init_pool,
         initargs=(self.data, self.ngram_nr_to_ngram, self.all_ngram_nrs),
-        maxtasksperchild=maxtasksperchild,
+        maxtasksperchild=self.maxtasksperchild,
       ) as pool:
       with tqdm(total=len(keys)) as pbar:
-        iterator = pool.imap_unordered(method_proxy, enumerate(keys), chunksize=chunksize)
+        iterator = pool.imap_unordered(method_proxy, enumerate(keys), chunksize=final_chunksize)
         for index, counts in iterator:
           result[index] = counts
           pbar.update()
@@ -232,179 +266,132 @@ class NGramExtractor():
     return result
 
 
-class KldIterator(Iterator[int]):
-  def __init__(self, data: Dict[int, Tuple[str, ...]], select_from_keys: OrderedSet[int], preselection_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]], key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
-    self.data = data
-    self.n_jobs = n_jobs
-    self.maxtasksperchild = maxtasksperchild
-    self.chunksize = chunksize
-    self.batches = batches
-    self.preselection_keys = preselection_keys
-    self.select_from_keys = select_from_keys
-    self.ignore_symbols = ignore_symbols
-    self.n_gram = n_gram
-    self.key_selector = key_selector
-    self.__prepare()
-
-  def start(self):
-    self.core_iterator.start()
-
-  def stop(self):
-    self.core_iterator.stop()
-
-  def __enter__(self):
-    self.start()
-    return self
-
-  def __exit__(self, exc_type, exc_value, traceback):
-    self.stop()
-
-  # def get_ngrams_counts_from_data(self, keys: Set[int], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNrs], ngram_nrs: OrderedSet[NGramNr]) -> np.ndarray:
-  #   result = np.zeros(shape=(len(keys), len(ngram_nrs)), dtype=np.uint32)
-  #   if len(data) == 0:
-  #     return result
-
-  #   chunksize = get_chunksize(len(keys), n_jobs, chunksize, batches)
-  #   log_mp_params(n_jobs, chunksize, maxtasksperchild, len(keys))
-
-  #   method_proxy = partial(
-  #     get_ngram_counts_from_data_entry,
-  #     n=n_gram,
-  #   )
-
-  #   with Pool(
-  #       processes=n_jobs,
-  #       initializer=get_ngrams_counts_from_data_init_pool,
-  #       initargs=(data, ngram_nr_to_ngram, ngram_nrs),
-  #       maxtasksperchild=maxtasksperchild,
-  #     ) as pool:
-  #     with tqdm(total=len(keys)) as pbar:
-  #       iterator = pool.imap_unordered(method_proxy, enumerate(keys), chunksize=chunksize)
-  #       for index, counts in iterator:
-  #         result[index] = counts
-  #         pbar.update()
-
-  #   return result
-
-  def __prepare(self):
+class OptimizedKldIterator(KldCoreIterator):
+  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], preselection: np.ndarray, distribution_factory: DistributionFactory, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
     logger = getLogger(__name__)
-    
-    ngram_extractor = NGramExtractor(self.data)
-    ngram_extractor.fit(self.select_from_keys | self.preselection_keys, self.n_gram, self.ignore_symbols)
-    np_counts = ngram_extractor.predict(self.select_from_keys, self.n_jobs, self.maxtasksperchild, self.chunksize, self.batches)
-    
-    logger.info(f"Collecting data symbols...")
-    data_symbols = get_unique_symbols(self.data, self.select_from_keys)
-    logger.info(f"Collecting preselection symbols...")
-    preselection_symbols = get_unique_symbols(self.data, self.preselection_keys)
-    target_symbols = OrderedSet(sorted(data_symbols | preselection_symbols))
-    if self.ignore_symbols is not None:
-      target_symbols -= self.ignore_symbols
-
-    logger.info(f"Calculating all possible {self.n_gram}-grams...")
-    possible_ngrams = get_all_ngrams_iterator(target_symbols, self.n_gram)
-    nummerated_ngrams = generate_nummerated_ngrams(possible_ngrams)
-    ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = OrderedDict(tqdm(nummerated_ngrams))
-    all_ngram_nrs: OrderedSet[NGramNr] = OrderedSet(ngram_nr_to_ngram.values())
-
-    logger.info(f"Calculating {self.n_gram}-grams...")
-    np_counts = get_ngrams_counts_from_data(
-      data=self.data,
-      keys=self.select_from_keys,
-      n_gram=self.n_gram,
-      ngram_nr_to_ngram=ngram_nr_to_ngram,
-      ngram_nrs=all_ngram_nrs,
-      n_jobs=self.n_jobs,
-      maxtasksperchild=self.maxtasksperchild,
-      chunksize=self.chunksize,
-      batches=self.batches,
+    logger.info("Copy data and preselection")
+    super().__init__(
+      data=data.copy(),
+      preselection=preselection,
+      data_indicies=data_indicies,
+      distribution_factory=distribution_factory,
+      batches=batches,
+      chunksize=chunksize,
+      key_selector=key_selector,
+      maxtasksperchild=maxtasksperchild,
+      n_jobs=n_jobs,
     )
+    logger.info("Done")
 
     # remove empty rows
-    empty_row_indicies = get_empty_row_indicies(np_counts)
+    empty_row_indicies = get_empty_row_indicies(self.data)
     remove_rows = len(empty_row_indicies) > 0
     if remove_rows:
       logger.info(
-        f"Removing {len(empty_row_indicies)} empty row(s) out of {len(np_counts)} rows...")
-      remove_from_ordered_set_inplace(self.select_from_keys, empty_row_indicies)
-      np_counts = np.delete(np_counts, empty_row_indicies, axis=0)
+        f"Removing {len(empty_row_indicies)} empty row(s) out of {len(self.data)} rows...")
+      remove_from_ordered_set_inplace(self.available_data_keys_ordered, empty_row_indicies)
+      # self.data = np.delete(self.data, empty_row_indicies, axis=0)
       logger.info("Done.")
+    self.available_empty_row_indicies = OrderedSet(empty_row_indicies)
     del empty_row_indicies
+    # mapping = {index: key for index, key in enumerate(self.select_from_keys)}
+    # self.mapping_iterator = MappingIterator(self, mapping=mapping)
 
-    pre_np_counts = get_ngrams_counts_from_data(
-      data=self.data,
-      keys=self.preselection_keys,
-      n_gram=self.n_gram,
-      ngram_nr_to_ngram=ngram_nr_to_ngram,
-      ngram_nrs=all_ngram_nrs,
-      n_jobs=self.n_jobs,
-      maxtasksperchild=self.maxtasksperchild,
-      chunksize=self.chunksize,
-      batches=self.batches,
-    )
-
-    preselection_counts: NDArray = np.sum(pre_np_counts, axis=0)
-    del pre_np_counts
-
-    # remove empty columns, can only occur on n_gram > 1
-    data_counts: NDArray = np.sum(np_counts, axis=0)
-    all_counts: NDArray = data_counts + preselection_counts
-    remove_ngrams = np.where(all_counts == 0)[0]
-    if len(remove_ngrams) > 0:
-      logger.info(f"Removing {len(remove_ngrams)} out of {len(all_ngram_nrs)} columns...")
-      for remove_ngram_nr in remove_ngrams:
-        all_ngram_nrs.remove(remove_ngram_nr)
-      np_counts = np.delete(np_counts, remove_ngrams, axis=1)
-      preselection_counts = np.delete(preselection_counts, remove_ngrams, axis=0)
+    # remove empty columns, can only occur if len(symbols in utterance) = n_gram - 1
+    data_counts: NDArray = np.sum(self.data, axis=0)
+    all_counts: NDArray = data_counts + self.covered_array
+    remove_ngram_indicies = np.where(all_counts == 0)[0]
+    if len(remove_ngram_indicies) > 0:
+      logger.info(
+        f"Removing {len(remove_ngram_indicies)} out of {self.data.shape[1]} columns...")
+      self.data: np.ndarray = np.delete(self.data, remove_ngram_indicies, axis=1)
+      self.covered_array: np.ndarray = np.delete(self.covered_array, remove_ngram_indicies, axis=0)
+      self.target_dist = distribution_factory.get(self.data.shape[1])
       logger.info("Done.")
-
-    ngrams_str = [f"\"{''.join(ngram)}\"" for ngram,
-                  ngram_nr in ngram_nr_to_ngram.items() if ngram_nr in all_ngram_nrs]
-    logger.info(
-      f"Obtained {len(all_ngram_nrs)} {self.n_gram}-gram(s): {', '.join(ngrams_str)}.")
-
-    if len(all_ngram_nrs) == 0:
-      logger.info("Nothing to select.")
-      return OrderedSet()
-
-    target_distribution_array = get_uniform_distribution(all_ngram_nrs)
-    logger.info(f"Target (uniform) distribution: {target_distribution_array[0]}")
-
-    preselected_ngrams_count: int = np.sum(preselection_counts, axis=0)
-    if preselected_ngrams_count > 0:
-      preselection_distr = get_distribution_array(preselection_counts)
-      preselection_kld = entropy(preselection_distr, target_distribution_array)
-      logger.info(f"Preselection Kullback-Leibler divergence: {preselection_kld}")
-
-    self.core_iterator = KldCoreIterator(
-      data=np_counts,
-      target_dist=target_distribution_array,
-      chunksize=self.chunksize,
-      maxtasksperchild=self.maxtasksperchild,
-      n_jobs=self.n_jobs,
-      batches=self.batches,
-      preselection=preselection_counts,
-      key_selector=self.key_selector,
-    )
-
-  def get_current_kld(self) -> float:
-    return self.core_iterator.get_current_kld()
 
   def __iter__(self) -> Iterator[int]:
     return self
 
   def __next__(self) -> int:
-    index = next(self.core_iterator)
-    key = self.select_from_keys[index]
-    return key
+    # index = super().__next__()
+    # key = self.select_from_keys[index]
+    # return key
+    try:
+      return super().__next__()
+    except StopIteration:
+      if len(self.available_empty_row_indicies) > 0:
+        selected_key = self.key_selector.select_key(self.available_empty_row_indicies)
+        assert 0 <= selected_key < len(self.data)
+        assert np.sum(self.data[selected_key], axis=0) == 0
+        self.available_empty_row_indicies.remove(selected_key)
+        return selected_key
+      else:
+        raise StopIteration()
 
 
-def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tuple[str, ...]], select_from_keys: OrderedSet[int], preselection_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> OrderedSet[int]:
+class MappingIterator(Iterator[int]):
+  def __init__(self, iterator: Iterator[int], mapping: Dict[int, int]) -> None:
+    super().__init__()
+    self.iterator = iterator
+    self.mapping = mapping
+
+  def __iter__(self) -> Iterator[int]:
+    return self
+
+  def __next__(self) -> int:
+    result = next(self.iterator)
+    assert result in self.mapping
+    mapped_result = self.mapping[result]
+    return mapped_result
+
+
+def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tuple[str, ...]], select_from_keys: OrderedSet[int], preselection_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
   logger = getLogger(__name__)
 
   select_from_keys = get_duration_keys(select_from_durations_s, select_from_keys, duration_boundary)
 
-  with KldIterator(
+  ngram_extractor = NGramExtractor(data, n_jobs, maxtasksperchild, chunksize, batches)
+  ngram_extractor.fit(select_from_keys | preselection_keys, n_gram, ignore_symbols)
+  all_data_counts = ngram_extractor.predict(select_from_keys)
+  all_preselected_counts = ngram_extractor.predict(preselection_keys)
+  summed_preselection_counts: NDArray = np.sum(all_preselected_counts, axis=0)
+  del all_preselected_counts
+  del ngram_extractor
+
+  with OptimizedKldIterator(
+    data=all_data_counts,
+    preselection=summed_preselection_counts,
+    data_indicies=OrderedSet(range(len(all_data_counts))),
+    key_selector=FirstKeySelector(),
+    distribution_factory=UniformDistributionFactory(),
+    n_jobs=n_jobs,
+    maxtasksperchild=maxtasksperchild,
+    chunksize=chunksize,
+    batches=batches,
+  ) as iterator:
+    logger.info(f"Target (uniform) distribution: {iterator.get_target_distribution()[0]}")
+    logger.info(f"Initial Kullback-Leibler divergence: {iterator.get_current_kld()}")
+    key_index_mapping = {index: key for index, key in enumerate(select_from_keys)}
+    mapping_iterator = MappingIterator(iterator, key_index_mapping)
+    greedy_selected, enough_data_was_available = iterate_durations_dict(
+      mapping_iterator, select_from_durations_s, seconds)
+
+    if not enough_data_was_available:
+      logger.warning(
+        f"Aborted since no further data had been available!")
+
+    logger.info(f"Final Kullback-Leibler divergence: {iterator.get_current_kld()}")
+
+  result = OrderedSet(greedy_selected)
+  return result
+
+
+def greedy_kld_uniform_ngrams_seconds_with_preselection_perf_old(data: Dict[int, Tuple[str, ...]], select_from_keys: OrderedSet[int], preselection_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> OrderedSet[int]:
+  logger = getLogger(__name__)
+
+  select_from_keys = get_duration_keys(select_from_durations_s, select_from_keys, duration_boundary)
+
+  with OptimizedKldIterator(
     data=data,
     select_from_keys=select_from_keys,
     preselection_keys=preselection_keys,

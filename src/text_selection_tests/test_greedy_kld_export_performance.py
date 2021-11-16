@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from ordered_set import OrderedSet
-from text_selection.greedy_kld_export_performance import \
+from text_selection.kld.main import \
     greedy_kld_uniform_ngrams_seconds_with_preselection_perf
 
 

@@ -28,16 +28,17 @@ def get_ngrams(sentence_symbols: List[str], n: int) -> List[Tuple[str]]:
   return res
 
 
-def get_ngrams_generator(sentence_symbols: List[str], n: int) -> Generator[Tuple[str, ...], None, None]:
-  # TODO: import from text-utils
-  if n < 1:
-    raise Exception()
+def get_chunksize(data_count: int, n_jobs: int, chunksize: Optional[int], batches: Optional[int]) -> int:
+  if batches is None:
+    assert chunksize is not None
+    assert chunksize > 0
+    return chunksize
 
-  result = (
-    tuple(sentence_symbols[i:i + n])
-    for i in range(len(sentence_symbols) - n + 1)
-  )
-  return result
+  if data_count == 0:
+    return 1
+
+  chunksize = math.ceil(data_count / n_jobs / batches)
+  return chunksize
 
 
 def get_filtered_list(l: List[_T1], take_only: Set[_T1]) -> List[_T1]:

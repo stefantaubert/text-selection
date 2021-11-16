@@ -8,6 +8,8 @@ from text_selection.kld.distribution_factories import DistributionFactory
 from text_selection.kld.kld_iterator import KldCoreIterator
 from text_selection.selection import KeySelector
 
+# TODO: split into two iterators -> empty rows at end & empty column remover
+
 
 class OptimizedKldIterator(KldCoreIterator):
   def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], preselection: np.ndarray, distribution_factory: DistributionFactory, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:

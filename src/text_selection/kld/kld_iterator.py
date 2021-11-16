@@ -136,8 +136,11 @@ def get_divergence_for_utterance_np_based2(index_key: Tuple[int, int]) -> Tuple[
   assert key < len(process_data_np_based)
   utterance_counts = process_data_np_based[key]
   counts = process_covered_counts_np_based + utterance_counts
+  del utterance_counts
   distr = get_distribution_array(counts)
+  del counts
   kld = get_kld(distr, process_target_dist_np_based)
+  del distr
   return index, kld
 
 

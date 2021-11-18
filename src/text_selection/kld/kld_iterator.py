@@ -118,6 +118,3 @@ def get_distribution(counts_or_weights: np.ndarray, axis: int) -> np.ndarray:
   new_dist = np.divide(counts_or_weights, sum_counts, dtype=np.float64)
   del sum_counts
   return new_dist
-
-
-print(np.tile(np.array([1]), 10))

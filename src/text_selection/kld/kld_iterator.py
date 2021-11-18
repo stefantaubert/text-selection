@@ -6,51 +6,50 @@ from typing import Iterator, Optional, Tuple
 import numpy as np
 from ordered_set import OrderedSet
 from scipy.stats import entropy
-from text_selection.kld.distribution_factories import DistributionFactory
 from text_selection.selection import KeySelector
 from text_selection.utils import get_chunksize, log_mp_params
 
 
-class KldCoreIterator(Iterator[int]):
-  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], distribution_factory: DistributionFactory, preselection: np.ndarray, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
-    super().__init__()
-    self.key_selector = key_selector
-    # defines the order for what the selection is based on
-    # self.available_data_keys_ordered = OrderedSet(range(len(data)))
-    self.available_data_keys_ordered = data_indicies
-    self.data = data
-    self.covered_array = preselection.copy()
-    self.n_jobs = n_jobs
-    self.maxtasksperchild = maxtasksperchild
-    self.chunksize = chunksize
-    self.batches = batches
-    self.pool: pool.Pool = None
-    self.distribution_factory = distribution_factory
-    self.__previous_kld: Optional[float] = None
-    self.__current_kld: float = math.inf
-    self.last_selected_key: Optional[int] = None
-    self.target_dist: np.ndarray = None
-    self.calculate_target_distribution_from_data_and_update_values()
+def get_distribution_from_weights(weights: np.ndarray) -> np.ndarray:
+  summed_weights = np.sum(weights, axis=0)
+  probabilities = np.divide(weights, summed_weights)
+  return probabilities
 
-  def calculate_target_distribution_from_data_and_update_values(self):
-    self.target_dist = self.distribution_factory.get(self.data.shape[1])
-    covered_distribution = get_distribution_array(self.covered_array)
-    self.__current_kld = get_kld(covered_distribution, self.target_dist)
+
+class KldCoreIterator(Iterator[int]):
+  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], weights: np.ndarray, preselection: np.ndarray, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
+    super().__init__()
+    self._data = data
+    self._key_selector = key_selector
+    # defines the order for what the selection is based on
+    self.__available_data_keys_ordered = data_indicies
+    self.__covered_array = preselection.copy()
+    self.__n_jobs = n_jobs
+    self.__maxtasksperchild = maxtasksperchild
+    self.__chunksize = chunksize
+    self.__batches = batches
+    self.__pool: pool.Pool = None
+    self.__target_dist = get_distribution_from_weights(weights)
+    self._previous_kld: Optional[float] = None
+    self.__current_kld: float = math.inf
+
+    covered_distribution = get_distribution_array(self.__covered_array)
+    self.__current_kld = get_kld(covered_distribution, self.__target_dist)
     del covered_distribution
 
   def start(self):
-    self.pool = Pool(
-      processes=self.n_jobs,
+    assert self.__pool is None
+    self.__pool = Pool(
+      processes=self.__n_jobs,
       initializer=init_pool_np_based,
-      initargs=(self.data, self.covered_array, self.target_dist),
-      maxtasksperchild=self.maxtasksperchild,
+      initargs=(self._data, self.__covered_array, self.__target_dist),
+      maxtasksperchild=self.__maxtasksperchild,
     )
 
-  def get_target_distribution(self) -> np.ndarray:
-    return self.target_dist
-
   def stop(self):
-    self.pool.terminate()
+    assert self.__pool is not None
+    self.__pool.terminate()
+    self.__pool = None
 
   def __enter__(self):
     self.start()
@@ -59,11 +58,11 @@ class KldCoreIterator(Iterator[int]):
   def __exit__(self, exc_type, exc_value, traceback):
     self.stop()
 
-  def __get_divergences_np_based2(self, keys: OrderedSet[int]) -> np.ndarray:
-    assert self.pool is not None
-    final_chunksize = get_chunksize(len(keys), self.n_jobs, self.chunksize, self.batches)
-    log_mp_params(self.n_jobs, final_chunksize, self.maxtasksperchild, len(keys))
-    iterator = self.pool.imap_unordered(
+  def __get_divergences(self, keys: OrderedSet[int]) -> np.ndarray:
+    assert self.__pool is not None
+    final_chunksize = get_chunksize(len(keys), self.__n_jobs, self.__chunksize, self.__batches)
+    log_mp_params(self.__n_jobs, final_chunksize, self.__maxtasksperchild, len(keys))
+    iterator = self.__pool.imap_unordered(
       get_divergence_for_utterance_np_based2, enumerate(keys),
       chunksize=final_chunksize
     )
@@ -79,36 +78,39 @@ class KldCoreIterator(Iterator[int]):
 
   @property
   def previous_kld(self) -> Optional[float]:
-    return self.__previous_kld
+    return self._previous_kld
 
   @property
   def current_kld(self) -> float:
     return self.__current_kld
 
+  @property
+  def target_distribution(self) -> np.ndarray:
+    return self.__target_dist
+
   def __next__(self) -> int:
-    if len(self.available_data_keys_ordered) == 0:
+    if len(self.__available_data_keys_ordered) == 0:
       raise StopIteration()
 
-    divergences = self.__get_divergences_np_based2(
-      keys=self.available_data_keys_ordered,
+    divergences = self.__get_divergences(
+      keys=self.__available_data_keys_ordered,
     )
 
     min_div = divergences.min()
     minima_indicies = np.flatnonzero(divergences == min_div)
     potential_keys = OrderedSet(
-      self.available_data_keys_ordered[index] for index in minima_indicies
+      self.__available_data_keys_ordered[index] for index in minima_indicies
     )
 
     if len(potential_keys) > 1:
       logger = getLogger(__name__)
       logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
 
-    selected_key = self.key_selector.select_key(potential_keys)
-    assert 0 <= selected_key < len(self.data)
-    self.last_selected_key = selected_key
-    self.covered_array += self.data[selected_key]
-    self.available_data_keys_ordered.remove(selected_key)
-    self.__previous_kld = self.__current_kld
+    selected_key = self._key_selector.select_key(potential_keys)
+    assert 0 <= selected_key < len(self._data)
+    self.__covered_array += self._data[selected_key]
+    self.__available_data_keys_ordered.remove(selected_key)
+    self._previous_kld = self.__current_kld
     self.__current_kld = min_div
     return selected_key
 
@@ -166,7 +168,6 @@ def get_kld(dist: np.ndarray, target_dist: np.ndarray) -> float:
 
 
 def get_distribution_array(counts: np.ndarray) -> np.ndarray:
-  # assert all(x >= 0 for x in counts) # too slow
   sum_counts = np.sum(counts)
   new_dist = np.divide(counts, sum_counts)
   return new_dist

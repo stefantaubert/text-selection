@@ -12,6 +12,7 @@ from text_selection.kld.mapping_iterator import MappingIterator
 from text_selection.kld.ngram_extractor import NGramExtractor
 from text_selection.selection import FirstKeySelector
 from text_selection.utils import DurationBoundary
+from tqdm import tqdm
 
 
 def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tuple[str, ...]], select_from_keys: OrderedSet[int], preselection_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
@@ -27,28 +28,25 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
   del all_preselected_counts
   del ngram_extractor
 
-  with CustomKldIterator(
+  weights = get_uniform_weights(all_data_counts.shape[1])
+  iterator = CustomKldIterator(
     data=all_data_counts,
     preselection=summed_preselection_counts,
     data_indicies=OrderedSet(range(len(all_data_counts))),
     key_selector=FirstKeySelector(),
-    weights=get_uniform_weights(all_data_counts.shape[1]),
-    n_jobs=n_jobs,
-    maxtasksperchild=maxtasksperchild,
-    chunksize=chunksize,
-    batches=batches,
-  ) as iterator:
-    logger.info(f"Target (uniform) distribution: {iterator.target_distribution[0]}")
-    logger.info(f"Initial Kullback-Leibler divergence: {iterator.current_kld}")
-    key_index_mapping = {index: key for index, key in enumerate(select_from_keys)}
-    mapping_iterator = MappingIterator(iterator, key_index_mapping)
-    greedy_selected, enough_data_was_available = iterate_durations_dict(
-      mapping_iterator, select_from_durations_s, seconds)
-    if not enough_data_was_available:
-      logger.warning(
-        f"Aborted since no further data had been available!")
+    weights=weights,
+  )
 
-    logger.info(f"Final Kullback-Leibler divergence: {iterator.previous_kld}")
+  logger.info(f"Initial Kullback-Leibler divergence: {iterator.current_kld}")
+  key_index_mapping = {index: key for index, key in enumerate(select_from_keys)}
+  mapping_iterator = MappingIterator(iterator, key_index_mapping)
+  greedy_selected, enough_data_was_available = iterate_durations_dict(
+    mapping_iterator, select_from_durations_s, seconds)
+  if not enough_data_was_available:
+    logger.warning(
+      f"Aborted since no further data had been available!")
+
+  logger.info(f"Final Kullback-Leibler divergence: {iterator.previous_kld}")
 
   result = OrderedSet(greedy_selected)
   return result

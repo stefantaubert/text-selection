@@ -1,8 +1,7 @@
 
 import numpy as np
 from ordered_set import OrderedSet
-from text_selection.kld.kld_iterator import (KldIterator, get_kld,
-                                             get_uniform_weights)
+from text_selection.kld.kld_iterator import KldIterator, get_uniform_weights
 from text_selection.selection import FirstKeySelector
 
 

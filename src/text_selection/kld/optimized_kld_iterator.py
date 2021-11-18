@@ -9,7 +9,7 @@ from text_selection.selection import KeySelector
 
 
 class OptimizedKldIterator(KldIterator):
-  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], preselection: np.ndarray, weights: np.ndarray, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
+  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], preselection: np.ndarray, weights: np.ndarray, key_selector: KeySelector) -> None:
     # remove empty columns, can only occur if len(symbols in utterance) = n_gram - 1
     data_counts: NDArray = np.sum(data[data_indicies], axis=0)
     all_counts: NDArray = data_counts + preselection
@@ -20,7 +20,7 @@ class OptimizedKldIterator(KldIterator):
     if len(remove_ngram_indicies) > 0:
       logger = getLogger(__name__)
       logger.info(
-        f"Removing {len(remove_ngram_indicies)} out of {self._data.shape[1]} columns...")
+        f"Removing {len(remove_ngram_indicies)} out of {data.shape[1]} columns...")
       data: np.ndarray = np.delete(data, remove_ngram_indicies, axis=1)
       preselection: np.ndarray = np.delete(preselection, remove_ngram_indicies, axis=0)
       weights: np.ndarray = np.delete(weights, remove_ngram_indicies, axis=0)
@@ -32,9 +32,5 @@ class OptimizedKldIterator(KldIterator):
       preselection=preselection,
       data_indicies=data_indicies,
       weights=weights,
-      batches=batches,
-      chunksize=chunksize,
       key_selector=key_selector,
-      maxtasksperchild=maxtasksperchild,
-      n_jobs=n_jobs,
     )

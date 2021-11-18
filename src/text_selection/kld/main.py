@@ -40,7 +40,7 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
     batches=batches,
   ) as iterator:
     logger.info(f"Target (uniform) distribution: {iterator.get_target_distribution()[0]}")
-    logger.info(f"Initial Kullback-Leibler divergence: {iterator.get_current_kld()}")
+    logger.info(f"Initial Kullback-Leibler divergence: {iterator.current_kld}")
     key_index_mapping = {index: key for index, key in enumerate(select_from_keys)}
     mapping_iterator = MappingIterator(iterator, key_index_mapping)
     greedy_selected, enough_data_was_available = iterate_durations_dict(
@@ -50,7 +50,7 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
       logger.warning(
         f"Aborted since no further data had been available!")
 
-    logger.info(f"Final Kullback-Leibler divergence: {iterator.get_current_kld()}")
+    logger.info(f"Final Kullback-Leibler divergence: {iterator.previous_kld}")
 
   result = OrderedSet(greedy_selected)
   return result

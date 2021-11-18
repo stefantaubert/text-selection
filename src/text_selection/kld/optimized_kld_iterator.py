@@ -51,7 +51,7 @@ class OptimizedKldIterator(KldCoreIterator):
         f"Removing {len(remove_ngram_indicies)} out of {self.data.shape[1]} columns...")
       self.data: np.ndarray = np.delete(self.data, remove_ngram_indicies, axis=1)
       self.covered_array: np.ndarray = np.delete(self.covered_array, remove_ngram_indicies, axis=0)
-      self.target_dist = distribution_factory.get(self.data.shape[1])
+      self.calculate_target_distribution_from_data_and_update_values()
       logger.info("Done.")
 
   def __iter__(self) -> Iterator[int]:
@@ -69,6 +69,7 @@ class OptimizedKldIterator(KldCoreIterator):
         assert 0 <= selected_key < len(self.data)
         assert np.sum(self.data[selected_key], axis=0) == 0
         self.available_empty_row_indicies.remove(selected_key)
+
         return selected_key
       else:
         raise StopIteration()

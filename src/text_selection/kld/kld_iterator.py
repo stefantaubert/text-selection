@@ -25,8 +25,18 @@ class KldCoreIterator(Iterator[int]):
     self.chunksize = chunksize
     self.batches = batches
     self.pool: pool.Pool = None
-    self.target_dist = distribution_factory.get(data.shape[1])
+    self.distribution_factory = distribution_factory
+    self.__previous_kld: Optional[float] = None
+    self.__current_kld: float = math.inf
     self.last_selected_key: Optional[int] = None
+    self.target_dist: np.ndarray = None
+    self.calculate_target_distribution_from_data_and_update_values()
+
+  def calculate_target_distribution_from_data_and_update_values(self):
+    self.target_dist = self.distribution_factory.get(self.data.shape[1])
+    covered_distribution = get_distribution_array(self.covered_array)
+    self.__current_kld = get_kld(covered_distribution, self.target_dist)
+    del covered_distribution
 
   def start(self):
     self.pool = Pool(
@@ -51,23 +61,14 @@ class KldCoreIterator(Iterator[int]):
 
   def __get_divergences_np_based2(self, keys: OrderedSet[int]) -> np.ndarray:
     assert self.pool is not None
-    # logger.debug(f"Using {thread_count} threads with {chunksize} chunks...")
-    # logger.info("Calculating Kullback-Leibler divergences...")
-
     final_chunksize = get_chunksize(len(keys), self.n_jobs, self.chunksize, self.batches)
     log_mp_params(self.n_jobs, final_chunksize, self.maxtasksperchild, len(keys))
-
-    result = np.zeros(shape=(len(keys)))
-    # with Pool(
-    #   processes=self.n_jobs,
-    #   initializer=init_pool_np_based,
-    #   initargs=(self.data, self.covered_array, self.target_dist),
-    #   maxtasksperchild=self.maxtasksperchild,
-    # ) as pool:
     iterator = self.pool.imap_unordered(
-      get_divergence_for_utterance_np_based2, enumerate(keys), chunksize=final_chunksize
+      get_divergence_for_utterance_np_based2, enumerate(keys),
+      chunksize=final_chunksize
     )
 
+    result = np.zeros(shape=(len(keys)), dtype=np.float64)
     for index, kld in iterator:
       result[index] = kld
 
@@ -76,18 +77,15 @@ class KldCoreIterator(Iterator[int]):
   def __iter__(self) -> Iterator[int]:
     return self
 
-  def get_current_kld(self) -> float:
-    # preselected_ngrams_count: int = np.sum(self.covered_array, axis=0)
-    # if preselected_ngrams_count > 0:
-    current_distribution = get_distribution_array(self.covered_array)
-    kld = get_kld(current_distribution, self.target_dist)
-    return kld
+  @property
+  def previous_kld(self) -> Optional[float]:
+    return self.__previous_kld
+
+  @property
+  def current_kld(self) -> float:
+    return self.__current_kld
 
   def __next__(self) -> int:
-    if self.last_selected_key is not None:
-      self.covered_array += self.data[self.last_selected_key]
-      self.available_data_keys_ordered.remove(self.last_selected_key)
-
     if len(self.available_data_keys_ordered) == 0:
       raise StopIteration()
 
@@ -95,7 +93,6 @@ class KldCoreIterator(Iterator[int]):
       keys=self.available_data_keys_ordered,
     )
 
-    # minima_indicies = np.argmin(divergences, axis=0)
     min_div = divergences.min()
     minima_indicies = np.flatnonzero(divergences == min_div)
     potential_keys = OrderedSet(
@@ -109,8 +106,10 @@ class KldCoreIterator(Iterator[int]):
     selected_key = self.key_selector.select_key(potential_keys)
     assert 0 <= selected_key < len(self.data)
     self.last_selected_key = selected_key
-    # self.covered_array += self.data[selected_key]
-    # self.available_data_keys_ordered.remove(selected_key)
+    self.covered_array += self.data[selected_key]
+    self.available_data_keys_ordered.remove(selected_key)
+    self.__previous_kld = self.__current_kld
+    self.__current_kld = min_div
     return selected_key
 
 
@@ -128,20 +127,33 @@ def init_pool_np_based(data: np.ndarray, covered_counts: np.ndarray, target_dist
   process_target_dist_np_based = target_dist
 
 
+def get_divergence_for_utterance(key: int, data: np.ndarray, covered_counts: np.ndarray, target_dist: np.ndarray) -> float:
+  assert 0 <= key < len(data)
+  utterance_counts = data[key]
+  counts = covered_counts + utterance_counts
+  del utterance_counts
+  distr = get_distribution_array(counts)
+  del counts
+  kld = get_kld(distr, target_dist)
+  del distr
+  return kld
+
+
 def get_divergence_for_utterance_np_based2(index_key: Tuple[int, int]) -> Tuple[int, float]:
   global process_data_np_based
   global process_covered_counts_np_based
   global process_target_dist_np_based
   index, key = index_key
-  assert key < len(process_data_np_based)
-  utterance_counts = process_data_np_based[key]
-  counts = process_covered_counts_np_based + utterance_counts
-  del utterance_counts
-  distr = get_distribution_array(counts)
-  del counts
-  kld = get_kld(distr, process_target_dist_np_based)
-  del distr
-  return index, kld
+  result = get_divergence_for_utterance(
+    key=key,
+    covered_counts=process_covered_counts_np_based,
+    data=process_data_np_based,
+    target_dist=process_target_dist_np_based,
+  )
+
+  del key
+
+  return index, result
 
 
 def get_kld(dist: np.ndarray, target_dist: np.ndarray) -> float:

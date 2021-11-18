@@ -151,40 +151,53 @@ def get_ngrams_counts_from_data_init_pool(data: OrderedDictType[int, Tuple[str, 
   process_ngram_nrs = ngram_nrs
 
 
+def get_ngram_counts_from_data_entry_core(key: int, n: int, data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr], all_ngram_nrs: OrderedSet[NGramNr]) -> np.ndarray:
+  assert key in data
+  symbols = data[key]
+
+  ngram_nrs = (
+    ngram_nr_to_ngram[ngram]
+    for ngram in get_ngrams_generator(symbols, n)
+    if ngram in ngram_nr_to_ngram
+  )
+
+  result = get_count_array(ngram_nrs, all_ngram_nrs)
+  del symbols
+  del ngram_nrs
+
+  return result
+
+
 def get_ngram_counts_from_data_entry(index_key: Tuple[int, int], n: int) -> Tuple[int, np.ndarray]:
   global process_data
   global process_ngram_nr_to_ngram
   global process_ngram_nrs
   index, key = index_key
-  symbols = process_data[key]
 
-  ngram_nrs = (
-    process_ngram_nr_to_ngram[ngram]
-    for ngram in get_ngrams_generator(symbols, n)
-    if ngram in process_ngram_nr_to_ngram
+  result = get_ngram_counts_from_data_entry_core(
+    key=key,
+    n=n,
+    data=process_data,
+    ngram_nr_to_ngram=process_ngram_nr_to_ngram,
+    all_ngram_nrs=process_ngram_nrs,
   )
 
-  counts = Counter(ngram_nrs)
-  res_tuple = tuple(
-    counts.get(ngram_nr, 0)
-    for ngram_nr in process_ngram_nrs
-  )
-  del counts
-
-  result = np.array(res_tuple, dtype=np.uint32)
-  del res_tuple
+  del key
 
   return index, result
 
 
-def get_count_array(ngrams: Iterable[NGramNr], target_symbols_ordered: OrderedSet[NGramNr]) -> np.ndarray:
-  counts = Counter(ngrams)
+def get_count_array(ngram_nrs: Iterable[NGramNr], target_symbols_ordered: OrderedSet[NGramNr]) -> np.ndarray:
+  ngram_nr_counts = Counter(ngram_nrs)
   res_tuple = tuple(
-    counts.get(ngram_nr, 0)
+    ngram_nr_counts.get(ngram_nr, 0)
     for ngram_nr in target_symbols_ordered
   )
+  del ngram_nr_counts
 
   result = np.array(res_tuple, dtype=np.uint32)
+  del res_tuple
+
   return result
 
 

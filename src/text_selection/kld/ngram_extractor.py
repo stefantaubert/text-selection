@@ -19,23 +19,28 @@ NGram = Tuple[str, ...]
 
 class NGramExtractor():
   def __init__(self, data: Dict[int, Tuple[str, ...]], n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
-    self.data = data
-    self.fitted = False
-    self.n_jobs = n_jobs
-    self.maxtasksperchild = maxtasksperchild
-    self.chunksize = chunksize
-    self.batches = batches
+    self.__data = data
+    self.__fitted = False
+    self.__n_jobs = n_jobs
+    self.__maxtasksperchild = maxtasksperchild
+    self.__chunksize = chunksize
+    self.__batches = batches
+    self.__consider_keys: Set[int] = None
+    self.__n_gram: int = None
+    self.__ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = None
+    self.__all_ngram_nrs: OrderedSet[NGramNr] = None
+    self.__all_ngrams: OrderedSet[NGram] = None
 
   def fit(self, consider_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]]) -> None:
-    consider_keys_exist_in_data = consider_keys.issubset(self.data.keys())
+    consider_keys_exist_in_data = consider_keys.issubset(self.__data.keys())
     assert consider_keys_exist_in_data
 
-    self.consider_keys = consider_keys
-    self.n_gram = n_gram
+    self.__consider_keys = consider_keys
+    self.__n_gram = n_gram
 
     logger = getLogger(__name__)
     logger.info(f"Collecting data symbols...")
-    data_symbols = get_unique_symbols(self.data, consider_keys)
+    data_symbols = get_unique_symbols(self.__data, consider_keys)
     target_symbols = OrderedSet(sorted(data_symbols))
     if ignore_symbols is not None:
       target_symbols -= ignore_symbols
@@ -43,47 +48,47 @@ class NGramExtractor():
     logger.info(f"Calculating all possible {n_gram}-grams...")
     possible_ngrams = get_all_ngrams_iterator(target_symbols, n_gram)
     nummerated_ngrams = generate_nummerated_ngrams(possible_ngrams)
-    self.ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = OrderedDict(tqdm(nummerated_ngrams))
-    self.all_ngram_nrs: OrderedSet[NGramNr] = OrderedSet(self.ngram_nr_to_ngram.values())
-    self.all_ngrams: OrderedSet[NGram] = OrderedSet(self.ngram_nr_to_ngram.keys())
+    self.__ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = OrderedDict(tqdm(nummerated_ngrams))
+    self.__all_ngram_nrs: OrderedSet[NGramNr] = OrderedSet(self.__ngram_nr_to_ngram.values())
+    self.__all_ngrams: OrderedSet[NGram] = OrderedSet(self.__ngram_nr_to_ngram.keys())
 
     ngrams_str = [
-      f"\"{''.join(n_gram)}\"" for n_gram in self.all_ngrams]
+      f"\"{''.join(n_gram)}\"" for n_gram in self.__all_ngrams]
 
     logger.info(
-      f"Obtained {len(self.all_ngrams)} different {self.n_gram}-gram(s): {', '.join(ngrams_str)}.")
-    self.fitted = True
+      f"Obtained {len(self.__all_ngrams)} different {self.__n_gram}-gram(s): {', '.join(ngrams_str)}.")
+    self.__fitted = True
 
   @property
   def fitted_ngrams(self) -> OrderedSet[NGram]:
-    assert self.fitted
-    return self.all_ngrams
+    assert self.__fitted
+    return self.__all_ngrams
 
   def predict(self, keys: Set[int]) -> np.ndarray:
-    assert self.fitted
-    keys_are_subset_of_fitted_keys = keys.issubset(self.consider_keys)
+    assert self.__fitted
+    keys_are_subset_of_fitted_keys = keys.issubset(self.__consider_keys)
     assert keys_are_subset_of_fitted_keys
 
-    result = np.zeros(shape=(len(keys), len(self.all_ngram_nrs)), dtype=np.uint32)
+    result = np.zeros(shape=(len(keys), len(self.__all_ngram_nrs)), dtype=np.uint32)
     if len(keys) == 0:
       return result
 
     logger = getLogger(__name__)
-    logger.info(f"Calculating {self.n_gram}-grams...")
+    logger.info(f"Calculating {self.__n_gram}-grams...")
 
-    final_chunksize = get_chunksize(len(keys), self.n_jobs, self.chunksize, self.batches)
-    log_mp_params(self.n_jobs, final_chunksize, self.maxtasksperchild, len(keys))
+    final_chunksize = get_chunksize(len(keys), self.__n_jobs, self.__chunksize, self.__batches)
+    log_mp_params(self.__n_jobs, final_chunksize, self.__maxtasksperchild, len(keys))
 
     method_proxy = partial(
       get_ngram_counts_from_data_entry,
-      n=self.n_gram,
+      n=self.__n_gram,
     )
 
     with Pool(
-        processes=self.n_jobs,
+        processes=self.__n_jobs,
         initializer=get_ngrams_counts_from_data_init_pool,
-        initargs=(self.data, self.ngram_nr_to_ngram, self.all_ngram_nrs),
-        maxtasksperchild=self.maxtasksperchild,
+        initargs=(self.__data, self.__ngram_nr_to_ngram, self.__all_ngram_nrs),
+        maxtasksperchild=self.__maxtasksperchild,
       ) as pool:
       with tqdm(total=len(keys)) as pbar:
         iterator = pool.imap_unordered(method_proxy, enumerate(keys), chunksize=final_chunksize)
@@ -169,6 +174,7 @@ def get_ngram_counts_from_data_entry_core(key: int, n: int, data: OrderedDictTyp
 
 
 def get_ngram_counts_from_data_entry(index_key: Tuple[int, int], n: int) -> Tuple[int, np.ndarray]:
+  # pylint: disable=global-variable-not-assigned
   global process_data
   global process_ngram_nr_to_ngram
   global process_ngram_nrs

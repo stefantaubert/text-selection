@@ -16,7 +16,7 @@ def get_distribution_from_weights(weights: np.ndarray) -> np.ndarray:
   return probabilities
 
 
-class KldCoreIterator(Iterator[int]):
+class KldIterator(Iterator[int]):
   def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], weights: np.ndarray, preselection: np.ndarray, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
     super().__init__()
     self._data = data
@@ -142,6 +142,7 @@ def get_divergence_for_utterance(key: int, data: np.ndarray, covered_counts: np.
 
 
 def get_divergence_for_utterance_np_based2(index_key: Tuple[int, int]) -> Tuple[int, float]:
+  # pylint: disable=global-variable-not-assigned
   global process_data_np_based
   global process_covered_counts_np_based
   global process_target_dist_np_based

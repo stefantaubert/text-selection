@@ -4,11 +4,11 @@ from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 from ordered_set import OrderedSet
-from text_selection.kld.kld_iterator import KldCoreIterator
+from text_selection.kld.kld_iterator import KldIterator
 from text_selection.selection import KeySelector
 
 
-class OptimizedKldIterator(KldCoreIterator):
+class OptimizedKldIterator(KldIterator):
   def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], preselection: np.ndarray, weights: np.ndarray, key_selector: KeySelector, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> None:
     # remove empty columns, can only occur if len(symbols in utterance) = n_gram - 1
     data_counts: NDArray = np.sum(data[data_indicies], axis=0)

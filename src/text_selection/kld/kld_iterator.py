@@ -10,8 +10,15 @@ from text_selection.selection import KeySelector
 from text_selection.utils import get_chunksize, log_mp_params
 
 
+def get_uniform_weights(count: int) -> np.ndarray:
+  result = np.ones(shape=(count), dtype=np.uint16)
+  return result
+
+
 def get_distribution_from_weights(weights: np.ndarray) -> np.ndarray:
+  assert len(weights.shape) == 1
   summed_weights = np.sum(weights, axis=0)
+  assert summed_weights > 0
   probabilities = np.divide(weights, summed_weights)
   return probabilities
 
@@ -160,15 +167,27 @@ def get_divergence_for_utterance_np_based2(index_key: Tuple[int, int]) -> Tuple[
 
 
 def get_kld(dist: np.ndarray, target_dist: np.ndarray) -> float:
-  none_of_targed_ngrams_exist = all(np.isnan(dist))
-  if none_of_targed_ngrams_exist:
-    return math.inf
+  assert len(dist.shape) == len(target_dist.shape) == 1
+  assert len(dist) == len(target_dist)
+  # dist and target_dist must not be all zero or have negative values
+  # target_dist must not be all zero
+  assert len(dist) == 0 or len(dist[dist == 0]) < len(dist)
+  assert len(dist) == 0 or len(target_dist[target_dist == 0]) < len(target_dist)
+  assert len(dist[dist < 0]) == 0
+  assert len(target_dist[target_dist < 0]) == 0
 
-  res = entropy(dist, target_dist)
+  res = entropy(dist, target_dist, axis=0)
+  if np.isnan(res):
+    del res
+    return np.inf
+
   return res
 
 
 def get_distribution_array(counts: np.ndarray) -> np.ndarray:
+  assert len(counts.shape) == 1
+  assert len(counts[counts < 0]) == 0
   sum_counts = np.sum(counts)
   new_dist = np.divide(counts, sum_counts)
+  del sum_counts
   return new_dist

@@ -2,7 +2,6 @@ from logging import getLogger
 from typing import Dict, Optional, Set, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
 from ordered_set import OrderedSet
 from text_selection.kld.custom_kld_iterator import CustomKldIterator
 from text_selection.kld.durations_iterator import iterate_durations_dict
@@ -24,7 +23,7 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
   ngram_extractor.fit(select_from_keys | preselection_keys, n_gram, ignore_symbols)
   all_data_counts = ngram_extractor.predict(select_from_keys)
   all_preselected_counts = ngram_extractor.predict(preselection_keys)
-  summed_preselection_counts: NDArray = np.sum(all_preselected_counts, axis=0)
+  summed_preselection_counts: np.ndarray = np.sum(all_preselected_counts, axis=0)
   del all_preselected_counts
   del ngram_extractor
 

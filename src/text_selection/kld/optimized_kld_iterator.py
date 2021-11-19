@@ -2,7 +2,6 @@ from logging import getLogger
 from typing import Optional
 
 import numpy as np
-from numpy.typing import NDArray
 from ordered_set import OrderedSet
 from text_selection.kld.kld_iterator import KldIterator
 from text_selection.selection import KeySelector
@@ -11,8 +10,8 @@ from text_selection.selection import KeySelector
 class OptimizedKldIterator(KldIterator):
   def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], preselection: np.ndarray, weights: np.ndarray, key_selector: KeySelector) -> None:
     # remove empty columns, can only occur if len(symbols in utterance) = n_gram - 1
-    data_counts: NDArray = np.sum(data[data_indicies], axis=0)
-    all_counts: NDArray = data_counts + preselection
+    data_counts: np.ndarray = np.sum(data[data_indicies], axis=0)
+    all_counts: np.ndarray = data_counts + preselection
     del data_counts
     remove_ngram_indicies = np.where(all_counts == 0)[0]
     del all_counts

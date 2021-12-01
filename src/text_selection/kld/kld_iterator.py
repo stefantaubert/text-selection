@@ -134,8 +134,20 @@ def get_kullback_leibler_divergence(pk: np.ndarray, qk: np.ndarray, axis: int) -
   return S
 
 
+def is_valid_counts_or_weights(counts_or_weights: np.ndarray, axis: int) -> bool:
+  assert 0 <= axis < len(counts_or_weights.shape)
+  any_negative = np.any(counts_or_weights < 0, axis=axis)
+  if np.any(any_negative, axis=0):
+    return False
+  indices = np.isnan(counts_or_weights)
+  any_nan = np.any(indices, axis=axis)
+  if np.any(any_nan, axis=0):
+    return False
+  return True
+
+
 def get_distribution(counts_or_weights: np.ndarray, axis: int) -> np.ndarray:
-  assert not np.any(counts_or_weights < 0)
+  assert is_valid_counts_or_weights(counts_or_weights, axis)
   # new_dist = 1.0 * counts / np.sum(counts, axis=axis, keepdims=True)
   # new_dist: np.ndarray = np.array(counts / np.sum(counts, axis=axis, keepdims=True), dtype=np.float64)
   sum_counts = np.sum(counts_or_weights, axis=axis, dtype=np.float64, keepdims=True)

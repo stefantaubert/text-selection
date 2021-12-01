@@ -5,7 +5,7 @@ from typing import Set
 
 from ordered_set import OrderedSet
 
-from text_selection.greedy_applied import (greedy_count, greedy_cover,
+from text_selection.greedy.greedy_applied import (greedy_count, greedy_cover,
                                            greedy_default,
                                            greedy_duration_advanced,
                                            greedy_epochs, greedy_iterations,

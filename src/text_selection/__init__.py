@@ -1,5 +1,5 @@
 from text_selection.cover_export import cover_symbols_default
-from text_selection.greedy_export import (greedy_ngrams_count,
+from text_selection.greedy.greedy_export import (greedy_ngrams_count,
                                           greedy_ngrams_cover,
                                           greedy_ngrams_default,
                                           greedy_ngrams_durations_advanced,

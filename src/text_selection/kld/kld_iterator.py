@@ -26,7 +26,7 @@ class KldIterator(Iterator[int]):
     self._data = data
     self._key_selector = key_selector
     # defines the order for what the selection is based on
-    self.__available_data_keys_ordered = data_indicies
+    self.__available_data_keys_ordered = data_indicies#.copy()
     self.__covered_array = preselection.copy()
     self.__target_dists = get_distributions_from_weights(weights, len(data))
     self._previous_kld: Optional[float] = None

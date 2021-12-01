@@ -1,4 +1,4 @@
-from text_selection.greedy_export import *
+from text_selection.greedy.greedy_export import *
 from text_selection.utils import *
 
 

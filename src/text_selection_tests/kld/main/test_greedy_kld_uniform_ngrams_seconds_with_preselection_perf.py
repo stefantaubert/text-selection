@@ -14,8 +14,8 @@ def test_sort_greedy_kld_until_with_preselection__without_preselection():
     (8, ("c", "c")),
   ])
 
-  preselection = OrderedSet([4])
-  select_from = OrderedSet([5, 6, 7, 8])
+  preselection = OrderedSet((4,))
+  select_from = OrderedSet((5, 6, 7, 8))
 
   select_from_durations = {
     5: 1.0,

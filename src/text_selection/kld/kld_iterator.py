@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Iterator, Optional, Tuple
+from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
 from ordered_set import OrderedSet
@@ -96,17 +96,41 @@ def get_minimum_kld(data: np.ndarray, covered_counts: np.ndarray, target_dist: n
   return min_div, minima_indicies
 
 
-def get_kullback_leibler_divergence(pk: np.ndarray, qk: np.ndarray, axis: int):
+def is_valid_distribution(qk: np.ndarray, axis: int) -> bool:
+  assert 0 <= axis < len(qk.shape)
+  if qk.shape[axis] == 0:
+    return True
+  if np.any(qk < 0.0):
+    return False
+  if np.any(qk > 1.0):
+    return False
+
+  result = np.all(np.sum(qk, axis=axis) == 1)
+  return result
+
+
+def remove_nan_rows(pk: np.ndarray, axis: int) -> np.ndarray:
+  indices = np.isnan(pk)
+  indices = ~np.all(indices, axis=axis)
+  if axis == 0:
+    if indices == False:
+      result = np.empty(shape=(0), dtype=pk.dtype)
+      return result
+    return pk
+  result = pk[indices]
+  return result
+
+
+def get_kullback_leibler_divergence(pk: np.ndarray, qk: np.ndarray, axis: int) -> Union[float, np.ndarray]:
   """qk: target distribution"""
-  assert not np.any(pk < 0) and not np.any(pk > 1)
-  assert not np.any(qk < 0)
-  assert not np.any(np.sum(pk, axis=axis) == 0)
-  assert qk.shape[axis] == 0 or np.all(np.sum(qk, axis=axis) == 1)
+  assert is_valid_distribution(remove_nan_rows(pk, axis), axis)
+  assert is_valid_distribution(qk, axis)
   assert pk.shape == qk.shape
-  assert pk.dtype == qk.dtype == np.float64
+  assert pk.dtype == qk.dtype
   # pylint: disable=no-member
   S = np.sum(special.rel_entr(pk, qk), axis=axis)
-  S = np.nan_to_num(S, copy=False, nan=0.0)
+  # assignment is required for axis == 0 because single values can not be changed inplace
+  S = np.nan_to_num(S, copy=False, nan=np.inf)
   return S
 
 

@@ -31,7 +31,7 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
   iterator = CustomKldIterator(
     data=all_data_counts,
     preselection=summed_preselection_counts,
-    data_indicies=OrderedSet(range(len(all_data_counts))),
+    data_indices=OrderedSet(range(len(all_data_counts))),
     key_selector=FirstKeySelector(),
     weights=weights,
   )

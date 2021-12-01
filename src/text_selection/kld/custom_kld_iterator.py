@@ -8,15 +8,15 @@ from text_selection.selection import KeySelector
 
 
 class CustomKldIterator(OptimizedKldIterator):
-  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], preselection: np.ndarray, weights: np.ndarray, key_selector: KeySelector) -> None:
+  def __init__(self, data: np.ndarray, data_indices: OrderedSet[int], preselection: np.ndarray, weights: np.ndarray, key_selector: KeySelector) -> None:
     empty_row_indicies = get_empty_row_indicies(data)
     empty_rows_exist = len(empty_row_indicies) > 0
     if empty_rows_exist:
       logger = getLogger(__name__)
       logger.info(
         f"Moving {len(empty_row_indicies)} empty row(s) out of {len(data)} rows to the end...")
-      data_indicies = data_indicies.copy()
-      remove_from_ordered_set_inplace(data_indicies, empty_row_indicies)
+      data_indices = data_indices.copy()
+      remove_from_ordered_set_inplace(data_indices, empty_row_indicies)
       logger.info("Done.")
     self.__available_empty_row_indicies = OrderedSet(empty_row_indicies)
     del empty_row_indicies
@@ -24,7 +24,7 @@ class CustomKldIterator(OptimizedKldIterator):
     super().__init__(
       data=data,
       preselection=preselection,
-      data_indicies=data_indicies,
+      data_indicies=data_indices,
       weights=weights,
       key_selector=key_selector,
     )

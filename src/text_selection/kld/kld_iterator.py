@@ -123,10 +123,10 @@ def remove_nan_rows(pk: np.ndarray, axis: int) -> np.ndarray:
 
 def get_kullback_leibler_divergence(pk: np.ndarray, qk: np.ndarray, axis: int) -> Union[float, np.ndarray]:
   """qk: target distribution"""
-  assert is_valid_distribution(remove_nan_rows(pk, axis), axis)
-  assert is_valid_distribution(qk, axis)
   assert pk.shape == qk.shape
   assert pk.dtype == qk.dtype
+  assert is_valid_distribution(remove_nan_rows(pk, axis), axis)
+  assert is_valid_distribution(qk, axis)
   # pylint: disable=no-member
   S = np.sum(special.rel_entr(pk, qk), axis=axis)
   # assignment is required for axis == 0 because single values can not be changed inplace

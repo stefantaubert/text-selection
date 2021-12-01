@@ -18,6 +18,7 @@ def test_multitest_with_preselection():
   assert div == 0.0
   assert result == OrderedSet((1, 3))
 
+
 def test_multitest_without_preselection():
   data = np.array([[1, 2], [2, 1], [2, 1], [2, 1], [0, 0]], dtype=np.uint32)
   keys = OrderedSet((0, 1, 3, 4))

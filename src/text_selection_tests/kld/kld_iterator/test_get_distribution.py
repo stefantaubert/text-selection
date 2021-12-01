@@ -9,6 +9,12 @@ def test_s0_empty__returns_empty():
   np.testing.assert_array_equal(result, np.empty(shape=(0)))
 
 
+def test_s0x0_empty__returns_empty():
+  counts = np.empty(shape=(0, 0), dtype=np.uint32)
+  result = get_distribution(counts, axis=1)
+  np.testing.assert_array_equal(result, np.empty(shape=(0, 0)))
+
+
 def test_s1x0_empty__returns_empty():
   counts = np.array([[]], dtype=np.uint32)
   result = get_distribution(counts, axis=1)

@@ -8,6 +8,12 @@ def test_axis_0_empty_array__returns_true():
   assert result
 
 
+def test_s0x0_empty__returns_true():
+  qk = np.empty(shape=(0, 0), dtype=np.int32)
+  result = is_valid_distribution(qk, axis=1)
+  assert result
+
+
 def test_axis_1_empty_array__returns_true():
   qk = np.array([[]], dtype=np.float64)
   result = is_valid_distribution(qk, axis=1)

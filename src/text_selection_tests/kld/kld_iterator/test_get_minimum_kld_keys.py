@@ -12,7 +12,7 @@ def test_multitest_with_preselection():
     data=data,
     covered_counts=covered_counts,
     keys=keys,
-    target_dist=target_dist,
+    target_distribution=target_dist,
   )
 
   assert div == 0.0
@@ -28,7 +28,7 @@ def test_multitest_without_preselection():
     data=data,
     covered_counts=covered_counts,
     keys=keys,
-    target_dist=target_dist,
+    target_distribution=target_dist,
   )
 
   assert div == 0.0

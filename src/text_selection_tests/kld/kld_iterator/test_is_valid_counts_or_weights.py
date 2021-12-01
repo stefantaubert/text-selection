@@ -9,6 +9,12 @@ def test_s0_empty__returns_true():
   assert result
 
 
+def test_s0x0_empty__returns_true():
+  counts = np.empty(shape=(0, 0), dtype=np.int32)
+  result = is_valid_counts_or_weights(counts, axis=1)
+  assert result
+
+
 def test_s1x0_empty__returns_true():
   counts = np.array([[]], dtype=np.int32)
   result = is_valid_counts_or_weights(counts, axis=1)

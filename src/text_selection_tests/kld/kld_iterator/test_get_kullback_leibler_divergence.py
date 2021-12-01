@@ -10,6 +10,13 @@ def test_s0_empty__returns_zero():
   assert result == 0.0
 
 
+def test_s0x0_empty__returns_empty():
+  pk = np.empty(shape=(0, 0), dtype=np.float64)
+  qk = np.empty(shape=(0, 0), dtype=np.float64)
+  result = get_kullback_leibler_divergence(pk, qk, axis=1)
+  np.testing.assert_array_equal(result, np.empty(shape=(0,), dtype=np.float64))
+
+
 def test_s1x0_empty__returns_zero():
   pk = np.array([[]], dtype=np.float64)
   qk = np.array([[]], dtype=np.float64)

@@ -55,7 +55,7 @@ class KldIterator(Iterator[int]):
       data=self._data,
       keys=self.__available_data_keys_ordered,
       covered_counts=self.__covered_array,
-      target_distribution=self.__target_dists,
+      target_distributions=self.__target_dists,
     )
 
     if len(potential_keys) > 1:
@@ -71,13 +71,13 @@ class KldIterator(Iterator[int]):
     return selected_key
 
 
-def get_minimum_kld_keys(data: np.ndarray, keys: OrderedSet[int], covered_counts: np.ndarray, target_distribution: np.ndarray) -> Tuple[float, OrderedSet]:
+def get_minimum_kld_keys(data: np.ndarray, keys: OrderedSet[int], covered_counts: np.ndarray, target_distributions: np.ndarray) -> Tuple[float, OrderedSet]:
   assert len(data.shape) == 2
-  assert len(target_distribution.shape) == 2
+  assert len(target_distributions.shape) == 2
   assert len(covered_counts.shape) == 1
   assert 0 < len(keys) <= len(data)
   data_subset: np.ndarray = data[keys]
-  target_dist_subset: np.ndarray = target_distribution[keys]
+  target_dist_subset: np.ndarray = target_distributions[keys]
   summed_counts = data_subset + covered_counts
   del data_subset
   min_div, indices = get_minimum_kld(summed_counts, target_dist_subset)
@@ -95,13 +95,22 @@ def get_minimum_kld(counts: np.ndarray, target_distribution: np.ndarray) -> Tupl
   divergences = get_kullback_leibler_divergence(
     new_counts_distributions, target_distribution, axis=1)
   del new_counts_distributions
-  min_divergence = divergences.min()
-  min_indices = np.flatnonzero(divergences == min_divergence)
+  assert np.all(divergences >= 0.0)
+  min_divergence, min_indices = get_minimun_indices(divergences)
   del divergences
   return min_divergence, min_indices
 
 
+def get_minimun_indices(array: np.ndarray) -> Tuple[float, np.ndarray]:
+  assert len(array) > 0
+  min_value = array.min()
+  min_indices = np.flatnonzero(array == min_value)
+  return min_value, min_indices
+
+
 def is_valid_distribution(qk: np.ndarray, axis: int) -> bool:
+  """valid is e.g.: [], [1.0], [0.5, 0.5]"""
+  """not valid is e.g.: [-1.0], [0.6, 0.6], [np.nan], [np.nan, 0.6], [1.2]"""
   assert 0 <= axis < len(qk.shape)
   if qk.shape[axis] == 0:
     return True
@@ -115,6 +124,11 @@ def is_valid_distribution(qk: np.ndarray, axis: int) -> bool:
 
 
 def remove_nan_rows(pk: np.ndarray, axis: int) -> np.ndarray:
+  """on axis=1: return empty only if all values are nan, otherwise keeps everything unchanged"""
+  """on axis=2: removes all rows where all values are nan"""
+  if pk.shape[axis] == 0:
+    return pk
+
   indices = np.isnan(pk)
   indices = ~np.all(indices, axis=axis)
   if axis == 0:

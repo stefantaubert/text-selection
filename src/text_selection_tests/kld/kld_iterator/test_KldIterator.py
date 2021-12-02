@@ -10,7 +10,7 @@ def test_empty_indicies__return_empty_set():
   preselection = np.zeros(data.shape[1], data.dtype)
   iterator = KldIterator(
     data=data,
-    data_indicies=data_indicies,
+    data_indices=data_indicies,
     key_selector=FirstKeySelector(),
     preselection=preselection,
     weights=np.array([1, 1, 1], dtype=np.uint32),
@@ -27,7 +27,7 @@ def test_all_equal_returns_all_in_same_key_order():
   preselection = np.zeros(data.shape[1], data.dtype)
   iterator = KldIterator(
     data=data,
-    data_indicies=data_indicies,
+    data_indices=data_indicies,
     key_selector=FirstKeySelector(),
     preselection=preselection,
     weights=np.array([1, 1, 1], dtype=np.uint32),
@@ -53,7 +53,7 @@ def test_select_zeros_not_first():
   preselection = np.zeros(data.shape[1], data.dtype)
   iterator = KldIterator(
     data=data,
-    data_indicies=data_indicies,
+    data_indices=data_indicies,
     key_selector=FirstKeySelector(),
     preselection=preselection,
     weights=np.array([1, 1, 1], dtype=np.uint32),
@@ -70,7 +70,7 @@ def test_empty_ngrams__returns_same_input_order():
   preselection = np.empty(shape=(0))
   iterator = KldIterator(
     data=data,
-    data_indicies=data_indicies,
+    data_indices=data_indicies,
     key_selector=FirstKeySelector(),
     preselection=preselection,
     weights=np.empty(shape=(0,), dtype=np.uint32),

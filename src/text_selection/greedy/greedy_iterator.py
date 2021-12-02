@@ -4,34 +4,46 @@ from typing import Iterator, Tuple
 import numpy as np
 from ordered_set import OrderedSet
 from text_selection.selection import KeySelector
+from tqdm import tqdm
 
 
 class GreedyIterator(Iterator[int]):
-
-  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], preselection: np.ndarray, key_selector: KeySelector) -> None:
+  def __init__(self, data: np.ndarray, data_indices: OrderedSet[int], preselection: np.ndarray, key_selector: KeySelector) -> None:
     super().__init__()
-    self._data = data
-    self._key_selector = key_selector
-    # defines the order for what the selection is based on
-    self.__available_data_keys_ordered = data_indicies.copy()
-    self.__covered_array = preselection.copy()
-    self.__epochs = 0
+    self.__data = data
+    self.__key_selector = key_selector
+    self.__available_data_keys_ordered = data_indices.copy()
+    self._iteration_tqdm: tqdm = None
+    if np.any(preselection == 0, axis=0):
+      self.__covered_array = preselection.copy()
+    else:
+      self.__covered_array = np.zeros_like(preselection)
+    self._current_epoch = 0
 
   def __iter__(self) -> Iterator[int]:
     return self
 
+  def close(self) -> None:
+    if self._iteration_tqdm is not None:
+      self._iteration_tqdm.close()
+      self._iteration_tqdm = None
+
+  @property
+  def current_epoch(self) -> int:
+    return self._current_epoch
+
   def __next__(self) -> int:
+    if self._iteration_tqdm is None:
+      self._iteration_tqdm = tqdm(total=len(self.__available_data_keys_ordered),
+                                  desc="Greedy iterations", ncols=200, unit="it")
+
     if len(self.__available_data_keys_ordered) == 0:
+      self._iteration_tqdm.close()
+      self._iteration_tqdm = None
       raise StopIteration()
 
-    if np.all(self.__covered_array > 0, axis=0):
-      # reset epoch
-      self.__covered_array = np.zeros_like(self.__covered_array)
-      # todo on init not + 1
-      self.__epochs += 1
-
     potential_keys = get_max_new_counts_keys(
-      data=self._data,
+      data=self.__data,
       keys=self.__available_data_keys_ordered,
       covered_counts=self.__covered_array,
     )
@@ -40,11 +52,17 @@ class GreedyIterator(Iterator[int]):
       logger = getLogger(__name__)
       logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
 
-    selected_key = self._key_selector.select_key(potential_keys)
-    assert 0 <= selected_key < len(self._data)
-    self.__covered_array += self._data[selected_key]
+    selected_key = self.__key_selector.select_key(potential_keys)
+    assert 0 <= selected_key < len(self.__data)
+    self.__covered_array += self.__data[selected_key]
     self.__available_data_keys_ordered.remove(selected_key)
 
+    if np.all(self.__covered_array > 0, axis=0):
+      # reset epoch
+      self.__covered_array = np.zeros_like(self.__covered_array)
+      self._current_epoch += 1
+
+    self._iteration_tqdm.update()
     return selected_key
 
 
@@ -55,7 +73,10 @@ def get_max_new_counts_keys(data: np.ndarray, keys: OrderedSet[int], covered_cou
   data_subset: np.ndarray = data[keys]
   uncovered_indices = np.flatnonzero(covered_counts == 0)
   data_subset_uncovered_total_counts = data_subset[:, uncovered_indices]
+  del data_subset
+  del uncovered_indices
   indices = get_max_new_counts(data_subset_uncovered_total_counts)
+  del data_subset_uncovered_total_counts
 
   mapped_indices = OrderedSet(keys[index] for index in indices)
 
@@ -65,7 +86,10 @@ def get_max_new_counts_keys(data: np.ndarray, keys: OrderedSet[int], covered_cou
 def get_max_new_counts(data: np.ndarray) -> np.ndarray:
   data_subset_amounts = data != 0
   data_subset_uncovered_counts = np.sum(data_subset_amounts, axis=1)
+  del data_subset_amounts
   _, max_indices = get_maximum_indices(data_subset_uncovered_counts)
+  del _
+  del data_subset_uncovered_counts
   return max_indices
 
 

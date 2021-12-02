@@ -29,7 +29,7 @@ class OptimizedKldIterator(KldIterator):
     super().__init__(
       data=data,
       preselection=preselection,
-      data_indicies=data_indicies,
+      data_indices=data_indicies,
       weights=weights,
       key_selector=key_selector,
     )

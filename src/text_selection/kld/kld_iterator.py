@@ -5,6 +5,7 @@ import numpy as np
 from ordered_set import OrderedSet
 from scipy import special
 from text_selection.selection import KeySelector
+from tqdm import tqdm
 
 
 def get_uniform_weights(count: int) -> np.ndarray:
@@ -20,13 +21,13 @@ def get_distributions_from_weights(weights: np.ndarray, data_len: int):
 
 
 class KldIterator(Iterator[int]):
-  def __init__(self, data: np.ndarray, data_indicies: OrderedSet[int], weights: np.ndarray, preselection: np.ndarray, key_selector: KeySelector) -> None:
+  def __init__(self, data: np.ndarray, data_indices: OrderedSet[int], weights: np.ndarray, preselection: np.ndarray, key_selector: KeySelector) -> None:
     super().__init__()
     assert len(weights) == 0 or np.sum(weights, axis=0) > 0
     self._data = data
     self._key_selector = key_selector
     # defines the order for what the selection is based on
-    self.__available_data_keys_ordered = data_indicies#.copy()
+    self.__available_data_keys_ordered = data_indices  # .copy()
     self.__covered_array = preselection.copy()
     self.__target_dists = get_distributions_from_weights(weights, len(data))
     self._previous_kld: Optional[float] = None
@@ -35,6 +36,7 @@ class KldIterator(Iterator[int]):
       qk=get_distribution(weights, axis=0),
       axis=0,
     )
+    self._iteration_tqdm: tqdm = None
 
   def __iter__(self) -> Iterator[int]:
     return self
@@ -47,8 +49,19 @@ class KldIterator(Iterator[int]):
   def current_kld(self) -> float:
     return self.__current_kld
 
+  def close(self) -> None:
+    if self._iteration_tqdm is not None:
+      self._iteration_tqdm.close()
+      self._iteration_tqdm = None
+
   def __next__(self) -> int:
+    if self._iteration_tqdm is None:
+      self._iteration_tqdm = tqdm(total=len(self.__available_data_keys_ordered),
+                                  desc="KLD iterations", ncols=200, unit="it")
+
     if len(self.__available_data_keys_ordered) == 0:
+      self._iteration_tqdm.close()
+      self._iteration_tqdm = None
       raise StopIteration()
 
     min_div, potential_keys = get_minimum_kld_keys(
@@ -68,6 +81,7 @@ class KldIterator(Iterator[int]):
     self.__available_data_keys_ordered.remove(selected_key)
     self._previous_kld = self.__current_kld
     self.__current_kld = min_div
+    self._iteration_tqdm.update()
     return selected_key
 
 

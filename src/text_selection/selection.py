@@ -20,7 +20,7 @@ def order_keys(keys: Set[_T1], ordered_keys: OrderedSet[_T1]) -> OrderedSet[_T1]
   assert all_keys_exist
   if len(keys) == 1:
     return OrderedSet(keys)
-  result = OrderedSet({key for key in ordered_keys if key in keys})
+  result = OrderedSet((key for key in ordered_keys if key in keys))
   return result
 
 

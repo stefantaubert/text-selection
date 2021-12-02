@@ -11,7 +11,7 @@ def test_empty_indicies__return_empty_set():
   preselection = np.zeros(data.shape[1], data.dtype)
   iterator = GreedyIterator(
     data=data,
-    data_indicies=data_indicies,
+    data_indices=data_indicies,
     key_selector=FirstKeySelector(),
     preselection=preselection,
   )

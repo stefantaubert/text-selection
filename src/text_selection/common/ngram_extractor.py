@@ -48,7 +48,7 @@ class NGramExtractor():
     logger.info(f"Calculating all possible {n_gram}-grams...")
     possible_ngrams = get_all_ngrams_iterator(target_symbols, n_gram)
     nummerated_ngrams = generate_nummerated_ngrams(possible_ngrams)
-    self.__ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = OrderedDict(tqdm(nummerated_ngrams))
+    self.__ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = OrderedDict(nummerated_ngrams)
     self.__all_ngram_nrs: OrderedSet[NGramNr] = OrderedSet(self.__ngram_nr_to_ngram.values())
     self.__all_ngrams: OrderedSet[NGram] = OrderedSet(self.__ngram_nr_to_ngram.keys())
 
@@ -90,7 +90,7 @@ class NGramExtractor():
         initargs=(self.__data, self.__ngram_nr_to_ngram, self.__all_ngram_nrs),
         maxtasksperchild=self.__maxtasksperchild,
       ) as pool:
-      with tqdm(total=len(keys)) as pbar:
+      with tqdm(total=len(keys), desc="N-gram prediction") as pbar:
         iterator = pool.imap_unordered(method_proxy, enumerate(keys), chunksize=final_chunksize)
         for index, counts in iterator:
           result[index] = counts

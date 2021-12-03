@@ -5,11 +5,11 @@ import numpy as np
 from ordered_set import OrderedSet
 from text_selection.common.durations_iterator import UntilProxyIterator
 from text_selection.common.filter_durations import get_duration_keys
+from text_selection.common.helper import get_ngram_counts
 from text_selection.common.mapping_iterator import MappingIterator
-from text_selection.common.ngram_counts import get_ngram_counts
-from text_selection.common.ngram_extractor import NGramExtractor
 from text_selection.greedy.greedy_epoch_iterator import EpochProxyIterator
-from text_selection.greedy.greedy_iterator import GreedyIterator
+from text_selection.greedy.optimized_greedy_iterator import \
+    OptimizedGreedyIterator
 from text_selection.selection import FirstKeySelector
 from text_selection.utils import DurationBoundary
 from tqdm import tqdm
@@ -20,16 +20,11 @@ def greedy_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tuple[s
 
   select_from_keys = get_duration_keys(select_from_durations_s, select_from_keys, duration_boundary)
 
-  ngram_extractor = NGramExtractor(data, n_jobs, maxtasksperchild, chunksize, batches)
-  ngram_extractor.fit(select_from_keys | preselection_keys, n_gram, ignore_symbols)
-  all_data_counts = ngram_extractor.predict(select_from_keys)
-  all_preselected_counts = ngram_extractor.predict(preselection_keys)
-  del ngram_extractor
-  summed_preselection_counts: np.ndarray = np.sum(all_preselected_counts, axis=0)
-  del all_preselected_counts
+  all_data_counts, summed_preselection_counts = get_ngram_counts(
+    data, select_from_keys, preselection_keys, n_gram, ignore_symbols, n_jobs, maxtasksperchild, chunksize, batches)
 
   selector = FirstKeySelector()
-  greedy_iterator = GreedyIterator(
+  greedy_iterator = OptimizedGreedyIterator(
     data=all_data_counts,
     data_indices=OrderedSet(range(len(all_data_counts))),
     preselection=summed_preselection_counts,
@@ -48,10 +43,10 @@ def greedy_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tuple[s
 
   result = OrderedSet()
 
-  with tqdm(desc="Iterations", unit="it") as progress_bar_iterations:
-    with tqdm(total=round(seconds), desc="Selected duration", ncols=200, unit="s") as progress_bar_seconds:
+  with tqdm(total=round(seconds), desc="Selected duration", ncols=200, unit="s") as progress_bar_seconds:
+    with tqdm(desc="Iterations", unit="it") as progress_bar_iterations:
       for item in mapping_iterator:
-        result.append(item)
+        result.add(item)
         progress_bar_seconds.update(round(until_iterator.tqdm_update))
         progress_bar_iterations.update()
 
@@ -70,7 +65,7 @@ def greedy_uniform_ngrams_epochs_perf(data: Dict[int, Tuple[str, ...]], select_f
     data, select_from_keys, preselection_keys, n_gram, ignore_symbols, n_jobs, maxtasksperchild, chunksize, batches)
 
   selector = FirstKeySelector()
-  greedy_iterator = GreedyIterator(
+  greedy_iterator = OptimizedGreedyIterator(
     data=all_data_counts,
     data_indices=OrderedSet(range(len(all_data_counts))),
     preselection=summed_preselection_counts,
@@ -87,9 +82,11 @@ def greedy_uniform_ngrams_epochs_perf(data: Dict[int, Tuple[str, ...]], select_f
 
   result = OrderedSet()
   with tqdm(total=epochs, desc="Selected epochs", ncols=200, unit="ep") as progress_bar:
-    for item in mapping_iterator:
-      result.append(item)
-      progress_bar.update(epoch_iterator.tqdm_update)
+    with tqdm(desc="Iterations", unit="it") as progress_bar_iterations:
+      for item in mapping_iterator:
+        result.add(item)
+        progress_bar.update(epoch_iterator.tqdm_update)
+        progress_bar_iterations.update()
 
   if not epoch_iterator.was_enough_data_available:
     logger.warning("Didn't had enough data!")

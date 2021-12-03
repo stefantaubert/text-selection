@@ -8,6 +8,7 @@ from text_selection.common.filter_durations import get_duration_keys
 from text_selection.common.mapping_iterator import MappingIterator
 from text_selection.random.random_iterator import RandomIterator
 from text_selection.utils import DurationBoundary
+from tqdm import tqdm
 
 
 def random_seconds_perf(select_from_keys: OrderedSet[int], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, seed: int) -> None:
@@ -15,10 +16,8 @@ def random_seconds_perf(select_from_keys: OrderedSet[int], select_from_durations
 
   select_from_keys = get_duration_keys(select_from_durations_s, select_from_keys, duration_boundary)
 
-  select_from_keys_np = OrderedSet(range(len(select_from_keys)))
-
   kld_iterator = RandomIterator(
-    data_indices=select_from_keys_np,
+    data_indices=OrderedSet(range(len(select_from_keys))),
     seed=seed,
   )
 
@@ -32,10 +31,15 @@ def random_seconds_perf(select_from_keys: OrderedSet[int], select_from_durations
   key_index_mapping = {index: key for index, key in enumerate(select_from_keys)}
   mapping_iterator = MappingIterator(until_iterator, key_index_mapping)
 
-  result = OrderedSet(mapping_iterator)
+  result = OrderedSet()
+  with tqdm(total=round(seconds), desc="Selected duration", ncols=200, unit="s", position=1) as progress_bar_seconds:
+    with tqdm(desc="Iterations", unit="it", position=0) as progress_bar_iterations:
+      for item in mapping_iterator:
+        result.add(item)
+        progress_bar_seconds.update(round(until_iterator.tqdm_update))
+        progress_bar_iterations.update()
 
   if not until_iterator.was_enough_data_available:
-    logger.warning(
-      f"Aborted since no further data had been available!")
+    logger.warning("Didn't had enough data!")
 
   return result

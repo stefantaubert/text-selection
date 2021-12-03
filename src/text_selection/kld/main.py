@@ -5,8 +5,8 @@ import numpy as np
 from ordered_set import OrderedSet
 from text_selection.common.durations_iterator import UntilProxyIterator
 from text_selection.common.filter_durations import get_duration_keys
+from text_selection.common.helper import get_ngram_counts
 from text_selection.common.mapping_iterator import MappingIterator
-from text_selection.common.ngram_counts import get_ngram_counts
 from text_selection.kld.custom_kld_iterator import CustomKldIterator
 from text_selection.kld.kld_iterator import get_uniform_weights
 from text_selection.selection import FirstKeySelector
@@ -46,10 +46,10 @@ def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tup
 
   result = OrderedSet()
 
-  with tqdm(desc="Iterations", unit="it") as progress_bar_iterations:
-    with tqdm(total=round(seconds), desc="Selected duration", ncols=200, unit="s") as progress_bar_seconds:
+  with tqdm(total=round(seconds), desc="Selected duration", ncols=200, unit="s") as progress_bar_seconds:
+    with tqdm(desc="Iterations", unit="it") as progress_bar_iterations:
       for item in mapping_iterator:
-        result.append(item)
+        result.add(item)
         progress_bar_seconds.update(round(until_iterator.tqdm_update))
         progress_bar_iterations.update()
 

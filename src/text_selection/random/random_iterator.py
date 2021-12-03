@@ -7,6 +7,7 @@ from ordered_set import OrderedSet
 class RandomIterator(Iterator[int]):
   def __init__(self, data_indices: OrderedSet[int], seed: int) -> None:
     super().__init__()
+    assert isinstance(data_indices, OrderedSet)
     self.__available_data_keys_ordered = data_indices.copy()
     random.seed(seed)
 

@@ -3,7 +3,7 @@ from collections import Counter, OrderedDict
 from functools import partial
 from logging import getLogger
 from multiprocessing import Pool
-from typing import Dict, Generator, Iterable, Iterator, List, Optional
+from typing import Dict, Generator, Iterable, Iterator, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple
 
@@ -114,12 +114,12 @@ def generate_numerated_ngrams(ngrams: Iterable[NGram]) -> Generator[Tuple[NGram,
   return numerated_ngrams
 
 
-process_ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr] = None
+process_ngram_nr_to_ngram: Dict[NGram, NGramNr] = None
 process_data: OrderedDictType[int, Tuple[str, ...]] = None
 process_ngram_nrs: OrderedSet[NGramNr] = None
 
 
-def get_ngrams_counts_from_data_init_pool(data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr], ngram_nrs: OrderedSet[NGramNr]) -> None:
+def get_ngrams_counts_from_data_init_pool(data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[NGram, NGramNr], ngram_nrs: OrderedSet[NGramNr]) -> None:
   global process_data
   global process_ngram_nr_to_ngram
   global process_ngram_nrs
@@ -148,7 +148,7 @@ def get_ngram_counts_from_data_entry(index_key: Tuple[int, int], n: int) -> Tupl
   return index, result
 
 
-def get_ngram_counts_from_data_entry_core(key: int, n: int, data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr], all_ngram_nrs: OrderedSet[NGramNr]) -> np.ndarray:
+def get_ngram_counts_from_data_entry_core(key: int, n: int, data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[NGram, NGramNr], all_ngram_nrs: OrderedSet[NGramNr]) -> np.ndarray:
   assert key in data
   symbols = data[key]
 
@@ -179,7 +179,7 @@ def get_count_array(ngram_nrs: Iterable[NGramNr], target_symbols_ordered: Ordere
   return result
 
 
-def get_ngrams_generator(sentence_symbols: Tuple[str, ...], n: int) -> Generator[Tuple[str, ...], None, None]:
+def get_ngrams_generator(sentence_symbols: Tuple[str, ...], n: int) -> Generator[NGram, None, None]:
   assert n > 0
   result = (
     tuple(sentence_symbols[i:i + n])

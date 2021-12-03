@@ -29,11 +29,13 @@ class GreedyIterator(Iterator[int]):
     if len(self.__available_data_keys_ordered) == 0:
       raise StopIteration()
 
-    potential_keys = get_max_new_counts_keys(
+    potential_keys = get_keys_with_most_new(
       data=self.__data,
       keys=self.__available_data_keys_ordered,
       covered_counts=self.__covered_array,
     )
+
+    potential_keys = OrderedSet(potential_keys)
 
     if len(potential_keys) > 1:
       logger = getLogger(__name__)
@@ -53,31 +55,42 @@ class GreedyIterator(Iterator[int]):
     return selected_key
 
 
-def get_max_new_counts_keys(data: np.ndarray, keys: OrderedSet[int], covered_counts: np.ndarray) -> OrderedSet[int]:
+def get_keys_with_most_new(data: np.ndarray, keys: OrderedSet[int], covered_counts: np.ndarray) -> Iterator[int]:
   assert len(data.shape) == 2
   assert len(covered_counts.shape) == 1
   assert 0 < len(keys) <= len(data)
   data_subset: np.ndarray = data[keys]
-  uncovered_indices = np.flatnonzero(covered_counts == 0)
-  data_subset_uncovered_total_counts = data_subset[:, uncovered_indices]
+  max_indices = get_indices_with_most_new(data_subset, covered_counts)
   del data_subset
-  del uncovered_indices
-  indices = get_max_new_counts(data_subset_uncovered_total_counts)
-  del data_subset_uncovered_total_counts
-
-  mapped_indices = OrderedSet(keys[index] for index in indices)
-
+  mapped_indices = (keys[index] for index in max_indices)
   return mapped_indices
 
 
-def get_max_new_counts(data: np.ndarray) -> np.ndarray:
-  data_subset_amounts = data != 0
-  data_subset_uncovered_counts = np.sum(data_subset_amounts, axis=1)
-  del data_subset_amounts
-  _, max_indices = get_maximum_indices(data_subset_uncovered_counts)
+def get_indices_with_most_new(data: np.ndarray, covered_counts: np.ndarray) -> np.ndarray:
+  data_subset_uncovered = select_uncovered_columns(data, covered_counts)
+  uncovered_amounts = get_uncovered_amounts(data_subset_uncovered)
+  del data_subset_uncovered
+  _, max_indices = get_maximum_indices(uncovered_amounts)
   del _
-  del data_subset_uncovered_counts
+  del uncovered_amounts
   return max_indices
+
+
+def select_uncovered_columns(data: np.ndarray, covered_counts: np.ndarray) -> np.ndarray:
+  assert len(data.shape) == 2
+  assert len(covered_counts.shape) == 1
+  assert data.shape[1] == covered_counts.shape[0]
+  uncovered_indices = np.flatnonzero(covered_counts == 0)
+  data_subset_uncovered_total_counts = data[:, uncovered_indices]
+  del uncovered_indices
+  return data_subset_uncovered_total_counts
+
+
+def get_uncovered_amounts(data: np.ndarray) -> np.ndarray:
+  data_subset_amounts = data != 0
+  uncovered_amounts = np.sum(data_subset_amounts, axis=1)
+  del data_subset_amounts
+  return uncovered_amounts
 
 
 def get_maximum_indices(array: np.ndarray) -> Tuple[float, np.ndarray]:

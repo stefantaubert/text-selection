@@ -36,12 +36,12 @@ def test_none_zero__removes_nothing():
 
 def test_all_zero__removes_everything():
   result = get_empty_columns(
-    data=np.zeros(shape=(1, 1)),
+    data=np.array([[0]]),
     data_indices={0},
     preselection=np.zeros(shape=(1,)),
   )
 
-  np.testing.assert_array_equal(result, np.array([0, 1]))
+  np.testing.assert_array_equal(result, np.array([0]))
 
 
 def test_one_one_and_one_zero__removes_zero():

@@ -20,5 +20,23 @@ def test_update_is_correct():
 
   assert_updates = (1, 0, 1)
 
-  for item, assert_update in zip(it, assert_updates):
+  for _, assert_update in zip(it, assert_updates):
     assert it.tqdm_update == assert_update
+
+
+def test_returns_greedy_indices():
+  it = GreedyIterator(
+    data=np.array([[0, 1], [1, 1], [1, 0]]),
+    data_indices=OrderedSet([0, 1, 2]),
+    key_selector=FirstKeySelector(),
+    preselection=np.array([0, 0]),
+  )
+
+  it = EpochProxyIterator(
+    iterator=it,
+    epochs=2,
+  )
+
+  result = list(it)
+
+  assert result == [1, 0, 2]

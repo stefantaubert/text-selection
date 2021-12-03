@@ -68,7 +68,7 @@ class KldIterator(Iterator[int]):
     self.__available_data_keys_ordered.remove(selected_key)
     self._previous_kld = self.__current_kld
     self.__current_kld = min_div
-    
+
     return selected_key
 
 

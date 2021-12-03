@@ -11,7 +11,7 @@ from text_selection.utils import DurationBoundary
 from tqdm import tqdm
 
 
-def random_seconds_perf(select_from_keys: OrderedSet[int], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, seed: int) -> None:
+def random_seconds_perf(select_from_keys: OrderedSet[int], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, seed: int) -> OrderedSet[int]:
   logger = getLogger(__name__)
 
   select_from_keys = get_duration_keys(select_from_durations_s, select_from_keys, duration_boundary)

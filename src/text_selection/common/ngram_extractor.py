@@ -47,7 +47,7 @@ class NGramExtractor():
 
     logger.info(f"Calculating all possible {n_gram}-grams...")
     possible_ngrams = get_all_ngrams_iterator(target_symbols, n_gram)
-    nummerated_ngrams = generate_nummerated_ngrams(possible_ngrams)
+    nummerated_ngrams = generate_numerated_ngrams(possible_ngrams)
     self.__ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = OrderedDict(nummerated_ngrams)
     self.__all_ngram_nrs: OrderedSet[NGramNr] = OrderedSet(self.__ngram_nr_to_ngram.values())
     self.__all_ngrams: OrderedSet[NGram] = OrderedSet(self.__ngram_nr_to_ngram.keys())
@@ -109,37 +109,9 @@ def get_all_ngrams_iterator(symbols: OrderedSet[str], n_gram: int) -> Iterator[N
   return possible_ngrams
 
 
-def generate_nummerated_ngrams(ngrams: Iterable[NGram]) -> Generator[Tuple[NGram, int], None, None]:
-  nummerated_ngrams = ((k, i) for i, k in enumerate(ngrams))
-  return nummerated_ngrams
-
-
-def get_ngrams_counts_from_data(data: OrderedDictType[int, Tuple[str, ...]], keys: Set[int], n_gram: int, ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNrs], ngram_nrs: OrderedSet[NGramNr], n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> np.ndarray:
-  result = np.zeros(shape=(len(keys), len(ngram_nrs)), dtype=np.uint32)
-  if len(data) == 0:
-    return result
-
-  chunksize = get_chunksize(len(keys), n_jobs, chunksize, batches)
-  log_mp_params(n_jobs, chunksize, maxtasksperchild, len(keys))
-
-  method_proxy = partial(
-    get_ngram_counts_from_data_entry,
-    n=n_gram,
-  )
-
-  with Pool(
-      processes=n_jobs,
-      initializer=get_ngrams_counts_from_data_init_pool,
-      initargs=(data, ngram_nr_to_ngram, ngram_nrs),
-      maxtasksperchild=maxtasksperchild,
-    ) as pool:
-    with tqdm(total=len(keys)) as pbar:
-      iterator = pool.imap_unordered(method_proxy, enumerate(keys), chunksize=chunksize)
-      for index, counts in iterator:
-        result[index] = counts
-        pbar.update()
-
-  return result
+def generate_numerated_ngrams(ngrams: Iterable[NGram]) -> Generator[Tuple[NGram, int], None, None]:
+  numerated_ngrams = ((k, i) for i, k in enumerate(ngrams))
+  return numerated_ngrams
 
 
 process_ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr] = None
@@ -154,23 +126,6 @@ def get_ngrams_counts_from_data_init_pool(data: OrderedDictType[int, Tuple[str, 
   process_data = data
   process_ngram_nr_to_ngram = ngram_nr_to_ngram
   process_ngram_nrs = ngram_nrs
-
-
-def get_ngram_counts_from_data_entry_core(key: int, n: int, data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr], all_ngram_nrs: OrderedSet[NGramNr]) -> np.ndarray:
-  assert key in data
-  symbols = data[key]
-
-  ngram_nrs = (
-    ngram_nr_to_ngram[ngram]
-    for ngram in get_ngrams_generator(symbols, n)
-    if ngram in ngram_nr_to_ngram
-  )
-
-  result = get_count_array(ngram_nrs, all_ngram_nrs)
-  del symbols
-  del ngram_nrs
-
-  return result
 
 
 def get_ngram_counts_from_data_entry(index_key: Tuple[int, int], n: int) -> Tuple[int, np.ndarray]:
@@ -193,6 +148,23 @@ def get_ngram_counts_from_data_entry(index_key: Tuple[int, int], n: int) -> Tupl
   return index, result
 
 
+def get_ngram_counts_from_data_entry_core(key: int, n: int, data: OrderedDictType[int, Tuple[str, ...]], ngram_nr_to_ngram: Dict[Tuple[str, ...], NGramNr], all_ngram_nrs: OrderedSet[NGramNr]) -> np.ndarray:
+  assert key in data
+  symbols = data[key]
+
+  ngram_nrs = (
+    ngram_nr_to_ngram[ngram]
+    for ngram in get_ngrams_generator(symbols, n)
+    if ngram in ngram_nr_to_ngram
+  )
+
+  result = get_count_array(ngram_nrs, all_ngram_nrs)
+  del symbols
+  del ngram_nrs
+
+  return result
+
+
 def get_count_array(ngram_nrs: Iterable[NGramNr], target_symbols_ordered: OrderedSet[NGramNr]) -> np.ndarray:
   ngram_nr_counts = Counter(ngram_nrs)
   res_tuple = tuple(
@@ -207,11 +179,8 @@ def get_count_array(ngram_nrs: Iterable[NGramNr], target_symbols_ordered: Ordere
   return result
 
 
-def get_ngrams_generator(sentence_symbols: List[str], n: int) -> Generator[Tuple[str, ...], None, None]:
-  # TODO: import from text-utils
-  if n < 1:
-    raise Exception()
-
+def get_ngrams_generator(sentence_symbols: Tuple[str, ...], n: int) -> Generator[Tuple[str, ...], None, None]:
+  assert n > 0
   result = (
     tuple(sentence_symbols[i:i + n])
     for i in range(len(sentence_symbols) - n + 1)

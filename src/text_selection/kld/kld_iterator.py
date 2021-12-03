@@ -5,7 +5,6 @@ import numpy as np
 from ordered_set import OrderedSet
 from scipy import special
 from text_selection.selection import KeySelector
-from tqdm import tqdm
 
 
 def get_uniform_weights(count: int) -> np.ndarray:
@@ -36,7 +35,6 @@ class KldIterator(Iterator[int]):
       qk=get_distribution(weights, axis=0),
       axis=0,
     )
-    self._iteration_tqdm: tqdm = None
 
   def __iter__(self) -> Iterator[int]:
     return self
@@ -49,19 +47,8 @@ class KldIterator(Iterator[int]):
   def current_kld(self) -> float:
     return self.__current_kld
 
-  def close(self) -> None:
-    if self._iteration_tqdm is not None:
-      self._iteration_tqdm.close()
-      self._iteration_tqdm = None
-
   def __next__(self) -> int:
-    if self._iteration_tqdm is None:
-      self._iteration_tqdm = tqdm(total=len(self.__available_data_keys_ordered),
-                                  desc="KLD iterations", ncols=200, unit="it")
-
     if len(self.__available_data_keys_ordered) == 0:
-      self._iteration_tqdm.close()
-      self._iteration_tqdm = None
       raise StopIteration()
 
     min_div, potential_keys = get_minimum_kld_keys(
@@ -81,7 +68,7 @@ class KldIterator(Iterator[int]):
     self.__available_data_keys_ordered.remove(selected_key)
     self._previous_kld = self.__current_kld
     self.__current_kld = min_div
-    self._iteration_tqdm.update()
+    
     return selected_key
 
 

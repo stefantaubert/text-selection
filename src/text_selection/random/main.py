@@ -3,7 +3,7 @@ from typing import Dict
 
 import numpy as np
 from ordered_set import OrderedSet
-from text_selection.common.durations_iterator import UntilIterator
+from text_selection.common.durations_iterator import UntilProxyIterator
 from text_selection.common.filter_durations import get_duration_keys
 from text_selection.common.mapping_iterator import MappingIterator
 from text_selection.random.random_iterator import RandomIterator
@@ -23,7 +23,7 @@ def random_seconds_perf(select_from_keys: OrderedSet[int], select_from_durations
   )
 
   until_values = np.array([select_from_durations_s[key] for key in select_from_keys])
-  until_iterator = UntilIterator(
+  until_iterator = UntilProxyIterator(
     iterator=kld_iterator,
     until_values=until_values,
     until_value=seconds,

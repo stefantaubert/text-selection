@@ -4,7 +4,6 @@ from typing import Iterator, Tuple
 import numpy as np
 from ordered_set import OrderedSet
 from text_selection.selection import KeySelector
-from tqdm import tqdm
 
 
 class GreedyIterator(Iterator[int]):
@@ -13,7 +12,6 @@ class GreedyIterator(Iterator[int]):
     self.__data = data
     self.__key_selector = key_selector
     self.__available_data_keys_ordered = data_indices.copy()
-    self._iteration_tqdm: tqdm = None
     if np.any(preselection == 0, axis=0):
       self.__covered_array = preselection.copy()
     else:
@@ -23,23 +21,12 @@ class GreedyIterator(Iterator[int]):
   def __iter__(self) -> Iterator[int]:
     return self
 
-  def close(self) -> None:
-    if self._iteration_tqdm is not None:
-      self._iteration_tqdm.close()
-      self._iteration_tqdm = None
-
   @property
   def current_epoch(self) -> int:
     return self._current_epoch
 
   def __next__(self) -> int:
-    if self._iteration_tqdm is None:
-      self._iteration_tqdm = tqdm(total=len(self.__available_data_keys_ordered),
-                                  desc="Greedy iterations", ncols=200, unit="it")
-
     if len(self.__available_data_keys_ordered) == 0:
-      self._iteration_tqdm.close()
-      self._iteration_tqdm = None
       raise StopIteration()
 
     potential_keys = get_max_new_counts_keys(
@@ -57,12 +44,12 @@ class GreedyIterator(Iterator[int]):
     self.__covered_array += self.__data[selected_key]
     self.__available_data_keys_ordered.remove(selected_key)
 
-    if np.all(self.__covered_array > 0, axis=0):
+    covered_everything = np.all(self.__covered_array > 0, axis=0)
+    if covered_everything:
       # reset epoch
       self.__covered_array = np.zeros_like(self.__covered_array)
       self._current_epoch += 1
 
-    self._iteration_tqdm.update()
     return selected_key
 
 

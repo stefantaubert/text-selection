@@ -3,7 +3,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 from text_selection.app.io import FILE_EXTENSION, save_dataset
-from text_selection.core.types import Dataset, Subset
+from text_selection.core.types import Dataset, Subset, SubsetType
 
 
 def test_empty__creates_file():
@@ -19,9 +19,9 @@ def test_empty__creates_file():
 def test_non_empty__creates_file():
   tmp_dir = Path(mkdtemp())
   dataset = Dataset()
-  dataset.available = Subset((1, 3, 2))
-  dataset.ignored = Subset((4, 6, 5))
-  dataset.selected = Subset((7, 9, 8))
+  dataset[SubsetType.AVAILABLE] = Subset((1, 3, 2))
+  dataset[SubsetType.IGNORED] = Subset((4, 6, 5))
+  dataset[SubsetType.SELECTED] = Subset((7, 9, 8))
 
   save_dataset(tmp_dir, dataset, "test")
 
@@ -32,9 +32,9 @@ def test_non_empty__creates_file():
 def test_non_empty__overwrite__overwrites_file():
   tmp_dir = Path(mkdtemp())
   dataset = Dataset()
-  dataset.available = Subset((1, 3, 2))
-  dataset.ignored = Subset((4, 6, 5))
-  dataset.selected = Subset((7, 9, 8))
+  dataset[SubsetType.AVAILABLE] = Subset((1, 3, 2))
+  dataset[SubsetType.IGNORED] = Subset((4, 6, 5))
+  dataset[SubsetType.SELECTED] = Subset((7, 9, 8))
 
   (tmp_dir / f"test{FILE_EXTENSION}").write_bytes(b"123456")
   save_dataset(tmp_dir, dataset, "test")

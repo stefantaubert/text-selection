@@ -13,14 +13,14 @@ Selection = OrderedSet[DataId]
 Subset = Selection
 
 
-class Dataset():
-  def __init__(self) -> None:
-    self.ignored = Subset()
-    self.selected = Subset()
-    self.available = Subset()
-
-
 class SubsetType(enum.Enum):
   IGNORED = 0
   SELECTED = 1
   AVAILABLE = 2
+
+
+class Dataset(Dict[SubsetType, Subset]):
+  def __init__(self) -> None:
+    self[SubsetType.AVAILABLE] = Subset()
+    self[SubsetType.SELECTED] = Subset()
+    self[SubsetType.IGNORED] = Subset()

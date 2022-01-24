@@ -2,7 +2,7 @@
 from typing import Optional, Set
 
 from text_selection.common.ngram_extractor import NGram
-from text_selection.core.types import (DataIds, Dataset, DataSymbols,
+from text_selection_core.types import (DataIds, Dataset, DataSymbols,
                                        DataWeights, NGramSet, Subset,
                                        SubsetType, Weight)
 from text_utils import Symbol

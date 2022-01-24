@@ -1,0 +1,109 @@
+import argparse
+import logging
+from argparse import ArgumentParser
+from logging import getLogger
+from typing import Callable, Dict, Generator, Tuple
+
+from text_selection_app.datasets import get_dataset_creation_from_text_parser
+from text_selection_app.selection import get_first_selection_parser
+from text_selection_app.subset import get_subset_renaming_parser
+from text_selection_app.subsets import (get_subsets_creation_parser,
+                                        get_subsets_removal_parser)
+from text_selection_app.weights import get_uniform_weights_creation_parser
+
+__version__ = "0.0.1"
+
+INVOKE_HANDLER_VAR = "invoke_handler"
+
+
+Parsers = Generator[Tuple[str, str, Callable], None, None]
+
+
+def formatter(prog):
+  return argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=40)
+
+
+def get_selection_parsers() -> Parsers:
+  yield "fifo", "select entries FIFO-style", get_first_selection_parser
+
+
+def get_dataset_parsers() -> Parsers:
+  yield "create-from-text", "create dataset from text", get_dataset_creation_from_text_parser
+
+
+def get_weights_parsers() -> Parsers:
+  yield "create-uniform", "create uniform weights", get_uniform_weights_creation_parser
+
+
+def get_subset_parsers() -> Parsers:
+  yield "rename", "rename subsets", get_subset_renaming_parser
+
+
+def get_subsets_parsers() -> Parsers:
+  yield "add", "add subsets", get_subsets_creation_parser
+  yield "remove", "remove subsets", get_subsets_removal_parser
+
+
+def _init_parser():
+  main_parser = ArgumentParser(
+    formatter_class=formatter,
+    description="This program provides methods to select data.",
+  )
+  main_parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
+  subparsers = main_parser.add_subparsers(help="description")
+
+  parsers: Dict[str, Tuple[Parsers, str]] = {
+    "dataset": (get_dataset_parsers(), "dataset commands"),
+    "subsets": (get_subsets_parsers(), "subsets commands"),
+    "subset": (get_subset_parsers(), "subset commands"),
+    "weights": (get_weights_parsers(), "weights commands"),
+    "selection": (get_selection_parsers(), "selection commands"),
+  }
+
+  for parser_name, (methods, help_str) in parsers.items():
+    sub_parser = subparsers.add_parser(parser_name, help=help_str, formatter_class=formatter)
+    subparsers_of_subparser = sub_parser.add_subparsers()
+    for command, description, method in methods:
+      method_parser = subparsers_of_subparser.add_parser(
+        command, help=description, formatter_class=formatter)
+      method_parser.set_defaults(**{
+        INVOKE_HANDLER_VAR: method(method_parser),
+      })
+
+  return main_parser
+
+
+def configure_logger() -> None:
+  loglevel = logging.DEBUG if __debug__ else logging.INFO
+  main_logger = getLogger()
+  main_logger.setLevel(loglevel)
+  main_logger.manager.disable = logging.NOTSET
+  if len(main_logger.handlers) > 0:
+    console = main_logger.handlers[0]
+  else:
+    console = logging.StreamHandler()
+    main_logger.addHandler(console)
+
+  logging_formatter = logging.Formatter(
+    '[%(asctime)s.%(msecs)03d] (%(levelname)s) %(message)s',
+    '%Y/%m/%d %H:%M:%S',
+  )
+  console.setFormatter(logging_formatter)
+  console.setLevel(loglevel)
+
+
+def main():
+  configure_logger()
+  parser = _init_parser()
+  received_args = parser.parse_args()
+  params = vars(received_args)
+
+  if INVOKE_HANDLER_VAR in params:
+    invoke_handler: Callable[[ArgumentParser], None] = params.pop(INVOKE_HANDLER_VAR)
+    invoke_handler(received_args)
+  else:
+    parser.print_help()
+
+
+if __name__ == "__main__":
+  main()

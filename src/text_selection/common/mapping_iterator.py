@@ -1,4 +1,4 @@
-from typing import Dict, Iterator
+from typing import Dict, Generator, Iterable, Iterator
 
 
 class MappingIterator(Iterator[int]):
@@ -15,3 +15,10 @@ class MappingIterator(Iterator[int]):
     assert result in self.mapping
     mapped_result = self.mapping[result]
     return mapped_result
+
+
+def map_indices(iterator: Iterable[int], mapping: Dict[int, int]) -> Generator[int, None, None]:
+  for key in iterator:
+    assert key in mapping
+    mapped_key = mapping[key]
+    yield mapped_key

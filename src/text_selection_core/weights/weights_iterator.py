@@ -1,4 +1,4 @@
-from typing import Iterator, Union
+from typing import Iterator
 
 from text_selection_core.types import DataId, DataWeights, Weight
 

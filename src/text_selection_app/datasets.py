@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
-from shutil import rmtree
+from shutil import copy2, rmtree
 from typing import cast
 
 from text_selection_core.datasets import create_from_text
@@ -10,6 +10,7 @@ from text_selection_app.argparse_helper import (parse_codec,
                                                 parse_existing_file,
                                                 parse_non_empty_or_whitespace,
                                                 parse_path)
+from text_selection_app.helper import get_datasets
 from text_selection_app.io import (get_data_symbols_path, get_dataset_path,
                                    save_data_symbols, save_dataset)
 
@@ -58,3 +59,63 @@ def create_dataset_from_text_ns(ns: Namespace):
 
     save_dataset(get_dataset_path(data_folder), dataset)
     save_data_symbols(get_data_symbols_path(data_folder), data_symbols)
+
+
+def get_backup_parser(parser: ArgumentParser):
+  parser.description = f"This command creates a backup of the database."
+  parser.add_argument("directory", type=parse_path, metavar="directory",
+                      help="directory to write")
+  parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
+                      help="name of the backup", default="backup")
+  parser.add_argument("-o", "--overwrite", action="store_true",
+                      help="overwrite backup if it exists")
+  return backup_ns
+
+
+def backup_ns(ns: Namespace):
+  logger = getLogger(__name__)
+  logger.debug(ns)
+  root_folder = cast(Path, ns.directory)
+  datasets = get_datasets(root_folder)
+
+  for i, dataset_path in enumerate(datasets, start=1):
+    data_folder = dataset_path.parent
+    data_name = str(data_folder.relative_to(root_folder)
+                    ) if root_folder != data_folder else "root"
+    logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
+
+    backup_path = data_folder / cast(str, ns.name)
+    if backup_path.is_file() and not ns.overwrite:
+      logger.error("Backup already exist! Skipped.")
+      continue
+
+    copy2(dataset_path, backup_path)
+
+
+def get_restore_parser(parser: ArgumentParser):
+  parser.description = f"This command creates a backup of the database."
+  parser.add_argument("directory", type=parse_path, metavar="directory",
+                      help="directory to write")
+  parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
+                      help="name of the backup", default="backup")
+  return restore_ns
+
+
+def restore_ns(ns: Namespace):
+  logger = getLogger(__name__)
+  logger.debug(ns)
+  root_folder = cast(Path, ns.directory)
+  datasets = get_datasets(root_folder)
+
+  for i, dataset_path in enumerate(datasets, start=1):
+    data_folder = dataset_path.parent
+    data_name = str(data_folder.relative_to(root_folder)
+                    ) if root_folder != data_folder else "root"
+    logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
+
+    backup_path = data_folder / cast(str, ns.name)
+    if not backup_path.is_file():
+      logger.error("Backup does not exist! Skipped.")
+      continue
+
+    copy2(backup_path, dataset_path)

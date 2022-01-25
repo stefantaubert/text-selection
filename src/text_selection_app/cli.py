@@ -4,12 +4,19 @@ from argparse import ArgumentParser
 from logging import getLogger
 from typing import Callable, Dict, Generator, Tuple
 
-from text_selection_app.datasets import get_dataset_creation_from_text_parser
-from text_selection_app.selection import get_first_selection_parser
+from text_selection_app.datasets import (get_backup_parser,
+                                         get_dataset_creation_from_text_parser,
+                                         get_restore_parser)
+from text_selection_app.filtering import get_duplicate_selection_parser
+from text_selection_app.n_grams import get_n_grams_extraction_parser
+from text_selection_app.selection import get_fifo_selection_parser, get_greedy_selection_parser
 from text_selection_app.subset import get_subset_renaming_parser
 from text_selection_app.subsets import (get_subsets_creation_parser,
                                         get_subsets_removal_parser)
-from text_selection_app.weights import get_uniform_weights_creation_parser
+from text_selection_app.weights import (
+    get_symbol_count_weights_creation_parser,
+    get_uniform_weights_creation_parser, get_weights_division_parser,
+    get_word_count_weights_creation_parser)
 
 __version__ = "0.0.1"
 
@@ -24,15 +31,22 @@ def formatter(prog):
 
 
 def get_selection_parsers() -> Parsers:
-  yield "fifo", "select entries FIFO-style", get_first_selection_parser
+  yield "select-fifo", "select entries FIFO-style", get_fifo_selection_parser
+  yield "select-greedy", "select entries greedy-style", get_greedy_selection_parser
+  yield "filter-duplicates", "filter duplicates", get_duplicate_selection_parser
 
 
 def get_dataset_parsers() -> Parsers:
   yield "create-from-text", "create dataset from text", get_dataset_creation_from_text_parser
+  yield "backup", "backup dataset", get_backup_parser
+  yield "restore", "restore dataset", get_restore_parser
 
 
 def get_weights_parsers() -> Parsers:
   yield "create-uniform", "create uniform weights", get_uniform_weights_creation_parser
+  yield "create-word-count", "create weights from word count", get_word_count_weights_creation_parser
+  yield "create-symbol-count", "create weights from symbols count", get_symbol_count_weights_creation_parser
+  yield "divide", "divide weights", get_weights_division_parser
 
 
 def get_subset_parsers() -> Parsers:
@@ -42,6 +56,10 @@ def get_subset_parsers() -> Parsers:
 def get_subsets_parsers() -> Parsers:
   yield "add", "add subsets", get_subsets_creation_parser
   yield "remove", "remove subsets", get_subsets_removal_parser
+
+
+def get_ngrams_parsers() -> Parsers:
+  yield "create", "create n-grams", get_n_grams_extraction_parser
 
 
 def _init_parser():
@@ -58,6 +76,7 @@ def _init_parser():
     "subset": (get_subset_parsers(), "subset commands"),
     "weights": (get_weights_parsers(), "weights commands"),
     "selection": (get_selection_parsers(), "selection commands"),
+    "n-grams": (get_ngrams_parsers(), "n-grams commands"),
   }
 
   for parser_name, (methods, help_str) in parsers.items():

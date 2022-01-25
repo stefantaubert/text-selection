@@ -1,14 +1,5 @@
-from math import ceil
-from typing import Optional, Set
 
-from ordered_set import OrderedSet
-from text_selection.common.ngram_extractor import NGram
-from text_utils import Symbol
-
-from text_selection_core.types import (DataIds, Dataset, DataSymbols,
-                                       DataWeights, NGramSet, Percent, Subset,
-                                       Weight)
-from text_selection_core.weights.weights_iterator import WeightsIterator
+from text_selection_core.types import DataWeights, Percent, Subset, Weight
 
 
 def get_target_weights_from_percent(from_subset: Subset, to_subset: Subset, weights: DataWeights, target: Percent, target_incl_selection: bool) -> Weight:

@@ -39,32 +39,39 @@ class NGramExtractor():
     self.__n_gram = n_gram
 
     logger = getLogger(__name__)
-    logger.info(f"Collecting data symbols...")
+    logger.debug(f"Collecting data symbols...")
     data_symbols = get_unique_symbols(self.__data, consider_keys)
     target_symbols = OrderedSet(sorted(data_symbols))
     if ignore_symbols is not None:
       target_symbols -= ignore_symbols
 
-    logger.info(f"Calculating all possible {n_gram}-grams...")
+    logger.debug(f"Calculating all possible {n_gram}-grams...")
     possible_ngrams = get_all_ngrams_iterator(target_symbols, n_gram)
     nummerated_ngrams = generate_numerated_ngrams(possible_ngrams)
     self.__ngram_nr_to_ngram: OrderedDictType[NGram, NGramNr] = OrderedDict(nummerated_ngrams)
     self.__all_ngram_nrs: OrderedSet[NGramNr] = OrderedSet(self.__ngram_nr_to_ngram.values())
     self.__all_ngrams: OrderedSet[NGram] = OrderedSet(self.__ngram_nr_to_ngram.keys())
 
-    ngrams_str = [
-      f"\"{''.join(n_gram)}\"" for n_gram in self.__all_ngrams]
-
-    logger.info(
-      f"Obtained {len(self.__all_ngrams)} different {self.__n_gram}-gram(s): {', '.join(ngrams_str)}.")
+    log_top_n = 100
+    ngrams_str = sorted((
+      f"{''.join(n_gram).replace(' ', '␣')}" for n_gram in self.__all_ngrams[:log_top_n]
+    ))
+    logger.debug(
+      f"Obtained {len(self.__all_ngrams)} different {self.__n_gram}-gram(s): {' '.join(ngrams_str)} ...")
     self.__fitted = True
+
+  @property
+  def ngram_nr_to_ngram(self) -> OrderedDictType[NGram, NGramNr]:
+    assert self.__fitted
+    return self.__ngram_nr_to_ngram
 
   @property
   def fitted_ngrams(self) -> OrderedSet[NGram]:
     assert self.__fitted
     return self.__all_ngrams
 
-  def predict(self, keys: Set[int]) -> np.ndarray:
+  def predict(self, keys: OrderedSet[int]) -> np.ndarray:
+    assert isinstance(keys, OrderedSet)
     assert self.__fitted
     keys_are_subset_of_fitted_keys = keys.issubset(self.__consider_keys)
     assert keys_are_subset_of_fitted_keys
@@ -74,7 +81,7 @@ class NGramExtractor():
       return result
 
     logger = getLogger(__name__)
-    logger.info(f"Calculating {self.__n_gram}-grams...")
+    logger.debug(f"Calculating {self.__n_gram}-grams...")
 
     final_chunksize = get_chunksize(len(keys), self.__n_jobs, self.__chunksize, self.__batches)
     log_mp_params(self.__n_jobs, final_chunksize, self.__maxtasksperchild, len(keys))

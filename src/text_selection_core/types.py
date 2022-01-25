@@ -1,13 +1,14 @@
-from typing import Dict, Iterable, Union
+from typing import Dict, Generator, Iterable, Union
 
 import numpy as np
 from ordered_set import OrderedSet
-from text_selection.common.ngram_extractor import NGram
-from text_utils import SymbolsString
+from text_selection.common.ngram_extractor import NGram, NGramNr
+from text_utils import StringFormat, Symbols, SymbolsString
 
 DataId = int
 DataIds = OrderedSet[DataId]
-DataSymbols = Dict[DataId, SymbolsString]
+Item = SymbolsString
+DataSymbols = Dict[DataId, Item]
 Percent = float
 Weight = Union[float, int]
 DataWeights = Dict[DataId, Weight]
@@ -36,9 +37,27 @@ class Dataset(Dict[SubsetName, Subset]):
       source_subset.remove(data_id)
       target_subset.add(data_id)
 
+  def get_subsets_ids(self, subsets: OrderedSet[SubsetName]) -> Generator[DataId, None, None]:
+    from_subsets = (self[from_subset_name] for from_subset_name in subsets)
+    from_ids = (data_id for subset in from_subsets for data_id in subset)
+    return from_ids
+
 
 class NGramSet():
   def __init__(self) -> None:
     self.data: np.ndarray = None
-    self.data_ids: Dict[int, DataId] = None
-    self.n_grams = Dict[int, NGram]
+    self.data_ids_to_indices: Dict[int, DataId] = None
+    self.indices_to_data_ids: Dict[DataId, int] = None
+    self.n_grams = Dict[NGram, NGramNr]
+
+
+def item_to_text(item: Item) -> str:
+  symbols = StringFormat.SYMBOLS.convert_string_to_symbols(item)
+  text = StringFormat.TEXT.convert_symbols_to_string(symbols)
+  del symbols
+  return text
+
+
+def item_to_symbols(item: Item) -> Symbols:
+  symbols = StringFormat.SYMBOLS.convert_string_to_symbols(item)
+  return symbols

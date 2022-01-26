@@ -25,7 +25,7 @@ class SubsetAlreadyExistsError(ValidationError):
 
   @classmethod
   def validate(cls, dataset: Dataset, name: SubsetName):
-    if name in dataset:
+    if name in dataset.subsets:
       return cls(dataset, name)
     return None
 
@@ -49,7 +49,7 @@ class SubsetNotExistsError(ValidationError):
 
   @classmethod
   def validate(cls, dataset: Dataset, name: SubsetName):
-    if name not in dataset:
+    if name not in dataset.subsets:
       return cls(dataset, name)
     return None
 

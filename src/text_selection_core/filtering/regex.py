@@ -20,7 +20,7 @@ def select_regex_match(dataset: Dataset, from_subset_names: OrderedSet[SubsetNam
   if error := NonDivergentSubsetsError.validate_names(from_subset_names, to_subset_name):
     return error, False
 
-  from_subsets = (dataset[from_subset_name] for from_subset_name in from_subset_names)
+  from_subsets = (dataset.subsets[from_subset_name] for from_subset_name in from_subset_names)
   from_ids = (data_id for subset in from_subsets for data_id in subset)
   select_from = ((data_id, item_to_text(data_symbols[data_id])) for data_id in from_ids)
   re_pattern = re.compile(pattern)

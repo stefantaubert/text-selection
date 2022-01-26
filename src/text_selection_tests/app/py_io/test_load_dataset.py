@@ -39,9 +39,9 @@ def test_empty__contains_nothing():
 def test_non_empty__contains_values():
   tmp_dir = Path(mkdtemp())
   dataset = Dataset()
-  dataset[SubsetType.AVAILABLE] = Subset((1, 3, 2))
-  dataset[SubsetType.IGNORED] = Subset((4, 6, 5))
-  dataset[SubsetType.SELECTED] = Subset((7, 9, 8))
+  dataset.subsets[SubsetType.AVAILABLE] = Subset((1, 3, 2))
+  dataset.subsets[SubsetType.IGNORED] = Subset((4, 6, 5))
+  dataset.subsets[SubsetType.SELECTED] = Subset((7, 9, 8))
 
   save_dataset(tmp_dir, dataset, "test")
   result = load_dataset(tmp_dir, "test")

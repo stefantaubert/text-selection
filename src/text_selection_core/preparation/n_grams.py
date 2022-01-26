@@ -3,12 +3,12 @@ from typing import Optional, Set
 from ordered_set import OrderedSet
 from text_selection.common.ngram_extractor import NGram, NGramExtractor
 from text_selection_core.types import (Dataset, DataSymbols, NGramSet,
-                                       SubsetName, item_to_symbols)
+                                       SubsetName, get_subsets_ids, item_to_symbols)
 from text_utils import Symbol
 
 
 def get_n_grams(dataset: Dataset, subset_names: OrderedSet[SubsetName], symbols: DataSymbols, n_gram: NGram, ignore_symbols: Set[Symbol], most_common: float, least_common: float, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> NGramSet:
-  keys = OrderedSet(dataset.get_subsets_ids(subset_names))
+  keys = OrderedSet(get_subsets_ids(dataset, subset_names))
   data_symbols = {
     data_id: item_to_symbols(symbols[data_id])
     for data_id in keys

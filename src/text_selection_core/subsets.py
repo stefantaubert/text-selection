@@ -30,7 +30,7 @@ def add_subsets(dataset: Dataset, names: OrderedSet[SubsetName]) -> ExecutionRes
     return error, False
 
   for name in names:
-    dataset[name] = OrderedSet()
+    dataset.subsets[name] = OrderedSet()
 
   return None, True
 
@@ -55,6 +55,6 @@ def rename_subset(dataset: Dataset, name: SubsetName, new_name: SubsetName) -> O
   if error := SubsetAlreadyExistsError.validate(dataset, new_name):
     return error, False
 
-  dataset[new_name] = dataset.pop(name)
+  dataset.subsets[new_name] = dataset.pop(name)
 
   return None, True

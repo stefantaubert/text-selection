@@ -6,7 +6,7 @@ from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import (get_initial_weights,
                                         get_target_weights_from_percent)
 from text_selection_core.types import (DataId, DataIds, Dataset, DataWeights,
-                                       Subset, SubsetName, Weight)
+                                       Subset, SubsetName, Weight, get_subsets_ids)
 from text_selection_core.validation import (InvalidPercentualValueError,
                                             NonDivergentSubsetsError,
                                             SubsetNotExistsError,
@@ -33,8 +33,8 @@ def select_fifo(dataset: Dataset, from_subset_names: OrderedSet[SubsetName], to_
     if error := InvalidPercentualValueError.validate(target):
       return error, False
 
-  from_ids = OrderedSet(dataset.get_subsets_ids(from_subset_names))
-  to_subset = dataset[to_subset_name]
+  from_ids = OrderedSet(get_subsets_ids(dataset, from_subset_names))
+  to_subset = dataset.subsets[to_subset_name]
   assert len(from_ids.intersection(to_subset)) == 0
 
   initial_weights = get_initial_weights(to_subset, weights, target_incl_selection)

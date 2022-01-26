@@ -3,13 +3,14 @@ from typing import Iterable, Optional, Tuple
 from ordered_set import OrderedSet
 from text_utils import StringFormat
 
-from text_selection_core.types import Dataset, DataSymbols
+from text_selection_core.types import (Dataset, DataSymbols,
+                                       create_dataset_from_ids)
 from text_selection_core.validation import ValidationError
 
 
 def create_from_count(count: int, default_subset_name: str) -> Dataset:
   assert count > 0
-  result = Dataset(range(count), default_subset_name)
+  result = create_dataset_from_ids(range(count), default_subset_name)
   return result
 
 
@@ -23,5 +24,5 @@ def create_from_text(lines: Iterable[str], default_subset_name: str) -> Tuple[Op
 
   ids = OrderedSet(data_symbols.keys())
 
-  result = Dataset(ids, default_subset_name)
+  result = create_dataset_from_ids(ids, default_subset_name)
   return None, (result, data_symbols)

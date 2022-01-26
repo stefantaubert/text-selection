@@ -18,7 +18,7 @@ def generate_statistics(dataset: Dataset, symbols: Optional[DataSymbols], weight
   if len(weights) > 0:
     yield "Weights", get_weights_statistics(weights)
     for subset in get_subsets_ordered(dataset):
-      yield f"Weights {subset}", get_subset_weights_statistics(dataset[subset], weights)
+      yield f"Weights {subset}", get_subset_weights_statistics(dataset.subsets[subset], weights)
   if symbols is not None:
     yield "Symbols", get_symbols_statistics(dataset, symbols)
 
@@ -49,7 +49,7 @@ def get_symbols_statistics(dataset: Dataset, symbols_strs: DataSymbols):
   subset_contains_symbol: Dict[SubsetName, Counter] = {}
   subset_names = get_subsets_ordered(dataset)
   for subset_name in subset_names:
-    subset = dataset[subset_name]
+    subset = dataset.subsets[subset_name]
     subset_symbols_strs = (symbols_strs[data_id] for data_id in subset)
     #subset_symbols = set(get_all_symbols(subset_symbols_strs))
     #subset_matches = {symbol: "x" if symbol in subset_symbols else "-" for symbol in all_symbols}
@@ -92,12 +92,12 @@ def get_symbols_statistics(dataset: Dataset, symbols_strs: DataSymbols):
 def get_selection_statistics(dataset: Dataset):
   data = []
   for subset_name in get_subsets_ordered(dataset):
-    subset = dataset[subset_name]
+    subset = dataset.subsets[subset_name]
     data.append((
       subset_name,
       len(subset),
-      len(dataset.ids),
       len(dataset.ids) - len(subset),
+      len(dataset.ids),
       len(subset) / len(dataset.ids) * 100,
       (len(dataset.ids) - len(subset)) / len(dataset.ids) * 100,
     ))

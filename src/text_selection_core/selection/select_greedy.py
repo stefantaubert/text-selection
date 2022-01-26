@@ -11,7 +11,8 @@ from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import (get_initial_weights,
                                         get_target_weights_from_percent)
 from text_selection_core.types import (DataId, Dataset, DataWeights, NGramSet,
-                                       Subset, SubsetName, Weight)
+                                       Subset, SubsetName, Weight,
+                                       get_subsets_ids)
 from text_selection_core.validation import (InvalidPercentualValueError,
                                             NonDivergentSubsetsError,
                                             SubsetNotExistsError,
@@ -54,13 +55,13 @@ def select_greedy(dataset: Dataset, from_subset_names: OrderedSet[SubsetName], t
     if error := InvalidPercentualValueError.validate(target):
       return error, False
 
-  from_ids = OrderedSet(dataset.get_subsets_ids(from_subset_names))
+  from_ids = OrderedSet(get_subsets_ids(dataset, from_subset_names))
 
   if error := NGramsNotExistError.validate(n_grams, from_ids):
     return error, False
 
   select_from_indices = OrderedSet(map_indices(from_ids, n_grams.indices_to_data_ids))
-  to_subset = dataset[to_subset_name]
+  to_subset = dataset.subsets[to_subset_name]
 
   if consider_to_subset:
     if error := NGramsNotExistError.validate(n_grams, from_ids):

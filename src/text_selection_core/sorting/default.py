@@ -12,9 +12,9 @@ def sort_fifo_after_id(dataset: Dataset, subset_names: OrderedSet[SubsetName]) -
     return error, False
 
   for subset_name in subset_names:
-    subset = dataset[subset_name]
+    subset = dataset.subsets[subset_name]
     ordered_subset = OrderedSet(sorted(subset))
-    dataset[subset_name] = ordered_subset
+    dataset.subsets[subset_name] = ordered_subset
 
 
 def sort_fifo_after_original_position(dataset: Dataset, subset_names: OrderedSet[SubsetName]) -> ExecutionResult:
@@ -22,9 +22,9 @@ def sort_fifo_after_original_position(dataset: Dataset, subset_names: OrderedSet
     return error, False
 
   for subset_name in subset_names:
-    subset = dataset[subset_name]
+    subset = dataset.subsets[subset_name]
     result = OrderedSet(get_original_positions(subset, dataset.ids))
-    dataset[subset_name] = result
+    dataset.subsets[subset_name] = result
 
 
 def get_original_positions(subset: Subset, ids: DataIds) -> Iterator[DataId]:

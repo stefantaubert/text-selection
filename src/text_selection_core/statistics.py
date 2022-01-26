@@ -1,4 +1,5 @@
-from typing import Dict, Generator, Iterable, List, Tuple
+from collections import Counter
+from typing import Dict, Generator, Iterable, List, Optional, Tuple
 
 import numpy as np
 from ordered_set import OrderedSet
@@ -12,12 +13,14 @@ from text_selection_core.types import (Dataset, DataSymbols, DataWeights, Item,
 SPACE_DISPL = "␣"
 
 
-def generate_statistics(dataset: Dataset, symbols: DataSymbols, weights: List[Tuple[str, DataWeights]], n_grams: List[NGramSet]) -> Generator[Tuple[str, DataFrame], None, None]:
+def generate_statistics(dataset: Dataset, symbols: Optional[DataSymbols], weights: List[Tuple[str, DataWeights]], n_grams: List[Tuple[str, NGramSet]]) -> Generator[Tuple[str, DataFrame], None, None]:
   yield "Selection", get_selection_statistics(dataset)
-  yield "Symbols", get_symbols_statistics(dataset, symbols)
-  yield "Weights", get_weights_statistics(weights)
-  for subset in get_subsets_ordered(dataset):
-    yield f"Weights {subset}", get_subset_weights_statistics(dataset[subset], weights)
+  if len(weights) > 0:
+    yield "Weights", get_weights_statistics(weights)
+    for subset in get_subsets_ordered(dataset):
+      yield f"Weights {subset}", get_subset_weights_statistics(dataset[subset], weights)
+  if symbols is not None:
+    yield "Symbols", get_symbols_statistics(dataset, symbols)
 
 
 def get_subsets_ordered(dataset: Dataset) -> OrderedSet[str]:
@@ -39,43 +42,65 @@ def get_n_gram_statistics(dataset: Dataset, n_grams: List[NGramSet]):
 
 
 def get_symbols_statistics(dataset: Dataset, symbols_strs: DataSymbols):
-  data = []
-  all_symbols = set(get_all_symbols(symbols_strs))
-  all_symbols = {repr(symbol)[1:-1] if symbol != " " else SPACE_DISPL for symbol in all_symbols}
-  all_symbols = sorted(all_symbols)
   # TODO this as n_gram stats
-  columns = ["Symbols"]
+  data = []
+  all_symbols = OrderedSet(sorted(get_all_symbols(symbols_strs.values())))
 
-  contains_symbol: Dict[SubsetName, Generator[str, None, None]] = {}
-
-  for subset in get_subsets_ordered(dataset):
-    columns.append(subset)
+  subset_contains_symbol: Dict[SubsetName, Counter] = {}
+  subset_names = get_subsets_ordered(dataset)
+  for subset_name in subset_names:
+    subset = dataset[subset_name]
     subset_symbols_strs = (symbols_strs[data_id] for data_id in subset)
-    subset_symbols = set(get_all_symbols(subset_symbols_strs))
-    subset_matches = ("x" if symbol in subset_symbols else "-" for symbol in all_symbols)
-    contains_symbol[subset] = subset_matches
+    #subset_symbols = set(get_all_symbols(subset_symbols_strs))
+    #subset_matches = {symbol: "x" if symbol in subset_symbols else "-" for symbol in all_symbols}
+    subset_matches = Counter(get_all_symbols(subset_symbols_strs))
+    subset_contains_symbol[subset_name] = subset_matches
     # TODO add percent un-/covered as line
 
-  for symbol in all_symbols:
-    line = [symbol] + list(next(contains_symbol[k]) for k in contains_symbol)
-    data.append(line)
+  #total_symbol_count = sum(sum(counters.values()) for counters in subset_contains_symbol.values())
+  total_symbols_count = {
+    symbol: sum(counters[symbol] for counters in subset_contains_symbol.values())
+    for symbol in all_symbols
+  }
+  total_symbol_count = sum(total_symbols_count.values())
 
-  df = DataFrame(data, columns)
+  for symbol in all_symbols:
+    symbol_repr = repr(symbol)[1:-1] if symbol != " " else SPACE_DISPL
+    counts = list(subset_contains_symbol[subset][symbol]
+                  for subset in subset_contains_symbol)
+    if total_symbol_count == 0:
+      counts_percent_total = []
+    else:
+      counts_percent_total = list(count / total_symbol_count * 100 for count in counts)
+
+    if symbol not in total_symbols_count or total_symbols_count[symbol] == 0:
+      counts_percent_subset = []
+    else:
+      counts_percent_subset = list(count / total_symbols_count[symbol] * 100 for count in counts)
+
+    line = [symbol_repr, total_symbols_count[symbol]] + \
+        counts + counts_percent_total + counts_percent_subset
+    data.append(line)
+  arr = np.array(data)
+
+  df = DataFrame(arr, columns=["Symbol", "Tot"] + list(subset_names) +
+                 list(subset_names) + list(subset_names))
 
   return df
 
 
 def get_selection_statistics(dataset: Dataset):
   data = []
-  for subset in get_subsets_ordered(dataset):
-    data.append(
-      subset,
+  for subset_name in get_subsets_ordered(dataset):
+    subset = dataset[subset_name]
+    data.append((
+      subset_name,
       len(subset),
       len(dataset.ids),
       len(dataset.ids) - len(subset),
       len(subset) / len(dataset.ids) * 100,
       (len(dataset.ids) - len(subset)) / len(dataset.ids) * 100,
-    )
+    ))
 
   df = DataFrame(
     data,
@@ -92,26 +117,40 @@ def get_selection_statistics(dataset: Dataset):
   return df
 
 
+NOT_AVAIL_VAL = "-"
+
+
 def get_subset_weights_statistics(subset: Subset, weights: List[Tuple[str, DataWeights]]):
-  weights_df_data = []
+  data = []
   for weights_name, data_weights in weights:
     data_weights_total = sum(data_weights.values())
     subset_weights = list(data_weights[k] for k in subset)
     weights_sum = sum(subset_weights)
-    weights_df_data.append(
-      weights_name,
-      min(subset_weights),
-      np.mean(subset_weights),
-      np.median(subset_weights),
-      max(subset_weights),
+    values = [weights_name]
+    if len(subset_weights) == 0:
+      values += [NOT_AVAIL_VAL] * 4
+    else:
+      values.extend((
+        min(subset_weights),
+        np.mean(subset_weights),
+        np.median(subset_weights),
+        max(subset_weights),
+      ))
+    values.extend((
       weights_sum,
       data_weights_total - weights_sum,
       data_weights_total,
-      weights_sum / data_weights_total * 100,
-      (data_weights_total - weights_sum) / data_weights_total * 100,
-    )
+    ))
+    if data_weights_total == 0:
+      values += [NOT_AVAIL_VAL] * 2
+    else:
+      values.extend((
+        weights_sum / data_weights_total * 100,
+        (data_weights_total - weights_sum) / data_weights_total * 100,
+      ))
+    data.append(values)
 
-  weights_df = DataFrame(weights_df_data, columns=(
+  df = DataFrame(data, columns=(
     "Name",
     "Min",
     "Avg",
@@ -124,21 +163,21 @@ def get_subset_weights_statistics(subset: Subset, weights: List[Tuple[str, DataW
     "Rst %",
   ))
 
-  return weights_df
+  return df
 
 
 def get_weights_statistics(weights: List[Tuple[str, DataWeights]]):
   data = []
   for weights_name, data_weights in weights:
-    subset_weights = data_weights.values()
-    data.append(
+    subset_weights = list(data_weights.values())
+    data.append((
       weights_name,
       min(subset_weights),
       np.mean(subset_weights),
       np.median(subset_weights),
       max(subset_weights),
       sum(subset_weights),
-    )
+    ))
 
   df = DataFrame(
     data,

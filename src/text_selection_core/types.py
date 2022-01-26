@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Dict, Generator, Iterable, Union
 
 import numpy as np
@@ -19,8 +20,8 @@ SubsetName = str
 
 class Dataset(Dict[SubsetName, Subset]):
   def __init__(self, ids: DataIds, default_subset_name: SubsetName) -> None:
-    self.ids = ids.copy()
-    self[default_subset_name] = ids.copy()
+    self.ids = deepcopy(ids)
+    self[default_subset_name] = deepcopy(ids)
 
   def get_subset_from_id(self, data_id: DataId) -> Subset:
     assert data_id in self.ids

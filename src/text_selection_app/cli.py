@@ -9,7 +9,9 @@ from text_selection_app.datasets import (get_backup_parser,
                                          get_restore_parser)
 from text_selection_app.filtering import get_duplicate_selection_parser
 from text_selection_app.n_grams import get_n_grams_extraction_parser
-from text_selection_app.selection import get_fifo_selection_parser, get_greedy_selection_parser
+from text_selection_app.selection import (get_fifo_selection_parser,
+                                          get_greedy_selection_parser)
+from text_selection_app.statistics import get_statistics_generation_parser
 from text_selection_app.subset import get_subset_renaming_parser
 from text_selection_app.subsets import (get_subsets_creation_parser,
                                         get_subsets_removal_parser)
@@ -40,6 +42,7 @@ def get_dataset_parsers() -> Parsers:
   yield "create-from-text", "create dataset from text", get_dataset_creation_from_text_parser
   yield "backup", "backup dataset", get_backup_parser
   yield "restore", "restore dataset", get_restore_parser
+  yield "get-stats", "getting statistics", get_statistics_generation_parser
 
 
 def get_weights_parsers() -> Parsers:

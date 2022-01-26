@@ -6,7 +6,7 @@ from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import (get_initial_weights,
                                         get_target_weights_from_percent)
 from text_selection_core.types import (DataId, DataIds, Dataset, DataWeights,
-                                       Subset, SubsetName, Weight, get_subsets_ids)
+                                       Subset, SubsetName, Weight, get_subsets_ids, move_ids_to_subset)
 from text_selection_core.validation import (InvalidPercentualValueError,
                                             NonDivergentSubsetsError,
                                             SubsetNotExistsError,
@@ -50,7 +50,7 @@ def select_fifo(dataset: Dataset, from_subset_names: OrderedSet[SubsetName], to_
   if len(result) > 0:
     logger = getLogger(__name__)
     logger.debug(f"Selected {len(result)} Id's.")
-    dataset.move_ids_to_subset(result, to_subset_name)
+    move_ids_to_subset(dataset, result, to_subset_name)
     changed_anything = True
   return None, changed_anything
 

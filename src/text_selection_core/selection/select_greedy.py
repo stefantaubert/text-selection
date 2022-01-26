@@ -1,23 +1,24 @@
+from dataclasses import dataclass
 from logging import getLogger
-from typing import Iterable
+from typing import Iterable, Optional
 
 import numpy as np
 from ordered_set import OrderedSet
-from text_selection.common.mapping_iterator import MappingIterator, map_indices
+from text_selection.common.mapping_iterator import map_indices
 from text_selection.greedy.optimized_greedy_iterator import \
     OptimizedGreedyIterator
 from text_selection.selection import FirstKeySelector, SelectionMode
+from text_selection_core.common import (SelectionDefaultParameters,
+                                        WeightSelectionParameters,
+                                        validate_selection_default_parameters,
+                                        validate_weights_parameters)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import (get_initial_weights,
                                         get_target_weights_from_percent)
 from text_selection_core.types import (DataId, Dataset, DataWeights, NGramSet,
                                        Subset, SubsetName, Weight,
-                                       get_subsets_ids)
-from text_selection_core.validation import (InvalidPercentualValueError,
-                                            NonDivergentSubsetsError,
-                                            SubsetNotExistsError,
-                                            ValidationError,
-                                            WeightsDoNotContainAllKeysError)
+                                       get_subsets_ids, move_ids_to_subset)
+from text_selection_core.validation import ValidationError
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
 
@@ -38,66 +39,68 @@ class NGramsNotExistError(ValidationError):
     return f"Not all n-grams exist!"
 
 
-def select_greedy(dataset: Dataset, from_subset_names: OrderedSet[SubsetName], to_subset_name: SubsetName, n_grams: NGramSet, weights: DataWeights, target: Weight, target_incl_selection: bool, target_percent: bool, consider_to_subset: bool, id_selection: SelectionMode) -> ExecutionResult:
-  if error := SubsetNotExistsError.validate_names(dataset, from_subset_names):
+@dataclass()
+class GreedySelectionParameters():
+  n_grams: NGramSet
+  consider_to_subset: bool
+  id_selection: SelectionMode
+
+
+def select_greedy(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, weight_params: WeightSelectionParameters) -> ExecutionResult:
+  if error := validate_selection_default_parameters(default_params):
     return error, False
 
-  if error := SubsetNotExistsError.validate(dataset, to_subset_name):
+  if error := validate_weights_parameters(weight_params, default_params.dataset):
     return error, False
 
-  if error := NonDivergentSubsetsError.validate_names(from_subset_names, to_subset_name):
+  from_ids = OrderedSet(get_subsets_ids(default_params.dataset,
+                        default_params.from_subset_names))
+
+  if error := NGramsNotExistError.validate(params.n_grams, from_ids):
     return error, False
 
-  if error := WeightsDoNotContainAllKeysError.validate(dataset, weights):
-    return error, False
+  select_from_indices = OrderedSet(map_indices(
+    from_ids, params.n_grams.indices_to_data_ids))
+  to_subset = default_params.dataset.subsets[default_params.to_subset_name]
 
-  if target_percent:
-    if error := InvalidPercentualValueError.validate(target):
+  if params.consider_to_subset:
+    if error := NGramsNotExistError.validate(params.n_grams, from_ids):
       return error, False
 
-  from_ids = OrderedSet(get_subsets_ids(dataset, from_subset_names))
-
-  if error := NGramsNotExistError.validate(n_grams, from_ids):
-    return error, False
-
-  select_from_indices = OrderedSet(map_indices(from_ids, n_grams.indices_to_data_ids))
-  to_subset = dataset.subsets[to_subset_name]
-
-  if consider_to_subset:
-    if error := NGramsNotExistError.validate(n_grams, from_ids):
-      return error, False
-
-    preselection_indices = map_indices(to_subset, n_grams.indices_to_data_ids)
-    summed_preselection_counts = np.sum(n_grams.data[preselection_indices], axis=0)
+    preselection_indices = map_indices(to_subset, params.n_grams.indices_to_data_ids)
+    summed_preselection_counts = np.sum(params.n_grams.data[preselection_indices], axis=0)
   else:
-    summed_preselection_counts = np.zeros(n_grams.data.shape[1])
+    summed_preselection_counts = np.zeros(params.n_grams.data.shape[1])
 
-  if id_selection == SelectionMode.FIRST:
+  if params.id_selection == SelectionMode.FIRST:
     selector = FirstKeySelector()
   else:
     assert False
 
   iterator = OptimizedGreedyIterator(
-    data=n_grams.data,
+    data=params.n_grams.data,
     data_indices=select_from_indices,
     preselection=summed_preselection_counts,
     key_selector=selector,
   )
 
-  initial_weights = get_initial_weights(to_subset, weights, target_incl_selection)
+  initial_weights = get_initial_weights(
+    to_subset, weight_params.weights, weight_params.target_incl_selection)
 
-  if target_percent:
+  if weight_params.target_percent:
     target = get_target_weights_from_percent(
-        from_ids, to_subset, weights, target, target_incl_selection)
+        from_ids, to_subset, weight_params.weights, weight_params.target, weight_params.target_incl_selection)
 
-  weights_iterator = WeightsIterator(iterator, weights, target, initial_weights)
-  mapping_iterator = map_indices(weights_iterator, n_grams.data_ids_to_indices)
+  weights_iterator = WeightsIterator(iterator, weight_params.weights, target, initial_weights)
+  mapping_iterator = map_indices(weights_iterator, params.n_grams.data_ids_to_indices)
 
   result: Subset = OrderedSet(mapping_iterator)
   changed_anything = False
+
   if len(result) > 0:
     logger = getLogger(__name__)
     logger.debug(f"Selected {len(result)} Id's.")
-    dataset.move_ids_to_subset(result, to_subset_name)
+    move_ids_to_subset(default_params.dataset, result, default_params.to_subset_name)
     changed_anything = True
+
   return None, changed_anything

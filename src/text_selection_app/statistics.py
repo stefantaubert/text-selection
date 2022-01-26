@@ -71,7 +71,7 @@ def statistics_generation_ns(ns: Namespace) -> None:
       n_grams.append((n_grams_name, current_n_grams))
 
     dataset = load_dataset(dataset_path)
-
+    logger.debug("Generating statistics...")
     dfs = generate_statistics(dataset, symbols, weights, n_grams)
     stats_path = root_folder / "statistics.csv"
     header_indicator = "###"
@@ -79,6 +79,7 @@ def statistics_generation_ns(ns: Namespace) -> None:
       f.write(f"{header_indicator} Statistics {header_indicator}\n\n")
 
     for df_name, df in dfs:
+      logger.debug(f"Saving {df_name}...")
 
       with open(stats_path, mode="a") as f:
         f.write(f"{header_indicator} {df_name} {header_indicator}\n\n")

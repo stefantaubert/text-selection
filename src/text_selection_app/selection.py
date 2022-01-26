@@ -5,8 +5,11 @@ from pathlib import Path
 from typing import cast
 
 from text_selection.selection import SelectionMode
+from text_selection_core.common import (SelectionDefaultParameters,
+                                        WeightSelectionParameters)
 from text_selection_core.selection.fifo import select_fifo
-from text_selection_core.selection.select_greedy import select_greedy
+from text_selection_core.selection.select_greedy import (
+    GreedySelectionParameters, select_greedy)
 
 from text_selection_app.argparse_helper import (ConvertToOrderedSetAction,
                                                 parse_existing_directory,
@@ -125,8 +128,12 @@ def greedy_selection_ns(ns: Namespace):
     weights = load_data_weights(weights_path)
     n_grams = load_data_n_grams(n_grams_path)
 
-    error, changed_anything = select_greedy(dataset, ns.from_subsets, ns.to_subset, n_grams, weights,
-                                            ns.limit, ns.limit_include_already_selected, ns.limit_percent, ns.include_selected, SelectionMode.FIRST)
+    default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
+    params = GreedySelectionParameters(n_grams, ns.include_selected, SelectionMode.FIRST)
+    weights_params = WeightSelectionParameters(
+      weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
+
+    error, changed_anything = select_greedy(default_params, params, weights_params)
 
     success = error is None
 

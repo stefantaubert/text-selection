@@ -24,7 +24,7 @@ def generate_statistics(dataset: Dataset, symbols: Optional[DataSymbols], weight
 
 
 def get_subsets_ordered(dataset: Dataset) -> OrderedSet[str]:
-  return OrderedSet(sorted(dataset.keys()))
+  return OrderedSet(sorted(dataset.subsets.keys()))
 
 
 def get_all_symbols(items: Iterable[Item]) -> Generator[Symbol, None, None]:

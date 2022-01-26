@@ -22,7 +22,7 @@ def check_dataset_is_valid(dataset: Dataset) -> bool:
   if not isinstance(dataset.ids, OrderedSet):
     return False
 
-  if not len(dataset) > 0:
+  if not len(dataset.subsets) > 0:
     return False
 
   for key in dataset.subsets:

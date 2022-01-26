@@ -1,4 +1,3 @@
-
 from ordered_set import OrderedSet
 
 from text_selection_core.types import Dataset, DataWeights, SubsetName

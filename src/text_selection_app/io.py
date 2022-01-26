@@ -20,7 +20,10 @@ def get_dataset_path(directory: Path) -> Path:
 def load_dataset(path: Path) -> Dataset:
   logger = getLogger(__name__)
   logger.debug(f"Loading '{path}'...")
-  return cast(Dataset, load_obj(path))
+  result = cast(Dataset, load_obj(path))
+  logger.debug(f"Ok.")
+  return result
+
 
 
 def save_dataset(path: Path, dataset: Dataset) -> None:
@@ -28,6 +31,8 @@ def save_dataset(path: Path, dataset: Dataset) -> None:
   logger.debug(f"Saving '{path}'...")
   path.parent.mkdir(parents=True, exist_ok=True)
   save_obj(dataset, path)
+  logger.debug(f"Ok.")
+
 
 
 def get_data_symbols_path(directory: Path) -> Path:
@@ -37,7 +42,9 @@ def get_data_symbols_path(directory: Path) -> Path:
 def load_data_symbols(path: Path) -> DataSymbols:
   logger = getLogger(__name__)
   logger.debug(f"Loading '{path}'...")
-  return cast(DataSymbols, load_obj(path))
+  result = cast(DataSymbols, load_obj(path))
+  logger.debug(f"Ok.")
+  return result
 
 
 def save_data_symbols(path: Path, data_symbols: DataSymbols) -> None:
@@ -45,6 +52,7 @@ def save_data_symbols(path: Path, data_symbols: DataSymbols) -> None:
   logger.debug(f"Saving '{path}'...")
   path.parent.mkdir(parents=True, exist_ok=True)
   save_obj(data_symbols, path)
+  logger.debug(f"Ok.")
 
 
 def get_data_weights_path(directory: Path, name: str) -> Path:
@@ -54,7 +62,10 @@ def get_data_weights_path(directory: Path, name: str) -> Path:
 def load_data_weights(path: Path) -> DataWeights:
   logger = getLogger(__name__)
   logger.debug(f"Loading '{path}'...")
-  return cast(DataWeights, load_obj(path))
+  result = cast(DataWeights, load_obj(path))
+  logger.debug(f"Ok.")
+  return result
+
 
 
 def save_data_weights(path: Path, data_weights: DataWeights) -> None:
@@ -62,6 +73,8 @@ def save_data_weights(path: Path, data_weights: DataWeights) -> None:
   logger.debug(f"Saving '{path}'...")
   path.parent.mkdir(parents=True, exist_ok=True)
   save_obj(data_weights, path)
+  logger.debug(f"Ok.")
+
 
 
 def get_data_n_grams_path(directory: Path, name: str) -> Path:
@@ -71,7 +84,10 @@ def get_data_n_grams_path(directory: Path, name: str) -> Path:
 def load_data_n_grams(path: Path) -> NGramSet:
   logger = getLogger(__name__)
   logger.debug(f"Loading '{path}'...")
-  return cast(NGramSet, load_obj(path))
+  result = cast(NGramSet, load_obj(path))
+  logger.debug(f"Ok.")
+  return result
+
 
 
 def save_data_n_grams(path: Path, data_n_grams: NGramSet) -> None:
@@ -79,3 +95,5 @@ def save_data_n_grams(path: Path, data_n_grams: NGramSet) -> None:
   logger.debug(f"Saving '{path}'...")
   path.parent.mkdir(parents=True, exist_ok=True)
   save_obj(data_n_grams, path)
+  logger.debug(f"Ok.")
+

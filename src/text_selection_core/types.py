@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from copy import deepcopy
+from logging import getLogger
 from typing import Dict, Generator, Iterable
 from typing import OrderedDict as OrderedDictType
 from typing import Union
@@ -64,13 +65,18 @@ def create_dataset_from_ids(ids: DataIds, default_subset_name: SubsetName) -> Da
 
 
 def move_ids_to_subset(dataset: Dataset, ids: DataIds, target: SubsetName) -> None:
+  logger = getLogger(__name__)
+  logger.debug("Adjusting selection...")
   assert target in dataset.subsets
   target_subset = dataset.subsets[target]
-  target_subset |= ids
+  logger.debug("Update target...")
+  target_subset.update(ids)
 
+  logger.debug("Update subsets...")
   potential_subsets = (dataset.subsets[subset] for subset in dataset.subsets if subset != target)
   for subset in potential_subsets:
-    subset -= ids
+    subset.difference_update(ids)
+  logger.debug("Done.")
 
 
 def get_subsets_ids(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> Generator[DataId, None, None]:

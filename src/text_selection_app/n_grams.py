@@ -72,7 +72,8 @@ def n_grams_extraction_ns(ns: Namespace):
 
     dataset = load_dataset(dataset_path)
     symbols = load_data_symbols(symbols_path)
-
+    
+    logger.debug("Selecting...")
     n_grams = get_n_grams(
       dataset, ns.subsets, symbols, ns.n_gram, ns.ignore, None, None, ns.n_jobs, ns.maxtasksperchild, ns.chunksize)
 

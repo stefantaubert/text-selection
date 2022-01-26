@@ -5,7 +5,8 @@ from typing import Generator, Iterable, Tuple, TypeVar
 from ordered_set import OrderedSet
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.types import (Dataset, DataSymbols, Subset,
-                                       SubsetName, item_to_text)
+                                       SubsetName, item_to_text,
+                                       move_ids_to_subset)
 from text_selection_core.validation import (NonDivergentSubsetsError,
                                             SubsetNotExistsError)
 
@@ -30,7 +31,7 @@ def select_regex_match(dataset: Dataset, from_subset_names: OrderedSet[SubsetNam
   if len(result) > 0:
     logger = getLogger(__name__)
     logger.debug(f"Selected {len(result)} Id's.")
-    dataset.move_ids_to_subset(result, to_subset_name)
+    move_ids_to_subset(dataset, result, to_subset_name)
     changed_anything = True
   return None, changed_anything
 

@@ -3,8 +3,8 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 from ordered_set import OrderedSet
-from text_selection.app.io import load_dataset, save_dataset
-from text_selection.core.types import Dataset, Subset, SubsetType
+from text_selection_app.io import load_dataset, save_dataset
+from text_selection_core.types import Dataset, Subset
 
 
 def test_empty__is_dataset_and_ordered_set():

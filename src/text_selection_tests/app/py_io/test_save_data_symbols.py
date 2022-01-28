@@ -2,8 +2,8 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 
-from text_selection.app.io import DATA_SYMBOLS_NAME, FILE_EXTENSION, save_data_symbols
-from text_selection.core.types import DataSymbols
+from text_selection_app.io import DATA_SYMBOLS_NAME, FILE_EXTENSION, save_data_symbols
+from text_selection_core.types import DataSymbols
 
 
 def test_empty__creates_file():

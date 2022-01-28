@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Iterable, Optional
+from typing import Iterable
 
 import numpy as np
 from ordered_set import OrderedSet
 from text_selection.common.mapping_iterator import map_indices
+from text_selection.greedy.greedy_epoch_iterator import EpochProxyIterator
 from text_selection.greedy.optimized_greedy_iterator import \
     OptimizedGreedyIterator
 from text_selection.selection import FirstKeySelector, SelectionMode
@@ -15,8 +16,7 @@ from text_selection_core.common import (SelectionDefaultParameters,
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import (get_initial_weights,
                                         get_target_weights_from_percent)
-from text_selection_core.types import (DataId, Dataset, DataWeights, NGramSet,
-                                       Subset, SubsetName, Weight,
+from text_selection_core.types import (DataId, NGramSet, Subset,
                                        get_subsets_ids, move_ids_to_subset)
 from text_selection_core.validation import ValidationError
 from text_selection_core.weights.weights_iterator import WeightsIterator
@@ -72,10 +72,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
   else:
     summed_preselection_counts = np.zeros(params.n_grams.data.shape[1])
 
-  if params.id_selection == SelectionMode.FIRST:
-    selector = FirstKeySelector()
-  else:
-    assert False
+  selector = get_selector(params.id_selection)
 
   iterator = OptimizedGreedyIterator(
     data=params.n_grams.data,
@@ -88,10 +85,11 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
     to_subset, weight_params.weights, weight_params.target_incl_selection)
 
   if weight_params.target_percent:
-    target = get_target_weights_from_percent(
+    weight_params.target = get_target_weights_from_percent(
         from_ids, to_subset, weight_params.weights, weight_params.target, weight_params.target_incl_selection)
 
-  weights_iterator = WeightsIterator(iterator, weight_params.weights, target, initial_weights)
+  weights_iterator = WeightsIterator(
+    iterator, weight_params.weights, weight_params.target, initial_weights)
   mapping_iterator = map_indices(weights_iterator, params.n_grams.data_ids_to_indices)
 
   result: Subset = OrderedSet(mapping_iterator)
@@ -104,3 +102,60 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
     changed_anything = True
 
   return None, changed_anything
+
+
+def select_greedy_epochs(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, epochs: int) -> ExecutionResult:
+  assert epochs > 0
+
+  if error := validate_selection_default_parameters(default_params):
+    return error, False
+
+  from_ids = OrderedSet(get_subsets_ids(default_params.dataset,
+                        default_params.from_subset_names))
+
+  if error := NGramsNotExistError.validate(params.n_grams, from_ids):
+    return error, False
+
+  select_from_indices = OrderedSet(map_indices(
+    from_ids, params.n_grams.indices_to_data_ids))
+  to_subset = default_params.dataset.subsets[default_params.to_subset_name]
+
+  if params.consider_to_subset:
+    if error := NGramsNotExistError.validate(params.n_grams, from_ids):
+      return error, False
+
+    preselection_indices = map_indices(to_subset, params.n_grams.indices_to_data_ids)
+    summed_preselection_counts = np.sum(params.n_grams.data[preselection_indices], axis=0)
+  else:
+    summed_preselection_counts = np.zeros(params.n_grams.data.shape[1])
+
+  selector = get_selector(params.id_selection)
+
+  iterator = OptimizedGreedyIterator(
+    data=params.n_grams.data,
+    data_indices=select_from_indices,
+    preselection=summed_preselection_counts,
+    key_selector=selector,
+  )
+
+  weights_iterator = EpochProxyIterator(iterator, epochs)
+  mapping_iterator = map_indices(weights_iterator, params.n_grams.data_ids_to_indices)
+
+  result: Subset = OrderedSet(mapping_iterator)
+  changed_anything = False
+
+  if len(result) > 0:
+    logger = getLogger(__name__)
+    logger.debug(f"Selected {len(result)} Id's.")
+    move_ids_to_subset(default_params.dataset, result, default_params.to_subset_name)
+    changed_anything = True
+
+  return None, changed_anything
+
+
+def get_selector(mode: SelectionMode):
+  if mode == SelectionMode.FIRST:
+    selector = FirstKeySelector()
+    return selector
+  else:
+    assert False

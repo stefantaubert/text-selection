@@ -27,6 +27,7 @@ tqdm = "*"
 numpy = "*"
 sklearn = "*"
 pandas = "*"
+pyenchant = "*"
 
 [requires]
 python_version = "3.9"

@@ -29,13 +29,15 @@ class NGramExtractor2():
     self.__all_ngram_nrs: OrderedSet[NGramNr] = None
     self.__all_ngrams: OrderedSet[NGram] = None
 
-  def fit(self, data: Iterable[Symbols], n_gram: int, ignore_symbols: Set[Symbol]) -> None:
+  def fit(self, data: Iterable[Symbols], data_len: int, n_gram: int, ignore_symbols: Set[Symbol]) -> None:
     self.__n_gram = n_gram
 
     logger = getLogger(__name__)
     logger.debug(f"Collecting data symbols...")
-    data_symbols = get_all_symbols(data)
-    target_symbols = OrderedSet(sorted(set(data_symbols)))
+
+    data_symbols = self.get_symbols(data, data_len)
+
+    target_symbols = OrderedSet(sorted(data_symbols))
     target_symbols.difference_update(ignore_symbols)
 
     logger.debug(f"Calculating all possible {n_gram}-grams...")
@@ -94,14 +96,32 @@ class NGramExtractor2():
 
     return result
 
+  def get_symbols(self, data: Iterable[Symbols], data_len: int) -> Set[Symbol]:
+    result = set()
+    if data_len == 0:
+      return result
 
-def get_all_symbols(data: Iterator[Symbols]) -> Generator[Symbol, None, None]:
-  occurring_symbols = (
-    symbol
-    for sentence in data
-    for symbol in sentence
-  )
-  return occurring_symbols
+    logger = getLogger(__name__)
+    logger.debug(f"Calculating symbol...")
+
+    log_mp_params(self.__n_jobs, self.__chunksize, self.__maxtasksperchild, data_len)
+
+    with Pool(
+        processes=self.__n_jobs,
+        maxtasksperchild=self.__maxtasksperchild,
+      ) as pool:
+      with tqdm(total=data_len, desc="Symbol detection") as pbar:
+        iterator = pool.imap_unordered(get_symbols_from_item, data, chunksize=self.__chunksize)
+        for unique_symbols in iterator:
+          result.update(unique_symbols)
+          pbar.update()
+
+    return result
+
+
+def get_symbols_from_item(item: Symbols) -> Set[Symbol]:
+  result = set(item)
+  return result
 
 
 def get_all_ngrams_iterator(symbols: OrderedSet[str], n_gram: int) -> Iterator[NGram]:

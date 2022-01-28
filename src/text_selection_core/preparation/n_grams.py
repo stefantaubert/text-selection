@@ -23,7 +23,7 @@ def get_n_grams(dataset: Dataset, subset_names: OrderedSet[SubsetName], symbols:
     for data_id in keys
   )
 
-  ngram_extractor.fit(data_symbols, n_gram, ignore_symbols)
+  ngram_extractor.fit(data_symbols, len(keys), n_gram, ignore_symbols)
 
   logger.debug("Predicting...")
   data_symbols = (

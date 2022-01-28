@@ -13,7 +13,9 @@ from text_utils import StringFormat, Symbols, SymbolsString
 DataId = int
 DataIds = OrderedSet[DataId]
 Item = SymbolsString
+# TODO as list of tuple[int]
 DataSymbols = Dict[DataId, Item]
+
 Percent = float
 Weight = Union[float, int]
 DataWeights = Dict[DataId, Weight]

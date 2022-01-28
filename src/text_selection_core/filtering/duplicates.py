@@ -3,7 +3,9 @@ from typing import Generator, Iterable, Tuple, TypeVar
 
 from ordered_set import OrderedSet
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import Dataset, DataSymbols, Subset, SubsetName, get_subsets_ids, move_ids_to_subset
+from text_selection_core.types import (Dataset, DataSymbols, Subset,
+                                       SubsetName, get_subsets_ids,
+                                       move_ids_to_subset)
 from text_selection_core.validation import (NonDivergentSubsetsError,
                                             SubsetNotExistsError)
 

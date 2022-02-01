@@ -179,7 +179,10 @@ def get_filtered_ngrams(data: OrderedDictType[_T1, List[str]], n_gram: int, igno
 
       logger.info(
           f"Removed {occurring_ngrams_count - new_occurring_ngrams_count} unique {n_gram}-gram(s).")
-
+      logger.info(
+        f"Remaining symbols: {' '.join(sorted(occurring_symbols.difference(occuring_ignore_symbols)))}")
+    else:
+      logger.info("Didn't ignoring any symbols.")
   return available_ngrams
 
 

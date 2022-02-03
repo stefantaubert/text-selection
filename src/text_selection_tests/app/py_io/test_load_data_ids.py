@@ -3,7 +3,7 @@
 # from tempfile import mkdtemp
 
 # from ordered_set import OrderedSet
-# from text_selection_app.io import load_data_ids, save_data_ids
+# from text_selection_app.io_handling import load_data_ids, save_data_ids
 # from text_selection_core.types import DataIds
 
 
@@ -38,4 +38,3 @@
 #   rmtree(tmp_dir)
 
 #   assert result == DataIds((1, 4, 2, 0, 7))
-

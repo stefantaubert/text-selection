@@ -31,8 +31,7 @@ def get_all_symbols(items: Iterable[Item]) -> Generator[Symbol, None, None]:
   result = (
     symbol
     for item in items
-    for symbols in item_to_symbols(item)
-    for symbol in symbols
+    for symbol in item_to_symbols(item)
   )
   return result
 

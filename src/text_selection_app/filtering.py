@@ -2,17 +2,17 @@ from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
 from typing import cast
+from text_selection_core.common import SelectionDefaultParameters
 
-from text_selection_core.filtering.duplicates import select_duplicates
-from text_selection_core.filtering.regex import select_regex_match
-
+from text_selection_core.filtering.duplicates_filter import filter_duplicates
+from text_selection_core.filtering.regex_filter import filter_regex_pattern
 from text_selection_app.argparse_helper import (ConvertToOrderedSetAction,
                                                 parse_existing_directory,
                                                 parse_non_empty_or_whitespace)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io import (get_data_symbols_path, get_dataset_path,
-                                   load_data_symbols, load_dataset,
-                                   save_dataset)
+from text_selection_app.io_handling import (get_data_symbols_path, get_dataset_path,
+                                            load_data_symbols, load_dataset,
+                                            save_dataset)
 
 
 def get_duplicate_selection_parser(parser: ArgumentParser):
@@ -47,7 +47,8 @@ def select_duplicates_ns(ns: Namespace):
     dataset = load_dataset(dataset_path)
     symbols = load_data_symbols(symbols_path)
 
-    error, changed_anything = select_duplicates(dataset, ns.from_subsets, ns.to_subset, symbols)
+    default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
+    error, changed_anything = filter_duplicates(default_params, symbols)
 
     success = error is None
 
@@ -96,8 +97,8 @@ def regex_match_selection(ns: Namespace):
     dataset = load_dataset(dataset_path)
     symbols = load_data_symbols(symbols_path)
 
-    error, changed_anything = select_regex_match(
-      dataset, ns.from_subsets, ns.to_subset, symbols, ns.pattern)
+    default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
+    error, changed_anything = filter_regex_pattern(default_params, symbols, ns.pattern)
 
     success = error is None
 

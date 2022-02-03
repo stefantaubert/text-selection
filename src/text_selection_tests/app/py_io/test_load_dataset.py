@@ -3,7 +3,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 from ordered_set import OrderedSet
-from text_selection_app.io import load_dataset, save_dataset
+from text_selection_app.io_handling import load_dataset, save_dataset
 from text_selection_core.types import Dataset, Subset
 
 

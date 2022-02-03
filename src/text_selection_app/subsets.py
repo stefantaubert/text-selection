@@ -10,7 +10,7 @@ from text_selection_app.argparse_helper import (ConvertToOrderedSetAction,
                                                 parse_existing_directory,
                                                 parse_non_empty_or_whitespace)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io import get_dataset_path, load_dataset, save_dataset
+from text_selection_app.io_handling import get_dataset_path, load_dataset, save_dataset
 
 
 def get_subsets_creation_parser(parser: ArgumentParser):

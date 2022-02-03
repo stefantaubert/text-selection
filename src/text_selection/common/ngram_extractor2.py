@@ -88,8 +88,9 @@ class NGramExtractor2():
         initargs=(self.__ngram_nr_to_ngram, self.__all_ngram_nrs),
         maxtasksperchild=self.__maxtasksperchild,
       ) as pool:
+
+      iterator = pool.imap_unordered(method_proxy, enumerate(data), chunksize=self.__chunksize)
       with tqdm(total=data_len, desc="N-gram prediction") as pbar:
-        iterator = pool.imap_unordered(method_proxy, enumerate(data), chunksize=self.__chunksize)
         for index, counts in iterator:
           result[index] = counts
           pbar.update()
@@ -110,8 +111,8 @@ class NGramExtractor2():
         processes=self.__n_jobs,
         maxtasksperchild=self.__maxtasksperchild,
       ) as pool:
+      iterator = pool.imap_unordered(get_symbols_from_item, data, chunksize=self.__chunksize)
       with tqdm(total=data_len, desc="Symbol detection") as pbar:
-        iterator = pool.imap_unordered(get_symbols_from_item, data, chunksize=self.__chunksize)
         for unique_symbols in iterator:
           result.update(unique_symbols)
           pbar.update()

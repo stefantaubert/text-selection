@@ -2,7 +2,7 @@ from logging import getLogger
 from typing import Iterator, Literal, Union
 
 from ordered_set import OrderedSet
-from text_selection_core.common import (SelectionDefaultParameters,
+from text_selection_core.common import (SelectionDefaultParameters, WeightSelectionParameters,
                                         validate_selection_default_parameters,
                                         validate_weights_parameters)
 from text_selection_core.filtering.weights_filter import \
@@ -15,12 +15,12 @@ from text_selection_core.types import (DataId, DataIds, Subset,
                                        get_subsets_ids, move_ids_to_subset)
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
-original_mode = Literal["original"]
-subset_mode = Literal["subset"]
-id_mode = Literal["id"]
+original_mode = "original"
+subset_mode = "subset"
+id_mode = "id"
 
 
-def select_fifo(default_params: SelectionDefaultParameters, weight_params: WeightsFilterParameters, mode: Union[original_mode, subset_mode, id_mode]) -> ExecutionResult:
+def select_fifo(default_params: SelectionDefaultParameters, weight_params: WeightSelectionParameters, mode: Literal["original", "subset", "id"]) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error, False
 

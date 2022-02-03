@@ -1,8 +1,10 @@
+import re
+import sys
 import argparse
 import logging
 from argparse import ArgumentParser
 from logging import getLogger
-from typing import Callable, Dict, Generator, Tuple
+from typing import Callable, Dict, Generator, List, Tuple
 
 from text_selection_app.datasets import (get_backup_parser,
                                          get_dataset_creation_from_text_parser,
@@ -10,7 +12,7 @@ from text_selection_app.datasets import (get_backup_parser,
 from text_selection_app.filtering import get_duplicate_selection_parser
 from text_selection_app.n_grams import get_n_grams_extraction_parser
 from text_selection_app.selection import (get_fifo_selection_parser,
-                                          get_greedy_selection_parser)
+                                          get_greedy_selection_parser, get_kld_selection_parser)
 from text_selection_app.statistics import get_statistics_generation_parser
 from text_selection_app.subset import get_subset_renaming_parser
 from text_selection_app.subsets import (get_subsets_creation_parser,
@@ -35,6 +37,7 @@ def formatter(prog):
 def get_selection_parsers() -> Parsers:
   yield "select-fifo", "select entries FIFO-style", get_fifo_selection_parser
   yield "select-greedy", "select entries greedy-style", get_greedy_selection_parser
+  yield "select-kld", "select entries kld-style", get_kld_selection_parser
   yield "filter-duplicates", "filter duplicates", get_duplicate_selection_parser
 
 
@@ -114,10 +117,18 @@ def configure_logger() -> None:
   console.setLevel(loglevel)
 
 
-def main():
+def parse_args_str(args: str):
+  args = re.sub(r"\s+", " ", args)
+  args = args.split(" ")
+  args = [x.strip("\"").strip("\'") for x in args]
+
+  parse_args(args)
+
+
+def parse_args(args: List[str]):
   configure_logger()
   parser = _init_parser()
-  received_args = parser.parse_args()
+  received_args = parser.parse_args(args)
   params = vars(received_args)
 
   if INVOKE_HANDLER_VAR in params:
@@ -128,4 +139,5 @@ def main():
 
 
 if __name__ == "__main__":
-  main()
+  args = sys.argv[1:]
+  parse_args(args)

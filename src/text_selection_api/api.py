@@ -1,18 +1,14 @@
+from text_utils import StringFormat
 from pathlib import Path
-from typing import Dict, Iterable, Optional
+from typing import Dict, Optional
 
 from ordered_set import OrderedSet
-from text_selection_core.subsets import add_subsets
+from text_selection_app.io_handling import (get_data_symbols_path,
+                                            get_data_weights_path, get_dataset_path,
+                                            load_dataset, save_data_symbols,
+                                            save_data_weights, save_dataset)
 from text_selection_core.types import (Dataset, DataSymbols, DataWeights,
                                        Subset, SubsetName)
-from text_selection_core.weights.calculation import get_uniform_weights
-
-from text_selection_app.io import (get_data_symbols_path,
-                                   get_data_weights_path, get_dataset_path,
-                                   load_data_n_grams, load_data_symbols,
-                                   load_data_weights, load_dataset,
-                                   save_data_n_grams, save_data_symbols,
-                                   save_data_weights, save_dataset)
 
 
 def check_dataset_is_valid(dataset: Dataset) -> bool:
@@ -51,6 +47,34 @@ def check_dataset_is_valid(dataset: Dataset) -> bool:
   return True
 
 
+def check_symbols_are_valid(symbols: DataSymbols) -> bool:
+  if not isinstance(symbols, dict):
+    return False
+
+  for k, v in symbols.items():
+    if not isinstance(k, int):
+      return False
+    if not isinstance(v, str):
+      return False
+    if not StringFormat.SYMBOLS.can_convert_string_to_symbols(v):
+      return False
+  return True
+
+
+def check_weights_are_valid(weights: DataWeights) -> bool:
+  if not isinstance(weights, dict):
+    return False
+
+  for k, v in weights.items():
+    if not isinstance(k, int):
+      return False
+    if not (isinstance(v, int) or isinstance(v, float)):
+      return False
+    if v < 0:
+      return False
+  return True
+
+
 def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], symbols: Optional[DataSymbols], overwrite: bool) -> None:
   dataset_path = get_dataset_path(directory)
   if not overwrite and dataset_path.exists():
@@ -62,6 +86,9 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
   save_dataset(dataset_path, dataset)
 
   for weight_name, data_weights in weights.items():
+    if not check_weights_are_valid(data_weights):
+      raise ValueError(f"Weights '{weight_name}' have the wrong format!")
+
     weights_path = get_data_weights_path(directory, weight_name)
     if weights_path.exists() and not overwrite:
       raise ValueError(f"Weights '{weight_name}' already exist!")
@@ -71,6 +98,9 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
     save_data_weights(weights_path, data_weights)
 
   if symbols is not None:
+    if not check_symbols_are_valid(symbols):
+      raise ValueError("Symbols have the wrong format!")
+
     symbols_path = get_data_symbols_path(directory)
     if symbols_path.exists() and not overwrite:
       raise ValueError(f"Symbols already exist!")

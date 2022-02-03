@@ -120,7 +120,9 @@ def is_valid_distribution(qk: np.ndarray, axis: int) -> bool:
   if np.any(qk > 1.0):
     return False
 
-  result = np.all(np.sum(qk, axis=axis) == 1)
+  #result = np.all(np.sum(qk, axis=axis) == 1)
+  # TODO test
+  result = np.all(np.isclose([np.sum(qk, axis=axis)], [1]))
   return result
 
 

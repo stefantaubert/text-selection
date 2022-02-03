@@ -2,7 +2,7 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 
-from text_selection_app.io import load_data_weights, save_data_weights
+from text_selection_app.io_handling import load_data_weights, save_data_weights
 from text_selection_core.types import DataWeights
 
 

@@ -13,10 +13,10 @@ from text_selection_app.argparse_helper import (get_optional,
                                                 parse_non_negative_float,
                                                 parse_positive_float)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io import (get_data_symbols_path,
-                                   get_data_weights_path, load_data_symbols,
-                                   load_data_weights, load_dataset,
-                                   save_data_weights)
+from text_selection_app.io_handling import (get_data_symbols_path,
+                                            get_data_weights_path, load_data_symbols,
+                                            load_data_weights, load_dataset,
+                                            save_data_weights)
 
 
 def get_uniform_weights_creation_parser(parser: ArgumentParser):

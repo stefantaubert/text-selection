@@ -3,23 +3,21 @@ from logging import getLogger
 from pathlib import Path
 from typing import cast
 
-from text_selection_core.filtering.duplicates import select_duplicates
-from text_selection_core.filtering.regex import select_regex_match
 from text_selection_core.preparation.n_grams import get_n_grams
 
 from text_selection_app.argparse_helper import (ConvertToOrderedSetAction,
-                                                parse_existing_directory,
+                                                parse_existing_directory, parse_non_empty,
                                                 parse_non_empty_or_whitespace,
                                                 parse_positive_integer)
 from text_selection_app.default_args import (add_chunksize_argument,
                                              add_maxtaskperchild_argument,
                                              add_n_jobs_argument)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io import (DATA_SYMBOLS_NAME, DATASET_NAME,
-                                   get_data_n_grams_path,
-                                   get_data_symbols_path, get_dataset_path,
-                                   load_data_symbols, load_dataset,
-                                   save_data_n_grams, save_dataset)
+from text_selection_app.io_handling import (DATA_SYMBOLS_NAME, DATASET_NAME,
+                                            get_data_n_grams_path,
+                                            get_data_symbols_path, get_dataset_path,
+                                            load_data_symbols, load_dataset,
+                                            save_data_n_grams, save_dataset)
 
 
 def get_n_grams_extraction_parser(parser: ArgumentParser):
@@ -32,7 +30,7 @@ def get_n_grams_extraction_parser(parser: ArgumentParser):
                       help="n-gram; needs to be greater than zero")
   parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
                       help="name of the n-grams", default="n-grams")
-  parser.add_argument("--ignore", type=parse_non_empty_or_whitespace, nargs="*", metavar="ignore",
+  parser.add_argument("--ignore", type=parse_non_empty, nargs="*", metavar="ignore",
                       help="ignore n-grams containing these symbols", default=[], action=ConvertToOrderedSetAction)
   add_n_jobs_argument(parser)
   add_chunksize_argument(parser, "items")
@@ -72,7 +70,7 @@ def n_grams_extraction_ns(ns: Namespace):
 
     dataset = load_dataset(dataset_path)
     symbols = load_data_symbols(symbols_path)
-    
+
     logger.debug("Selecting...")
     n_grams = get_n_grams(
       dataset, ns.subsets, symbols, ns.n_gram, ns.ignore, None, None, ns.n_jobs, ns.maxtasksperchild, ns.chunksize)

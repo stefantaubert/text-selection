@@ -2,7 +2,7 @@
 # from shutil import rmtree
 # from tempfile import mkdtemp
 
-# from text_selection_app.io import DATA_IDS_NAME, FILE_EXTENSION, save_data_ids
+# from text_selection_app.io_handling import DATA_IDS_NAME, FILE_EXTENSION, save_data_ids
 # from text_selection_core.types import DataIds
 
 

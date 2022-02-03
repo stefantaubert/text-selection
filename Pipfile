@@ -14,10 +14,10 @@ rope = "*"
 pytest = "*"
 pytest-xdist = "*"
 unittest2pytest = "*"
+cx-freeze = "*"
 
 [packages]
 text-utils = {editable = true, path = "./../text-utils"}
-text-selection = {editable = true, path = "./../text-selection"}
 pronunciation_dict_parser = {editable = true, path = "./../pronunciation_dict_parser"}
 g2p_en = {editable = true, path = "./../g2p"}
 sentence2pronunciation = {editable = true, path = "./../sentence2pronunciation"}
@@ -30,4 +30,4 @@ pandas = "*"
 pyenchant = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.8"

@@ -4,7 +4,6 @@ from logging import getLogger
 from typing import Dict, Generator, Iterable
 from typing import OrderedDict as OrderedDictType
 from typing import Union
-
 import numpy as np
 from ordered_set import OrderedSet
 from text_selection.common.ngram_extractor import NGram, NGramNr

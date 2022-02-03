@@ -11,8 +11,8 @@ from text_selection_app.argparse_helper import (parse_codec,
                                                 parse_non_empty_or_whitespace,
                                                 parse_path)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io import (get_data_symbols_path, get_dataset_path,
-                                   save_data_symbols, save_dataset)
+from text_selection_app.io_handling import (get_data_symbols_path, get_dataset_path,
+                                            save_data_symbols, save_dataset)
 
 
 def add_encoding_argument(parser: ArgumentParser, help_str: str) -> None:

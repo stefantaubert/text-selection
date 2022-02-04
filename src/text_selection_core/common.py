@@ -7,7 +7,11 @@ from text_selection.selection import FirstKeySelector, SelectionMode
 from text_selection_core.types import (DataId, Dataset, DataWeights, NGramSet,
                                        Subset, SubsetName, Weight,
                                        get_subsets_ids)
-from text_selection_core.validation import InvalidPercentualValueError, NonDivergentSubsetsError, SubsetNotExistsError, ValidationError, WeightsDoNotContainAllKeysError
+from text_selection_core.validation import (InvalidPercentualValueError,
+                                            NonDivergentSubsetsError,
+                                            SubsetNotExistsError,
+                                            ValidationError,
+                                            WeightsDoNotContainAllKeysError)
 
 
 @dataclass()
@@ -23,6 +27,11 @@ class SelectionDefaultParameters():
   dataset: Dataset
   from_subset_names: OrderedSet[SubsetName]
   to_subset_name: SubsetName
+
+@dataclass()
+class SortingDefaultParameters():
+  dataset: Dataset
+  subset_names: OrderedSet[SubsetName]
 
 
 def validate_selection_default_parameters(params: SelectionDefaultParameters) -> Optional[ValidationError]:
@@ -43,6 +52,10 @@ def validate_weights_parameters(params: WeightSelectionParameters, dataset: Data
   if params.target_percent:
     if error := InvalidPercentualValueError.validate(params.target):
       return error
+
+def validate_sorting_default_parameters(params: SortingDefaultParameters) -> Optional[ValidationError]:
+  if error := SubsetNotExistsError.validate_names(params.dataset, params.subset_names):
+    return error
 
 
 class NGramsNotExistError(ValidationError):

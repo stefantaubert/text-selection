@@ -11,7 +11,7 @@ def get_uniform_weights(ids: DataIds) -> DataWeights:
 def get_character_count_weights(data_symbols: DataSymbols) -> DataWeights:
   result = {
     data_id: len(item_to_symbols(symbols_str))
-    for data_id, symbols_str in data_symbols
+    for data_id, symbols_str in data_symbols.items()
   }
 
   return result

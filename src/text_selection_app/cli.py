@@ -9,10 +9,12 @@ from typing import Callable, Dict, Generator, List, Tuple
 from text_selection_app.datasets import (get_backup_parser,
                                          get_dataset_creation_from_text_parser,
                                          get_restore_parser)
+from text_selection_app.export import get_export_txt_parser
 from text_selection_app.filtering import get_duplicate_selection_parser
 from text_selection_app.n_grams import get_n_grams_extraction_parser
 from text_selection_app.selection import (get_fifo_selection_parser,
                                           get_greedy_selection_parser, get_kld_selection_parser)
+from text_selection_app.sorting import get_fifo_sorting_parser, get_reverse_sorting_parser
 from text_selection_app.statistics import get_statistics_generation_parser
 from text_selection_app.subset import get_subset_renaming_parser
 from text_selection_app.subsets import (get_subsets_creation_parser,
@@ -34,13 +36,6 @@ def formatter(prog):
   return argparse.ArgumentDefaultsHelpFormatter(prog, max_help_position=40)
 
 
-def get_selection_parsers() -> Parsers:
-  yield "select-fifo", "select entries FIFO-style", get_fifo_selection_parser
-  yield "select-greedy", "select entries greedy-style", get_greedy_selection_parser
-  yield "select-kld", "select entries kld-style", get_kld_selection_parser
-  yield "filter-duplicates", "filter duplicates", get_duplicate_selection_parser
-
-
 def get_dataset_parsers() -> Parsers:
   yield "create-from-text", "create dataset from text", get_dataset_creation_from_text_parser
   yield "backup", "backup dataset", get_backup_parser
@@ -56,12 +51,19 @@ def get_weights_parsers() -> Parsers:
 
 
 def get_subset_parsers() -> Parsers:
-  yield "rename", "rename subsets", get_subset_renaming_parser
+  yield "rename", "rename subset", get_subset_renaming_parser
+  yield "export", "export subset as text file", get_export_txt_parser
 
 
 def get_subsets_parsers() -> Parsers:
   yield "add", "add subsets", get_subsets_creation_parser
   yield "remove", "remove subsets", get_subsets_removal_parser
+  yield "select-fifo", "select entries FIFO-style", get_fifo_selection_parser
+  yield "select-greedy", "select entries greedy-style", get_greedy_selection_parser
+  yield "select-kld", "select entries kld-style", get_kld_selection_parser
+  yield "filter-duplicates", "filter duplicates", get_duplicate_selection_parser
+  yield "sort-fifo", "sort entries FIFO-style", get_fifo_sorting_parser
+  yield "sort-reverse", "reverse entries", get_reverse_sorting_parser
 
 
 def get_ngrams_parsers() -> Parsers:
@@ -81,7 +83,6 @@ def _init_parser():
     "subsets": (get_subsets_parsers(), "subsets commands"),
     "subset": (get_subset_parsers(), "subset commands"),
     "weights": (get_weights_parsers(), "weights commands"),
-    "selection": (get_selection_parsers(), "selection commands"),
     "n-grams": (get_ngrams_parsers(), "n-grams commands"),
   }
 

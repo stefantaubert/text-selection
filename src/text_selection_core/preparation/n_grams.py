@@ -1,15 +1,31 @@
 from logging import getLogger
-from typing import Optional, Set
+from typing import Optional, Set, Tuple
 
 from ordered_set import OrderedSet
 from text_selection.common.ngram_extractor2 import NGram, NGramExtractor2
+from text_selection_core.globals import ExecutionResult
 from text_selection_core.types import (Dataset, DataSymbols, NGramSet,
                                        SubsetName, get_subsets_ids,
                                        item_to_symbols)
 from text_utils import Symbol
 
+from text_selection_core.validation import SubsetNotExistsError, SymbolsDoNotContainAllKeysError, ValidationError
 
-def get_n_grams(dataset: Dataset, subset_names: OrderedSet[SubsetName], symbols: DataSymbols, n_gram: NGram, ignore_symbols: Set[Symbol], most_common: float, least_common: float, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> NGramSet:
+
+def get_n_grams(dataset: Dataset, subset_names: OrderedSet[SubsetName], symbols: DataSymbols, n_gram: NGram, ignore_symbols: Set[Symbol], most_common: float, least_common: float, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> Tuple[Optional[ValidationError], Optional[NGramSet]]:
+  assert n_gram > 0
+  assert chunksize > 0
+  assert maxtasksperchild is None or maxtasksperchild > 0
+  assert n_jobs > 0
+  #assert most_common >= 0
+  #assert least_common >= 0
+
+  if error := SubsetNotExistsError.validate_names(dataset, subset_names):
+    return error, None
+
+  if error := SymbolsDoNotContainAllKeysError.validate(dataset, symbols):
+    return error, None
+
   logger = getLogger(__name__)
   logger.debug("Getting ids...")
   keys = OrderedSet(get_subsets_ids(dataset, subset_names))
@@ -39,4 +55,4 @@ def get_n_grams(dataset: Dataset, subset_names: OrderedSet[SubsetName], symbols:
   result.indices_to_data_ids = {data_id: i for i, data_id in enumerate(keys)}
   result.n_grams = ngram_extractor.ngram_nr_to_ngram
   del ngram_extractor
-  return result
+  return None, result

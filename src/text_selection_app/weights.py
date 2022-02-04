@@ -9,12 +9,14 @@ from text_selection_core.weights.calculation import (
 
 from text_selection_app.argparse_helper import (get_optional,
                                                 parse_existing_directory,
+                                                parse_non_empty,
                                                 parse_non_empty_or_whitespace,
                                                 parse_non_negative_float,
                                                 parse_positive_float)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_symbols_path,
-                                            get_data_weights_path, load_data_symbols,
+                                            get_data_weights_path,
+                                            load_data_symbols,
                                             load_data_weights, load_dataset,
                                             save_data_weights)
 
@@ -61,6 +63,8 @@ def get_word_count_weights_creation_parser(parser: ArgumentParser):
                       help="directory containing data")
   parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
                       help="name of the weights", default="weights")
+  parser.add_argument("--sep", type=parse_non_empty, metavar="SYMBOL",
+                      help="word separator symbol", default=" ")
   parser.add_argument("-o", "--overwrite", action="store_true",
                       help="overwrite weights")
   return create_word_count_weights_ns
@@ -92,7 +96,7 @@ def create_word_count_weights_ns(ns: Namespace) -> None:
 
     symbols = load_data_symbols(symbols_path)
 
-    weights = get_word_count_weights(symbols)
+    weights = get_word_count_weights(symbols, ns.sep)
 
     save_data_weights(weights_path, weights)
 

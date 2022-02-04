@@ -10,5 +10,6 @@ def sort_random(dataset: Dataset, subset_names: OrderedSet[SubsetName]) -> Execu
 
   for subset_name in subset_names:
     subset = dataset.subsets[subset_name]
-    ordered_subset = dataset.ids.intersection(subset)
+    # TODO
+    ordered_subset = subset
     dataset.subsets[subset_name] = ordered_subset

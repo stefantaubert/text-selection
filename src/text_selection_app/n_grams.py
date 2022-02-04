@@ -15,9 +15,9 @@ from text_selection_app.default_args import (add_chunksize_argument,
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (DATA_SYMBOLS_NAME, DATASET_NAME,
                                             get_data_n_grams_path,
-                                            get_data_symbols_path, get_dataset_path,
+                                            get_data_symbols_path,
                                             load_data_symbols, load_dataset,
-                                            save_data_n_grams, save_dataset)
+                                            save_data_n_grams)
 
 
 def get_n_grams_extraction_parser(parser: ArgumentParser):
@@ -72,7 +72,14 @@ def n_grams_extraction_ns(ns: Namespace):
     symbols = load_data_symbols(symbols_path)
 
     logger.debug("Selecting...")
-    n_grams = get_n_grams(
+    error, n_grams = get_n_grams(
       dataset, ns.subsets, symbols, ns.n_gram, ns.ignore, None, None, ns.n_jobs, ns.maxtasksperchild, ns.chunksize)
 
-    save_data_n_grams(n_grams_path, n_grams)
+    success = error is None
+
+    if not success:
+      logger.error(f"{error.default_message}")
+      logger.info("Skipped.")
+    else:
+      assert n_grams is not None
+      save_data_n_grams(n_grams_path, n_grams)

@@ -10,14 +10,10 @@ pipenv run cxfreeze \
   --compress \
   --target-dir=dist \
   --bin-includes="libffi.so" \
-  --target-name=$prog_name \
+  --target-name=cli \
   $cli_path
 
 echo "compiled."
-# copy to local apps folder
-mkdir -p /home/mi/apps/$prog_name
-cp dist/* -r /home/mi/apps/$prog_name
-echo "deployed."
 
 if [ $1 ]
 then

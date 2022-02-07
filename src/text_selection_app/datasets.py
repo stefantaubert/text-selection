@@ -3,6 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from shutil import copy2, rmtree
 from typing import cast
+from text_selection_app.default_args import add_encoding_argument, add_string_format_argument
 
 from text_selection_core.datasets import create_from_text
 
@@ -15,11 +16,6 @@ from text_selection_app.io_handling import (get_data_symbols_path, get_dataset_p
                                             save_data_symbols, save_dataset)
 
 
-def add_encoding_argument(parser: ArgumentParser, help_str: str) -> None:
-  parser.add_argument("--encoding", type=parse_codec, metavar='CODEC',
-                      help=help_str + "; see all available codecs at https://docs.python.org/3.8/library/codecs.html#standard-encodings", default="utf-8")
-
-
 def get_dataset_creation_from_text_parser(parser: ArgumentParser):
   parser.description = f"This command reads the lines of a textfile and creates a dataset from it."
   parser.add_argument("directory", type=parse_path, metavar="directory",
@@ -27,6 +23,7 @@ def get_dataset_creation_from_text_parser(parser: ArgumentParser):
   parser.add_argument("text", type=parse_existing_file, metavar="text",
                       help="path to textfile")
   add_encoding_argument(parser, "encoding of text")
+  add_string_format_argument(parser, "text")
   parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
                       help="name of the initial subset containing all Id's", default="base")
   parser.add_argument("-o", "--overwrite", action="store_true",
@@ -45,7 +42,7 @@ def create_dataset_from_text_ns(ns: Namespace):
 
   lines = cast(Path, ns.text).read_text(ns.encoding).splitlines()
 
-  error, result = create_from_text(lines, ns.name)
+  error, result = create_from_text(lines, ns.name, ns.formatting)
 
   success = error is None
 

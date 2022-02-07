@@ -1,10 +1,10 @@
 from typing import List, Optional, Tuple
 from text_selection_core.types import DataSymbols, Dataset, SubsetName, item_to_symbols
 from text_selection_core.validation import SubsetNotExistsError, SymbolsDoNotContainAllKeysError, ValidationError
-from text_utils import StringFormat
+from text_utils import StringFormat2
 
 
-def export_symbols(dataset: Dataset, subset_name: SubsetName, data_symbols: DataSymbols, string_format: StringFormat) -> Tuple[Optional[ValidationError], str]:
+def export_symbols(dataset: Dataset, subset_name: SubsetName, data_symbols: DataSymbols, string_format: StringFormat2) -> Tuple[Optional[ValidationError], str]:
   if error := SubsetNotExistsError.validate(dataset, subset_name):
     return error, None
 

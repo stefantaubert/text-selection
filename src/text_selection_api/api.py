@@ -1,4 +1,4 @@
-from text_utils import StringFormat
+from text_utils import StringFormat2
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -56,7 +56,7 @@ def check_symbols_are_valid(symbols: DataSymbols) -> bool:
       return False
     if not isinstance(v, str):
       return False
-    if not StringFormat.SYMBOLS.can_convert_string_to_symbols(v):
+    if not StringFormat2.SPACED.can_convert_string_to_symbols(v):
       return False
   return True
 
@@ -83,8 +83,6 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
   if not check_dataset_is_valid(dataset):
     raise ValueError("The dataset is not valid!")
 
-  save_dataset(dataset_path, dataset)
-
   for weight_name, data_weights in weights.items():
     if not check_weights_are_valid(data_weights):
       raise ValueError(f"Weights '{weight_name}' have the wrong format!")
@@ -95,7 +93,6 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
     # TODO extra function
     if data_weights.keys() != set(dataset.ids):
       raise ValueError(f"Weights '{weight_name}' contain not all Id's!")
-    save_data_weights(weights_path, data_weights)
 
   if symbols is not None:
     if not check_symbols_are_valid(symbols):
@@ -106,6 +103,16 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
       raise ValueError(f"Symbols already exist!")
     if symbols.keys() != set(dataset.ids):
       raise ValueError(f"Symbols contain not all Id's!")
+
+  dataset_path = get_dataset_path(directory)
+  save_dataset(dataset_path, dataset)
+
+  for weight_name, data_weights in weights.items():
+    weights_path = get_data_weights_path(directory, weight_name)
+    save_data_weights(weights_path, data_weights)
+
+  if symbols is not None:
+    symbols_path = get_data_symbols_path(directory)
     save_data_symbols(symbols_path, symbols)
 
 

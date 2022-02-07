@@ -7,7 +7,7 @@ from typing import Union
 import numpy as np
 from ordered_set import OrderedSet
 from text_selection.common.ngram_extractor import NGram, NGramNr
-from text_utils import StringFormat, Symbols, SymbolsString
+from text_utils import StringFormat2, Symbols, SymbolsString
 
 DataId = int
 DataIds = OrderedSet[DataId]
@@ -47,14 +47,14 @@ class NGramSet():
 
 
 def item_to_text(item: Item) -> str:
-  symbols = StringFormat.SYMBOLS.convert_string_to_symbols(item)
-  text = StringFormat.TEXT.convert_symbols_to_string(symbols)
+  symbols = StringFormat2.SPACED.convert_string_to_symbols(item)
+  text = StringFormat2.DEFAULT.convert_symbols_to_string(symbols)
   del symbols
   return text
 
 
 def item_to_symbols(item: Item) -> Symbols:
-  symbols = StringFormat.SYMBOLS.convert_string_to_symbols(item)
+  symbols = StringFormat2.SPACED.convert_string_to_symbols(item)
   return symbols
 
 

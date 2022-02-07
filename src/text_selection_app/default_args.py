@@ -1,5 +1,5 @@
 
-from text_utils import StringFormat
+from text_utils import StringFormat2
 from argparse import ArgumentParser
 from collections import OrderedDict
 from multiprocessing import cpu_count
@@ -29,8 +29,8 @@ def add_maxtaskperchild_argument(parser: ArgumentParser) -> None:
 
 def add_string_format_argument(parser: ArgumentParser, target: str, short_name: str = "-f", name: str = '--formatting') -> None:
   names = OrderedDict((
-    (StringFormat.TEXT, "Normal"),
-    (StringFormat.SYMBOLS, "Spaced"),
+    (StringFormat2.DEFAULT, "Normal"),
+    (StringFormat2.SPACED, "Spaced"),
   ))
 
   values_to_names = dict(zip(
@@ -38,13 +38,13 @@ def add_string_format_argument(parser: ArgumentParser, target: str, short_name: 
     names.keys()
   ))
 
-  help_str = f"formatting of text in {target}; use \'{names[StringFormat.TEXT]}\' for normal text and \'{names[StringFormat.SYMBOLS]}\' for space separated symbols, i.e., words are separated by two spaces and characters are separated by one space. Example: {names[StringFormat.TEXT]} -> |This text.|; {names[StringFormat.SYMBOLS]} -> |T␣h␣i␣s␣␣t␣e␣x␣t␣.|"
+  help_str = f"formatting of text in {target}; use \'{names[StringFormat2.DEFAULT]}\' for normal text and \'{names[StringFormat2.SPACED]}\' for space separated symbols, i.e., words are separated by two spaces and characters are separated by one space. Example: {names[StringFormat2.DEFAULT]} -> |This text.|; {names[StringFormat2.SPACED]} -> |T␣h␣i␣s␣␣t␣e␣x␣t␣.|"
   parser.add_argument(
     short_name, name,
     metavar=list(names.values()),
-    choices=StringFormat,
+    choices=StringFormat2,
     type=values_to_names.get,
-    default=names[StringFormat.TEXT],
+    default=names[StringFormat2.DEFAULT],
     help=help_str,
   )
 

@@ -118,14 +118,6 @@ def configure_logger() -> None:
   console.setLevel(loglevel)
 
 
-def parse_args_str(args: str):
-  args = re.sub(r"\s+", " ", args)
-  args = args.split(" ")
-  args = [x.strip("\"").strip("\'") for x in args]
-
-  parse_args(args)
-
-
 def parse_args(args: List[str]):
   configure_logger()
   parser = _init_parser()

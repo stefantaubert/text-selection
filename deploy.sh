@@ -3,8 +3,8 @@
 prog_name="text-selection"
 cli_path=src/text_selection_app/cli.py
 
-mkdir ./dist
-deactivate
+mkdir -p ./dist
+
 pipenv run cxfreeze \
   -O \
   --compress \

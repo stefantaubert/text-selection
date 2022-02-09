@@ -91,7 +91,7 @@ def statistics_generation_ns(ns: Namespace) -> None:
         with pd.option_context(
           'display.max_rows', None,
           'display.max_columns', None,
-          'display.precision', 5,
+          'display.precision', 7,
           'display.width', None,
         ):
           print(header)

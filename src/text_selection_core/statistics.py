@@ -1,5 +1,6 @@
+from typing import Any, OrderedDict as OrderedDictType
 from collections import Counter
-from typing import Dict, Generator, Iterable, List, Optional, Tuple
+from typing import Dict, Generator, Iterable, List, Optional, OrderedDict, Tuple
 
 import numpy as np
 from ordered_set import OrderedSet
@@ -11,6 +12,7 @@ from text_selection_core.types import (Dataset, DataSymbols, DataWeights, Item,
                                        item_to_symbols)
 
 SPACE_DISPL = "␣"
+NOT_AVAIL_VAL = "N/A"
 
 
 def generate_statistics(dataset: Dataset, symbols: Optional[DataSymbols], weights: List[Tuple[str, DataWeights]], n_grams: List[Tuple[str, NGramSet]]) -> Generator[Tuple[str, DataFrame], None, None]:
@@ -24,7 +26,7 @@ def generate_statistics(dataset: Dataset, symbols: Optional[DataSymbols], weight
 
 
 def get_subsets_ordered(dataset: Dataset) -> OrderedSet[str]:
-  return OrderedSet(sorted(dataset.subsets.keys()))
+  return OrderedSet(dataset.subsets.keys())
 
 
 def get_all_symbols(items: Iterable[Item]) -> Generator[Symbol, None, None]:
@@ -45,7 +47,7 @@ def get_symbols_statistics(dataset: Dataset, symbols_strs: DataSymbols):
   data = []
   all_symbols = OrderedSet(sorted(get_all_symbols(symbols_strs.values())))
 
-  subset_contains_symbol: Dict[SubsetName, Counter] = {}
+  subset_counts: OrderedDictType[SubsetName, Counter] = OrderedDict()
   subset_names = get_subsets_ordered(dataset)
   for subset_name in subset_names:
     subset = dataset.subsets[subset_name]
@@ -53,39 +55,72 @@ def get_symbols_statistics(dataset: Dataset, symbols_strs: DataSymbols):
     #subset_symbols = set(get_all_symbols(subset_symbols_strs))
     #subset_matches = {symbol: "x" if symbol in subset_symbols else "-" for symbol in all_symbols}
     subset_matches = Counter(get_all_symbols(subset_symbols_strs))
-    subset_contains_symbol[subset_name] = subset_matches
+    subset_counts[subset_name] = subset_matches
     # TODO add percent un-/covered as line
 
   #total_symbol_count = sum(sum(counters.values()) for counters in subset_contains_symbol.values())
   total_symbols_count = {
-    symbol: sum(counters[symbol] for counters in subset_contains_symbol.values())
+    symbol: sum(counters[symbol] for counters in subset_counts.values())
     for symbol in all_symbols
   }
   total_symbol_count = sum(total_symbols_count.values())
 
+  result: List[OrderedDictType[str, Any]] = []
   for symbol in all_symbols:
     symbol_repr = repr(symbol)[1:-1] if symbol != " " else SPACE_DISPL
-    counts = list(subset_contains_symbol[subset][symbol]
-                  for subset in subset_contains_symbol)
-    if total_symbol_count == 0:
-      counts_percent_total = []
-    else:
-      counts_percent_total = list(count / total_symbol_count * 100 for count in counts)
+    row = {
+      "Symbol": symbol_repr,
+    }
 
-    if symbol not in total_symbols_count or total_symbols_count[symbol] == 0:
-      counts_percent_subset = []
-    else:
-      counts_percent_subset = list(count / total_symbols_count[symbol] * 100 for count in counts)
+    for subset, counts in subset_counts.items():
+      row[f"Count {subset}"] = counts[symbol]
+    symbol_count_total = sum(subset_counter[symbol] for subset_counter in subset_counts.values())
+    row["Count Total"] = symbol_count_total
 
-    line = [symbol_repr, total_symbols_count[symbol]] + \
-        counts + counts_percent_total + counts_percent_subset
-    data.append(line)
-  arr = np.array(data)
+    for subset, counts in subset_counts.items():
+      val = NOT_AVAIL_VAL if symbol_count_total == 0 else counts[symbol] / symbol_count_total * 100
+      row[f"Count % {subset}"] = val
 
-  df = DataFrame(arr, columns=["Symbol", "Tot"] + list(subset_names) +
-                 list(subset_names) + list(subset_names))
+    for subset, counts in subset_counts.items():
+      subset_total_count = sum(counts.values())
+      val = NOT_AVAIL_VAL if subset_total_count == 0 else counts[symbol] / subset_total_count * 100
+      row[f"Rel % {subset}"] = val
 
-  return df
+    val = NOT_AVAIL_VAL if total_symbol_count == 0 else symbol_count_total / total_symbol_count * 100
+    row["Rel % Total"] = val
+    result.append(row)
+
+  if len(result) > 0:
+    cols = result[0].keys()
+    rows = (list(row.values()) for row in result)
+    df = DataFrame(rows, columns=cols)
+    return df
+  else:
+    return DataFrame()
+
+  # for symbol in all_symbols:
+  #   symbol_repr = repr(symbol)[1:-1] if symbol != " " else SPACE_DISPL
+  #   counts = list(subset_counts[subset][symbol]
+  #                 for subset in subset_counts)
+  #   if total_symbol_count == 0:
+  #     counts_percent_total = []
+  #   else:
+  #     counts_percent_total = list(count / total_symbol_count * 100 for count in counts)
+
+  #   if symbol not in total_symbols_count or total_symbols_count[symbol] == 0:
+  #     counts_percent_subset = []
+  #   else:
+  #     counts_percent_subset = list(count / total_symbols_count[symbol] * 100 for count in counts)
+
+  #   line = [symbol_repr, total_symbols_count[symbol]] + \
+  #       counts + counts_percent_total + counts_percent_subset
+  #   data.append(line)
+  # arr = np.array(data)
+
+  # df = DataFrame(arr, columns=["Symbol", "Tot"] + list(subset_names) +
+  #                list(subset_names) + list(subset_names))
+
+  # return df
 
 
 def get_selection_statistics(dataset: Dataset):
@@ -114,9 +149,6 @@ def get_selection_statistics(dataset: Dataset):
   )
 
   return df
-
-
-NOT_AVAIL_VAL = "-"
 
 
 def get_subset_weights_statistics(subset: Subset, weights: List[Tuple[str, DataWeights]]):

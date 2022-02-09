@@ -81,7 +81,7 @@ def backup_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    backup_path = data_folder / cast(str, ns.name)
+    backup_path = data_folder / f"{ns.name}.pkl"
     if backup_path.is_file() and not ns.overwrite:
       logger.error("Backup already exist! Skipped.")
       continue
@@ -110,7 +110,7 @@ def restore_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    backup_path = data_folder / cast(str, ns.name)
+    backup_path = data_folder / f"{ns.name}.pkl"
     if not backup_path.is_file():
       logger.error("Backup does not exist! Skipped.")
       continue

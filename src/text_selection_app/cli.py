@@ -13,7 +13,7 @@ from text_selection_app.export import get_export_txt_parser
 from text_selection_app.filtering import get_duplicate_selection_parser
 from text_selection_app.n_grams import get_n_grams_extraction_parser
 from text_selection_app.selection import (get_fifo_selection_parser,
-                                          get_greedy_selection_parser, get_kld_selection_parser)
+                                          get_greedy_selection_parser, get_id_selection_parser, get_kld_selection_parser)
 from text_selection_app.sorting import get_fifo_sorting_parser, get_reverse_sorting_parser
 from text_selection_app.statistics import get_statistics_generation_parser
 from text_selection_app.subset import get_subset_renaming_parser
@@ -58,6 +58,7 @@ def get_subset_parsers() -> Parsers:
 def get_subsets_parsers() -> Parsers:
   yield "add", "add subsets", get_subsets_creation_parser
   yield "remove", "remove subsets", get_subsets_removal_parser
+  yield "select-ids", "select entries by id", get_id_selection_parser
   yield "select-fifo", "select entries FIFO-style", get_fifo_selection_parser
   yield "select-greedy", "select entries greedy-style", get_greedy_selection_parser
   yield "select-kld", "select entries kld-style", get_kld_selection_parser

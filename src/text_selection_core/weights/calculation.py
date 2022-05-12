@@ -6,25 +6,22 @@ def get_uniform_weights(ids: LineNrs) -> DataWeights:
   return result
 
 
-def get_character_count_weights(data_symbols: Lines) -> DataWeights:
-  result = {
-    data_id: len(symbols_str)
-    for data_id, symbols_str in data_symbols.items()
-  }
-
-  return result
-
-
-def get_word_count_weights(data_symbols: Lines, word_sep: str) -> DataWeights:
+def get_word_count_weights(lines: Lines, sep: str) -> DataWeights:
   texts = (
-    (data_id, symbols_str)
-    for data_id, symbols_str in data_symbols.items()
+    (data_id, line)
+    for data_id, line in enumerate(lines, start=1)
   )
 
-  words_counts = (
-    (data_id, sum(1 for word in item.split(word_sep) if word != ""))
-    for data_id, item in texts
-  )
+  if sep == "":
+    words_counts = (
+      (data_id, len(item))
+      for data_id, item in texts
+    )
+  else:
+    words_counts = (
+      (data_id, sum(1 for word in item.split(sep) if word != ""))
+      for data_id, item in texts
+    )
 
   result = dict(words_counts)
 

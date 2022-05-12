@@ -1,6 +1,5 @@
 import argparse
 import logging
-import re
 import sys
 from argparse import ArgumentParser
 from logging import getLogger
@@ -17,8 +16,7 @@ from text_selection_app.sorting import get_fifo_sorting_parser, get_reverse_sort
 from text_selection_app.statistics import get_statistics_generation_parser
 from text_selection_app.subset import get_subset_renaming_parser
 from text_selection_app.subsets import get_subsets_creation_parser, get_subsets_removal_parser
-from text_selection_app.weights import (get_symbol_count_weights_creation_parser,
-                                        get_uniform_weights_creation_parser,
+from text_selection_app.weights import (get_uniform_weights_creation_parser,
                                         get_weights_division_parser,
                                         get_word_count_weights_creation_parser)
 
@@ -43,8 +41,7 @@ def get_dataset_parsers() -> Parsers:
 
 def get_weights_parsers() -> Parsers:
   yield "create-uniform", "create uniform weights", get_uniform_weights_creation_parser
-  yield "create-word-count", "create weights from word count", get_word_count_weights_creation_parser
-  yield "create-symbol-count", "create weights from symbols count", get_symbol_count_weights_creation_parser
+  yield "create-count", "create weights from word/symbol count", get_word_count_weights_creation_parser
   yield "divide", "divide weights", get_weights_division_parser
 
 

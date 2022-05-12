@@ -5,17 +5,16 @@ from typing import cast
 
 from text_selection_app.argparse_helper import (get_optional, parse_existing_directory,
                                                 parse_non_empty, parse_non_empty_or_whitespace,
-                                                parse_non_negative_float, parse_positive_float)
+                                                parse_positive_float)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, load_data_weights, load_dataset,
                                             save_data_weights)
-from text_selection_core.weights.calculation import (divide_weights_inplace,
-                                                     get_character_count_weights,
-                                                     get_uniform_weights, get_word_count_weights)
+from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
+                                                     get_word_count_weights)
 
 
 def get_uniform_weights_creation_parser(parser: ArgumentParser):
-  parser.description = f"This command adds subsets."
+  parser.description = "This command creates uniform weights."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
   parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
@@ -51,13 +50,17 @@ def create_uniform_weights_ns(ns: Namespace) -> None:
 
 
 def get_word_count_weights_creation_parser(parser: ArgumentParser):
-  parser.description = f"This command creates weights containing the word counts."
+  parser.description = f"This command creates weights containing the word/symbol counts."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
   parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
                       help="name of the weights", default="weights")
-  parser.add_argument("--sep", type=parse_non_empty, metavar="SYMBOL",
-                      help="word separator symbol", default=" ")
+  parser.add_argument("file", type=parse_non_empty_or_whitespace,
+                      help="name of the file containing the lines")
+  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
+                      help="line separator")
+  parser.add_argument("--sep", type=str, metavar="SYMBOL",
+                      help="separator symbol for symbols/words", default=" ")
   parser.add_argument("-o", "--overwrite", action="store_true",
                       help="overwrite weights")
   return create_word_count_weights_ns
@@ -81,63 +84,21 @@ def create_word_count_weights_ns(ns: Namespace) -> None:
       logger.error("Weights already exist! Skipped.")
       continue
 
-    symbols_path = get_data_symbols_path(data_folder)
+    symbols_path = data_folder / cast(str, ns.file)
     if not symbols_path.exists():
       logger.error(
-        f"Symbols were not found! Skipping...")
+        "File was not found! Skipping...")
       continue
 
-    symbols = load_data_symbols(symbols_path)
+    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
 
-    weights = get_word_count_weights(symbols, ns.sep)
-
-    save_data_weights(weights_path, weights)
-
-
-def get_symbol_count_weights_creation_parser(parser: ArgumentParser):
-  parser.description = f"This command creates weights containing the symbol counts."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
-  parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
-                      help="name of the weights", default="weights")
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite weights")
-  return create_symbol_count_weights_ns
-
-
-def create_symbol_count_weights_ns(ns: Namespace) -> None:
-  logger = getLogger(__name__)
-  logger.debug(ns)
-  root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
-
-  for i, dataset_path in enumerate(datasets, start=1):
-    data_folder = dataset_path.parent
-    data_name = str(data_folder.relative_to(root_folder)
-                    ) if root_folder != data_folder else "root"
-    logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
-
-    weights_path = get_data_weights_path(data_folder, ns.name)
-
-    if weights_path.is_file() and not ns.overwrite:
-      logger.error("Weights already exist! Skipped.")
-      continue
-
-    symbols_path = get_data_symbols_path(data_folder)
-    if not symbols_path.exists():
-      logger.error(
-        f"Symbols were not found! Skipping...")
-      continue
-
-    symbols = load_data_symbols(symbols_path)
-
-    weights = get_character_count_weights(symbols)
+    weights = get_word_count_weights(lines, ns.sep)
 
     save_data_weights(weights_path, weights)
 
 
 def get_weights_division_parser(parser: ArgumentParser):
-  parser.description = f"This command creates weights containing the symbol counts."
+  parser.description = "This command creates weights containing the ..."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
   parser.add_argument("divisor", type=parse_positive_float, metavar="divisor",

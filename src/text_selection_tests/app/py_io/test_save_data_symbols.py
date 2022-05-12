@@ -3,12 +3,12 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 from text_selection_app.io_handling import DATA_SYMBOLS_NAME, FILE_EXTENSION, save_data_symbols
-from text_selection_core.types import DataSymbols
+from text_selection_core.types import Lines
 
 
 def test_empty__creates_file():
   tmp_dir = Path(mkdtemp())
-  symbols: DataSymbols = dict()
+  symbols: Lines = dict()
 
   save_data_symbols(tmp_dir, symbols)
 
@@ -18,7 +18,7 @@ def test_empty__creates_file():
 
 def test_non_empty__creates_file():
   tmp_dir = Path(mkdtemp())
-  symbols: DataSymbols = dict(((1, ""), (2, "t e s t  a b c.")))
+  symbols: Lines = dict(((1, ""), (2, "t e s t  a b c.")))
 
   save_data_symbols(tmp_dir, symbols)
 
@@ -28,7 +28,7 @@ def test_non_empty__creates_file():
 
 def test_non_empty__overwrite__overwrites_file():
   tmp_dir = Path(mkdtemp())
-  symbols: DataSymbols = dict(((1, ""), (2, "t e s t  a b c.")))
+  symbols: Lines = dict(((1, ""), (2, "t e s t  a b c.")))
 
   (tmp_dir / f"{DATA_SYMBOLS_NAME}{FILE_EXTENSION}").write_bytes(b"123456")
   save_data_symbols(tmp_dir, symbols)

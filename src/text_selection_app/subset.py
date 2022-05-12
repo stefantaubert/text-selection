@@ -3,16 +3,15 @@ from logging import getLogger
 from pathlib import Path
 from typing import cast
 
-from text_selection_core.subsets import rename_subset
-
 from text_selection_app.argparse_helper import (parse_existing_directory,
                                                 parse_non_empty_or_whitespace)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import get_dataset_path, load_dataset, save_dataset
+from text_selection_core.subsets import rename_subset
 
 
 def get_subset_renaming_parser(parser: ArgumentParser):
-  parser.description = f"This command adds subsets."
+  parser.description = "This command rename a subset."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
   parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="name",

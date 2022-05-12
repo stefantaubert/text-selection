@@ -1,10 +1,10 @@
 from typing import Iterator
 
-from text_selection_core.types import DataId, DataWeights, Weight
+from text_selection_core.types import LineNr, DataWeights, Weight
 
 
-class WeightsIterator(Iterator[DataId]):
-  def __init__(self, iterator: Iterator[DataId], weights: DataWeights, target: Weight, initial_weight: Weight) -> None:
+class WeightsIterator(Iterator[LineNr]):
+  def __init__(self, iterator: Iterator[LineNr], weights: DataWeights, target: Weight, initial_weight: Weight) -> None:
     assert initial_weight >= 0
 
     super().__init__()

@@ -14,7 +14,7 @@ from text_selection_app.io_handling import get_dataset_path, load_dataset, save_
 
 
 def get_subsets_creation_parser(parser: ArgumentParser):
-  parser.description = f"This command adds subsets."
+  parser.description = "This command adds subsets."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
   parser.add_argument("names", type=parse_non_empty_or_whitespace, nargs="+", metavar="names",
@@ -50,7 +50,7 @@ def add_subsets_ns(ns: Namespace):
 
 
 def get_subsets_removal_parser(parser: ArgumentParser):
-  parser.description = f"This command removes subsets."
+  parser.description = "This command removes subsets."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
   parser.add_argument("names", type=parse_non_empty_or_whitespace, nargs="+", metavar="names",

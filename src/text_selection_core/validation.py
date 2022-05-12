@@ -1,6 +1,6 @@
 from ordered_set import OrderedSet
 
-from text_selection_core.types import DataSymbols, Dataset, DataWeights, SubsetName
+from text_selection_core.types import Lines, Dataset, DataWeights, SubsetName
 
 
 class ValidationError():
@@ -111,7 +111,7 @@ class WeightsDoNotContainAllKeysError(ValidationError):
 
   @classmethod
   def validate(cls, dataset: Dataset, weights: DataWeights):
-    if set(dataset.ids) != set(weights.keys()):
+    if set(dataset.nrs) != set(weights):
       return cls(dataset, weights)
     return None
 
@@ -121,14 +121,14 @@ class WeightsDoNotContainAllKeysError(ValidationError):
 
 
 class SymbolsDoNotContainAllKeysError(ValidationError):
-  def __init__(self, dataset: Dataset, symbols: DataSymbols) -> None:
+  def __init__(self, dataset: Dataset, symbols: Lines) -> None:
     super().__init__()
     self.dataset = dataset
     self.symbols = symbols
 
   @classmethod
-  def validate(cls, dataset: Dataset, symbols: DataSymbols):
-    if set(dataset.ids) != set(symbols.keys()):
+  def validate(cls, dataset: Dataset, symbols: Lines):
+    if set(dataset.nrs) != set(symbols.keys()):
       return cls(dataset, symbols)
     return None
 

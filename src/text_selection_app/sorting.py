@@ -5,21 +5,16 @@ from pathlib import Path
 from typing import cast
 
 from text_selection.selection import SelectionMode
-from text_selection_core.common import (SelectionDefaultParameters, SortingDefaultParameters,
-                                        WeightSelectionParameters)
-from text_selection_core.selection.greedy_selection import (
-    GreedySelectionParameters, select_greedy)
-
-from text_selection_app.argparse_helper import (ConvertToOrderedSetAction,
-                                                parse_existing_directory,
+from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
                                                 parse_non_empty_or_whitespace,
                                                 parse_non_negative_float)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (get_data_n_grams_path,
-                                            get_data_weights_path, get_dataset_path,
-                                            load_data_n_grams, load_data_weights,
-                                            load_dataset, save_dataset)
-from text_selection_core.sorting.fifo_sorting import sort_fifo, id_mode, original_mode
+from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
+                                            load_data_weights, load_dataset, save_dataset)
+from text_selection_core.common import (SelectionDefaultParameters, SortingDefaultParameters,
+                                        WeightSelectionParameters)
+from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
+from text_selection_core.sorting.fifo_sorting import sort_fifo
 from text_selection_core.sorting.reverse_sorting import sort_reverse
 
 
@@ -29,8 +24,6 @@ def get_fifo_sorting_parser(parser: ArgumentParser):
                       help="directory containing data")
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",
                       help="subsets", action=ConvertToOrderedSetAction)
-  parser.add_argument("--mode", type=parse_non_empty_or_whitespace, metavar="MODE",
-                      help="mode", default=id_mode, choices=[original_mode, id_mode])
   return sort_fifo_from_ns
 
 
@@ -49,7 +42,7 @@ def sort_fifo_from_ns(ns: Namespace):
     dataset = load_dataset(dataset_path)
 
     default_params = SortingDefaultParameters(dataset, ns.subsets)
-    error, changed_anything = sort_fifo(default_params, ns.mode)
+    error, changed_anything = sort_fifo(default_params)
 
     success = error is None
 
@@ -66,7 +59,7 @@ def sort_fifo_from_ns(ns: Namespace):
 
 
 def get_reverse_sorting_parser(parser: ArgumentParser):
-  parser.description = f"Reverse sorting."
+  parser.description = "Reverse sorting."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",

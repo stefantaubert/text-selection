@@ -1,25 +1,23 @@
-from text_selection_core.types import (DataIds, DataSymbols, DataWeights,
-                                       item_to_symbols, item_to_text)
-from text_utils import Symbol, get_words
+from text_selection_core.types import DataWeights, LineNrs, Lines
 
 
-def get_uniform_weights(ids: DataIds) -> DataWeights:
+def get_uniform_weights(ids: LineNrs) -> DataWeights:
   result = dict.fromkeys(ids, 1)
   return result
 
 
-def get_character_count_weights(data_symbols: DataSymbols) -> DataWeights:
+def get_character_count_weights(data_symbols: Lines) -> DataWeights:
   result = {
-    data_id: len(item_to_symbols(symbols_str))
+    data_id: len(symbols_str)
     for data_id, symbols_str in data_symbols.items()
   }
 
   return result
 
 
-def get_word_count_weights(data_symbols: DataSymbols, word_sep: Symbol) -> DataWeights:
+def get_word_count_weights(data_symbols: Lines, word_sep: str) -> DataWeights:
   texts = (
-    (data_id, item_to_text(symbols_str))
+    (data_id, symbols_str)
     for data_id, symbols_str in data_symbols.items()
   )
 

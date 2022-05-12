@@ -1,5 +1,4 @@
 
-from text_utils import StringFormat2
 from argparse import ArgumentParser
 from collections import OrderedDict
 from multiprocessing import cpu_count
@@ -27,26 +26,26 @@ def add_maxtaskperchild_argument(parser: ArgumentParser) -> None:
                       help="amount of tasks per child", default=DEFAULT_MAXTASKSPERCHILD)
 
 
-def add_string_format_argument(parser: ArgumentParser, target: str, short_name: str = "-f", name: str = '--formatting') -> None:
-  names = OrderedDict((
-    (StringFormat2.DEFAULT, "Normal"),
-    (StringFormat2.SPACED, "Spaced"),
-  ))
+# def add_string_format_argument(parser: ArgumentParser, target: str, short_name: str = "-f", name: str = '--formatting') -> None:
+#   names = OrderedDict((
+#     (StringFormat2.DEFAULT, "Normal"),
+#     (StringFormat2.SPACED, "Spaced"),
+#   ))
 
-  values_to_names = dict(zip(
-    names.values(),
-    names.keys()
-  ))
+#   values_to_names = dict(zip(
+#     names.values(),
+#     names.keys()
+#   ))
 
-  help_str = f"formatting of text in {target}; use \'{names[StringFormat2.DEFAULT]}\' for normal text and \'{names[StringFormat2.SPACED]}\' for space separated symbols, i.e., words are separated by two spaces and characters are separated by one space. Example: {names[StringFormat2.DEFAULT]} -> |This text.|; {names[StringFormat2.SPACED]} -> |T␣h␣i␣s␣␣t␣e␣x␣t␣.|"
-  parser.add_argument(
-    short_name, name,
-    metavar=list(names.values()),
-    choices=StringFormat2,
-    type=values_to_names.get,
-    default=names[StringFormat2.DEFAULT],
-    help=help_str,
-  )
+#   help_str = f"formatting of text in {target}; use \'{names[StringFormat2.DEFAULT]}\' for normal text and \'{names[StringFormat2.SPACED]}\' for space separated symbols, i.e., words are separated by two spaces and characters are separated by one space. Example: {names[StringFormat2.DEFAULT]} -> |This text.|; {names[StringFormat2.SPACED]} -> |T␣h␣i␣s␣␣t␣e␣x␣t␣.|"
+#   parser.add_argument(
+#     short_name, name,
+#     metavar=list(names.values()),
+#     choices=StringFormat2,
+#     type=values_to_names.get,
+#     default=names[StringFormat2.DEFAULT],
+#     help=help_str,
+#   )
 
 
 def add_encoding_argument(parser: ArgumentParser, help_str: str) -> None:

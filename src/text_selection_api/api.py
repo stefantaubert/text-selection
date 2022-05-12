@@ -7,7 +7,7 @@ from text_selection_app.io_handling import (get_data_symbols_path,
                                             get_data_weights_path, get_dataset_path,
                                             load_dataset, save_data_symbols,
                                             save_data_weights, save_dataset)
-from text_selection_core.types import (Dataset, DataSymbols, DataWeights,
+from text_selection_core.types import (Dataset, Lines, DataWeights,
                                        Subset, SubsetName)
 
 
@@ -15,7 +15,7 @@ def check_dataset_is_valid(dataset: Dataset) -> bool:
   if not isinstance(dataset, Dataset):
     return False
 
-  if not isinstance(dataset.ids, OrderedSet):
+  if not isinstance(dataset.nrs, OrderedSet):
     return False
 
   if not len(dataset.subsets) > 0:
@@ -27,7 +27,7 @@ def check_dataset_is_valid(dataset: Dataset) -> bool:
     if not isinstance(dataset.subsets[key], OrderedSet):
       return False
 
-    if not dataset.subsets[key].issubset(dataset.ids):
+    if not dataset.subsets[key].issubset(dataset.nrs):
       return False
 
   all_keys_from_all_subsets = list(
@@ -40,14 +40,14 @@ def check_dataset_is_valid(dataset: Dataset) -> bool:
   if some_keys_duplicate:
     return False
 
-  not_all_keys_in_subsets = len(all_keys_from_all_subsets) != len(dataset.ids)
+  not_all_keys_in_subsets = len(all_keys_from_all_subsets) != len(dataset.nrs)
   if not_all_keys_in_subsets:
     return False
 
   return True
 
 
-def check_symbols_are_valid(symbols: DataSymbols) -> bool:
+def check_symbols_are_valid(symbols: Lines) -> bool:
   if not isinstance(symbols, dict):
     return False
 
@@ -75,7 +75,7 @@ def check_weights_are_valid(weights: DataWeights) -> bool:
   return True
 
 
-def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], symbols: Optional[DataSymbols], overwrite: bool) -> None:
+def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], symbols: Optional[Lines], overwrite: bool) -> None:
   dataset_path = get_dataset_path(directory)
   if not overwrite and dataset_path.exists():
     raise ValueError("The dataset already exists!")
@@ -91,7 +91,7 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
     if weights_path.exists() and not overwrite:
       raise ValueError(f"Weights '{weight_name}' already exist!")
     # TODO extra function
-    if data_weights.keys() != set(dataset.ids):
+    if data_weights.keys() != set(dataset.nrs):
       raise ValueError(f"Weights '{weight_name}' contain not all Id's!")
 
   if symbols is not None:
@@ -101,7 +101,7 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
     symbols_path = get_data_symbols_path(directory)
     if symbols_path.exists() and not overwrite:
       raise ValueError(f"Symbols already exist!")
-    if symbols.keys() != set(dataset.ids):
+    if symbols.keys() != set(dataset.nrs):
       raise ValueError(f"Symbols contain not all Id's!")
 
   dataset_path = get_dataset_path(directory)

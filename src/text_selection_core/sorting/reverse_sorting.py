@@ -1,4 +1,5 @@
 from ordered_set import OrderedSet
+
 from text_selection_core.algorithms.reverse import get_reverse_iterator
 from text_selection_core.common import SortingDefaultParameters, validate_sorting_default_parameters
 from text_selection_core.globals import ExecutionResult

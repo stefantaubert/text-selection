@@ -2,23 +2,24 @@ from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
 from typing import cast
-from text_selection_core.common import SelectionDefaultParameters
 
+from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
+                                                parse_non_empty, parse_non_empty_or_whitespace)
+from text_selection_app.helper import get_datasets
+from text_selection_app.io_handling import get_dataset_path, load_dataset, save_dataset
+from text_selection_core.common import SelectionDefaultParameters
 from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.regex_filter import filter_regex_pattern
-from text_selection_app.argparse_helper import (ConvertToOrderedSetAction,
-                                                parse_existing_directory,
-                                                parse_non_empty_or_whitespace)
-from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (get_data_symbols_path, get_dataset_path,
-                                            load_data_symbols, load_dataset,
-                                            save_dataset)
 
 
 def get_duplicate_selection_parser(parser: ArgumentParser):
-  parser.description = f"Select duplicate entries."
+  parser.description = "Select duplicate entries."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
+  parser.add_argument("file", type=parse_non_empty_or_whitespace,
+                      help="name of the file containing the lines")
+  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
+                      help="line separator")
   parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="from-subsets",
                       help="from subset", action=ConvertToOrderedSetAction)
   parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
@@ -38,17 +39,18 @@ def select_duplicates_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    symbols_path = get_data_symbols_path(data_folder)
+    symbols_path = data_folder / cast(str, ns.name)
+
     if not symbols_path.exists():
       logger.error(
-        f"Symbols were not found! Skipping...")
+        "Symbols were not found! Skipping...")
       continue
 
     dataset = load_dataset(dataset_path)
-    symbols = load_data_symbols(symbols_path)
+    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-    error, changed_anything = filter_duplicates(default_params, symbols)
+    error, changed_anything = filter_duplicates(default_params, lines)
 
     success = error is None
 
@@ -64,9 +66,13 @@ def select_duplicates_ns(ns: Namespace):
 
 
 def get_regex_match_selection_parser(parser: ArgumentParser):
-  parser.description = f"Select entries matching regex pattern."
+  parser.description = "Select entries matching regex pattern."
   parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
                       help="directory containing data")
+  parser.add_argument("file", type=parse_non_empty_or_whitespace,
+                      help="name of the file containing the lines")
+  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
+                      help="line separator")
   parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+",
                       metavar="from-subsets", help="from subset", action=ConvertToOrderedSetAction)
   parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
@@ -88,17 +94,18 @@ def regex_match_selection(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    symbols_path = get_data_symbols_path(data_folder)
+    symbols_path = data_folder / cast(str, ns.name)
+
     if not symbols_path.exists():
       logger.error(
-        f"Symbols were not found! Skipping...")
+        "Symbols were not found! Skipping...")
       continue
 
     dataset = load_dataset(dataset_path)
-    symbols = load_data_symbols(symbols_path)
+    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-    error, changed_anything = filter_regex_pattern(default_params, symbols, ns.pattern)
+    error, changed_anything = filter_regex_pattern(default_params, lines, ns.pattern)
 
     success = error is None
 

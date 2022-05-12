@@ -4,36 +4,35 @@ from logging import getLogger
 from typing import Generator, Iterable, Set, Tuple
 
 from ordered_set import OrderedSet
+from tqdm import tqdm
+
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import (DataId, DataSymbols, Subset,
-                                       get_subsets_ids, item_to_text,
-                                       move_ids_to_subset)
-from text_utils import Symbol, symbols_split_iterable, symbols_strip
-from tqdm import tqdm
+from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs,
+                                       move_lines_to_subset)
 
 
 @dataclass()
 class WordsCountFilterParameters():
-  symbols: DataSymbols
-  word_sep: Symbol
+  lines: Lines
+  word_sep: str
   from_count_incl: int
   to_count_excl: int
   ignore_case: bool
-  trim_symbols: Set[Symbol]
+  trim_symbols: Set[str]
 
 
 def filter_words_with_frequencies(default_params: SelectionDefaultParameters, params: WordsCountFilterParameters) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
-  select_from = ((data_id, item_to_text(params.data_symbols[data_id]))
-                 for data_id in get_subsets_ids(default_params.dataset, default_params. from_subset_names))
+  select_from = ((line_nr, params.lines[line_nr])
+                 for line_nr in get_subsets_line_nrs(default_params.dataset, default_params. from_subset_names))
   counter = get_counter(select_from, params.word_sep, params.trim_symbols, params.ignore_case)
 
-  select_from = ((data_id, item_to_text(params.data_symbols[data_id]))
-                 for data_id in get_subsets_ids(default_params.dataset, default_params. from_subset_names))
+  select_from = ((line_nr, params.lines[line_nr])
+                 for line_nr in get_subsets_line_nrs(default_params.dataset, default_params. from_subset_names))
   items = get_matching_items(select_from, params.word_sep, params.trim_symbols,
                              params.ignore_case, params.from_count_incl, params.to_count_excl, counter)
   result: Subset = OrderedSet(items)
@@ -41,25 +40,24 @@ def filter_words_with_frequencies(default_params: SelectionDefaultParameters, pa
   if len(result) > 0:
     logger = getLogger(__name__)
     logger.debug(f"Filtered {len(result)} Id's.")
-    move_ids_to_subset(default_params.dataset, result, default_params.to_subset_name)
+    move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
   return None, changed_anything
 
 
-def get_counter(items: Iterable[Tuple[DataId, str]], word_sep: Symbol, trim_symbols: Set[Symbol], ignore_case: bool) -> Generator[DataId, None, None]:
+def get_counter(items: Iterable[Tuple[LineNr, str]], word_sep: str, trim_symbols: Set[str], ignore_case: bool) -> Generator[LineNr, None, None]:
   assert len(word_sep) > 0
 
   words = (
       word
       for _, sentence in items
-      for word in symbols_split_iterable(sentence, {word_sep})
+      for word in sentence.split(word_sep)
       if word != ""
   )
 
   if len(trim_symbols) > 0:
-    words = (symbols_strip(word, trim_symbols) for word in words)
-
-  words = (''.join(word) for word in words)
+    trim_symbols = ''.join(trim_symbols)
+    words = (word.strip(trim_symbols) for word in words)
 
   if ignore_case:
     words = (word.lower() for word in words)
@@ -71,17 +69,18 @@ def get_counter(items: Iterable[Tuple[DataId, str]], word_sep: Symbol, trim_symb
   return counter
 
 
-def get_matching_items(items: Iterable[Tuple[DataId, str]], word_sep: Symbol, trim_symbols: Set[Symbol], ignore_case: bool, from_count_incl: int, to_count_excl: int, counter: Counter) -> Generator[DataId, None, None]:
+def get_matching_items(items: Iterable[Tuple[LineNr, str]], word_sep: str, trim_symbols: Set[str], ignore_case: bool, from_count_incl: int, to_count_excl: int, counter: Counter) -> Generator[LineNr, None, None]:
   assert len(word_sep) > 0
 
   items = (
-      (data_id, (word for word in symbols_split_iterable(sentence, {word_sep}) if word != ""))
+      (data_id, (word for word in sentence.split(word_sep) if word != ""))
       for data_id, sentence in items
   )
 
   if len(trim_symbols) > 0:
+    trim_symbols = ''.join(trim_symbols)
     items = (
-      (data_id, (symbols_strip(word, trim_symbols) for word in words))
+      (data_id, (word.strip(trim_symbols) for word in words))
       for data_id, words in items
     )
 

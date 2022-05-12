@@ -1,60 +1,55 @@
-from typing import Any, OrderedDict as OrderedDictType
 from collections import Counter
-from typing import Dict, Generator, Iterable, List, Optional, OrderedDict, Tuple
+from typing import Any, Dict, Generator, Iterable, List, Optional
+from typing import OrderedDict
+from typing import OrderedDict as OrderedDictType
+from typing import Tuple
 
 import numpy as np
 from ordered_set import OrderedSet
 from pandas import DataFrame
 from text_utils import Symbol
 
-from text_selection_core.types import (Dataset, DataSymbols, DataWeights, Item,
-                                       NGramSet, Subset, SubsetName,
-                                       item_to_symbols)
+from text_selection_core.types import Dataset, DataWeights, Line, Lines, Subset, SubsetName
 
 SPACE_DISPL = "␣"
 NOT_AVAIL_VAL = "N/A"
 
 
-def generate_statistics(dataset: Dataset, symbols: Optional[DataSymbols], weights: List[Tuple[str, DataWeights]], n_grams: List[Tuple[str, NGramSet]]) -> Generator[Tuple[str, DataFrame], None, None]:
+def generate_statistics(dataset: Dataset, lines: Optional[Lines], ssep: str, weights: List[Tuple[str, DataWeights]]) -> Generator[Tuple[str, DataFrame], None, None]:
   yield "Selection", get_selection_statistics(dataset)
   if len(weights) > 0:
     yield "Weights", get_weights_statistics(weights)
     for subset in get_subsets_ordered(dataset):
       yield f"Weights {subset}", get_subset_weights_statistics(dataset.subsets[subset], weights)
-  if symbols is not None:
-    yield "Symbols", get_symbols_statistics(dataset, symbols)
+  if lines is not None:
+    yield "Symbols", get_symbols_statistics(dataset, lines, ssep)
 
 
 def get_subsets_ordered(dataset: Dataset) -> OrderedSet[str]:
   return OrderedSet(dataset.subsets.keys())
 
 
-def get_all_symbols(items: Iterable[Item]) -> Generator[Symbol, None, None]:
+def get_all_symbols(items: Iterable[Line], ssep: str) -> Generator[Symbol, None, None]:
   result = (
     symbol
     for item in items
-    for symbol in item_to_symbols(item)
+    for symbol in item.split(ssep)
   )
   return result
 
 
-def get_n_gram_statistics(dataset: Dataset, n_grams: List[NGramSet]):
-  pass
-
-
-def get_symbols_statistics(dataset: Dataset, symbols_strs: DataSymbols):
+def get_symbols_statistics(dataset: Dataset, lines: Lines, ssep: str):
   # TODO this as n_gram stats
-  data = []
-  all_symbols = OrderedSet(sorted(get_all_symbols(symbols_strs.values())))
+  all_symbols = OrderedSet(sorted(get_all_symbols(lines.values(), ssep)))
 
   subset_counts: OrderedDictType[SubsetName, Counter] = OrderedDict()
   subset_names = get_subsets_ordered(dataset)
   for subset_name in subset_names:
     subset = dataset.subsets[subset_name]
-    subset_symbols_strs = (symbols_strs[data_id] for data_id in subset)
+    subset_symbols_strs = (lines[data_id] for data_id in subset)
     #subset_symbols = set(get_all_symbols(subset_symbols_strs))
     #subset_matches = {symbol: "x" if symbol in subset_symbols else "-" for symbol in all_symbols}
-    subset_matches = Counter(get_all_symbols(subset_symbols_strs))
+    subset_matches = Counter(get_all_symbols(subset_symbols_strs, ssep))
     subset_counts[subset_name] = subset_matches
     # TODO add percent un-/covered as line
 
@@ -130,10 +125,10 @@ def get_selection_statistics(dataset: Dataset):
     data.append((
       subset_name,
       len(subset),
-      len(dataset.ids) - len(subset),
-      len(dataset.ids),
-      len(subset) / len(dataset.ids) * 100,
-      (len(dataset.ids) - len(subset)) / len(dataset.ids) * 100,
+      len(dataset.nrs) - len(subset),
+      len(dataset.nrs),
+      len(subset) / len(dataset.nrs) * 100,
+      (len(dataset.nrs) - len(subset)) / len(dataset.nrs) * 100,
     ))
 
   df = DataFrame(

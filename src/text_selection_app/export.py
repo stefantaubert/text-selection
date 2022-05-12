@@ -2,19 +2,14 @@ from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
 from typing import cast
-from text_selection_core.exporting.symbols_exporting import export_symbols
 
-
-from text_selection_app.argparse_helper import (get_optional,
-                                                parse_existing_directory,
-                                                parse_non_empty_or_whitespace, parse_path
-                                                )
-from text_selection_app.default_args import (add_encoding_argument,
-                                             add_string_format_argument)
+from text_selection_app.argparse_helper import (get_optional, parse_existing_directory,
+                                                parse_non_empty, parse_non_empty_or_whitespace,
+                                                parse_path)
+from text_selection_app.default_args import add_encoding_argument
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (DATA_SYMBOLS_NAME, DATASET_NAME,
-                                            get_data_symbols_path,
-                                            load_data_symbols, load_dataset)
+from text_selection_app.io_handling import DATASET_NAME, load_dataset
+from text_selection_core.exporting.symbols_exporting import export_symbols
 
 
 def get_export_txt_parser(parser: ArgumentParser):
@@ -23,9 +18,13 @@ def get_export_txt_parser(parser: ArgumentParser):
                       help="directory containing data")
   parser.add_argument("subset", type=parse_non_empty_or_whitespace, metavar="subset",
                       help="subset which should be exported")
+  parser.add_argument("file", type=parse_non_empty_or_whitespace,
+                      help="name of the file containing the lines")
+  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
+                      help="line separator")
   parser.add_argument("--name", type=get_optional(parse_non_empty_or_whitespace), metavar="NAME",
                       help="name of the exported text-file if not same as subset", default=None)
-  add_string_format_argument(parser, "text files")
+  #add_string_format_argument(parser, "text files")
   add_encoding_argument(parser, "encoding of the text files")
   parser.add_argument("-out", "--output-directory", type=get_optional(parse_path), metavar="PATH",
                       help="custom output directory if not same as input directory", default=None)
@@ -41,20 +40,21 @@ def export_txt_ns(ns: Namespace):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder)
 
-  if ns.name in {DATASET_NAME, DATA_SYMBOLS_NAME}:
+  if ns.name in {DATASET_NAME}:
     logger.error("The given name is not valid.")
     return
 
+  dataset_path: Path
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent
     data_name = str(data_folder.relative_to(root_folder)
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    symbols_path = get_data_symbols_path(data_folder)
+    symbols_path = data_folder / cast(str, ns.file)
     if not symbols_path.exists():
       logger.error(
-        f"Symbols were not found! Skipping...")
+        "File was not found! Skipping...")
       continue
 
     output_directory = root_folder
@@ -71,10 +71,10 @@ def export_txt_ns(ns: Namespace):
       continue
 
     dataset = load_dataset(dataset_path)
-    symbols = load_data_symbols(symbols_path)
+    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
 
     logger.debug("Exporting...")
-    error, text = export_symbols(dataset, ns.subset, symbols, ns.formatting)
+    error, text = export_symbols(dataset, ns.subset, lines)
 
     success = error is None
 

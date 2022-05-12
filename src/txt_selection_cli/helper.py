@@ -4,6 +4,7 @@ import os
 from argparse import ArgumentParser, ArgumentTypeError, _ArgumentGroup
 from collections import OrderedDict
 from functools import partial
+from logging import Logger
 from os import cpu_count
 from pathlib import Path
 from shutil import copy
@@ -13,10 +14,53 @@ from typing import Set, Tuple, TypeVar
 
 from ordered_set import OrderedSet
 
-from txt_selection_cli.globals import (DEFAULT_CHUNKSIZE, DEFAULT_ENCODING, DEFAULT_MAXTASKSPERCHILD,
-                                       DEFAULT_N_JOBS)
+from txt_selection_cli.globals import (DEFAULT_CHUNKSIZE, DEFAULT_ENCODING,
+                                       DEFAULT_MAXTASKSPERCHILD, DEFAULT_N_JOBS, SEL_ENC, SEL_LSEP)
 
 T = TypeVar("T")
+
+
+def try_save_selection(selection: OrderedSet[int], path: Path, logger: Logger) -> bool:
+  logger.info(f"Saving selection to \"{path.absolute()}\"")
+  sel_content = SEL_LSEP.join(str(x) for x in selection)
+  assert path.parent.is_dir()
+  try:
+    path.write_text(sel_content, SEL_ENC)
+  except Exception as ex:
+    logger.error(f"File \"{path.absolute()}\" couldn't be written!")
+    logger.exception(ex)
+    return False
+  return True
+
+from tqdm import tqdm
+def try_read_selection(path: Path, logger: Logger) -> Optional[OrderedSet[str]]:
+  if not path.is_file():
+    logger.error(f"Selection file \"{path.absolute()}\" was not found!")
+    return None
+
+  logger.info(f"Reading selection file \"{path.absolute()}\"")
+  try:
+    sel_content = path.read_text(SEL_ENC)
+  except Exception as ex:
+    logger.error("Selection file couldn't be loaded!")
+    logger.exception(ex)
+    return None
+
+  lines = sel_content.strip().split(SEL_LSEP)
+  x = [int(line) for line in tqdm(lines)]
+  try:
+    current_selection = OrderedSet(int(line) for line in tqdm(lines))
+  except ValueError as ex:
+    logger.error("Selection file couldn't be parsed!")
+    logger.exception(ex)
+    return None
+  
+  all_nums_are_greater_than_zero = all(num > 0 for num in current_selection)
+  if not all_nums_are_greater_than_zero:
+    logger.error("Selection file is invalid because it contains negative numbers!")
+    return None
+
+  return current_selection
 
 
 def get_chunks(keys: OrderedSet[str], chunk_size: Optional[int]) -> List[OrderedSet[str]]:
@@ -24,6 +68,13 @@ def get_chunks(keys: OrderedSet[str], chunk_size: Optional[int]) -> List[Ordered
     chunk_size = len(keys)
   chunked_list = list(keys[i: i + chunk_size] for i in range(0, len(keys), chunk_size))
   return chunked_list
+
+
+def get_all_files_in_all_subfolders(directory: Path) -> Generator[Path, None, None]:
+  for root, _, files in os.walk(directory):
+    for name in files:
+      file_path = Path(root) / name
+      yield file_path
 
 
 class ConvertToOrderedSetAction(argparse._StoreAction):

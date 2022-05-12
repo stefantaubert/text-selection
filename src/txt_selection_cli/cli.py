@@ -10,11 +10,14 @@ from tempfile import gettempdir
 from time import perf_counter
 from typing import Callable, Dict, Generator, List, Tuple
 
+from txt_selection_cli.deinitialization import get_deinitialization_parser
 from txt_selection_cli.globals import ExecutionResult
 from txt_selection_cli.helper import get_optional, parse_path
 from txt_selection_cli.initialization import get_initialization_parser
 from txt_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                      try_init_file_logger)
+from txt_selection_cli.line_nr_selection import get_line_nr_moving_parser
+from txt_selection_cli.subset_removal import get_subset_removal_parser
 
 __version__ = version("txt-selection")
 
@@ -35,6 +38,9 @@ def formatter(prog):
 
 def get_parsers() -> Parsers:
   yield "init", "initialize folders", get_initialization_parser
+  yield "deinit", "deinitialize folders", get_deinitialization_parser
+  yield "remove-empty-sets", "remove empty sets", get_subset_removal_parser
+  yield "select-lines", "select lines by line number", get_line_nr_moving_parser
 
 
 def print_features():

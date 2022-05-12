@@ -8,8 +8,9 @@ from tqdm import tqdm
 
 from txt_selection_cli.globals import SEL_ENC, SEL_EXT, SEL_LSEP, ExecutionResult
 from txt_selection_cli.helper import (ConvertToOrderedSetAction, add_encoding_argument,
-                                      parse_existing_directory, parse_non_empty,
-                                      parse_non_empty_or_whitespace, parse_path)
+                                      get_all_files_in_all_subfolders, parse_existing_directory,
+                                      parse_non_empty, parse_non_empty_or_whitespace, parse_path,
+                                      try_save_selection)
 from txt_selection_cli.logging_configuration import get_file_logger, init_and_get_console_logger
 
 
@@ -70,22 +71,11 @@ def init_ns(ns: Namespace) -> ExecutionResult:
     del text
     del lines
     flogger.info(f"Parsed {lines_count} lines.")
-    sel_content = SEL_LSEP.join(str(x) for x in range(1, lines_count + 1))
-    assert selection_path.parent.is_dir()
-    try:
-      selection_path.write_text(sel_content, SEL_ENC)
-    except Exception as ex:
-      flogger.error(f"File \"{selection_path.absolute()}\" couldn't be written!")
-      flogger.exception(ex)
+
+    selection = OrderedSet(range(1, lines_count + 1))
+    success = try_save_selection(selection, selection_path, flogger)
+    if not success:
       all_successfull = False
       continue
-    flogger.info(f"Initialized selection file at: \"{selection_path.absolute()}\"")
 
   return all_successfull, None
-
-
-def get_all_files_in_all_subfolders(directory: Path) -> Generator[Path, None, None]:
-  for root, _, files in os.walk(directory):
-    for name in files:
-      file_path = Path(root) / name
-      yield file_path

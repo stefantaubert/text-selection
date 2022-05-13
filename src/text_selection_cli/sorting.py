@@ -1,3 +1,4 @@
+from logging import Logger
 import math
 from argparse import ArgumentParser, Namespace
 from logging import getLogger
@@ -13,6 +14,7 @@ from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import (get_data_weights_path, get_dataset_path,
                                             try_load_data_weights, try_load_dataset,
                                             try_save_dataset)
+from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
 from text_selection_core.common import (SelectionDefaultParameters, SortingDefaultParameters,
                                         WeightSelectionParameters)
 from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
@@ -28,9 +30,7 @@ def get_fifo_sorting_parser(parser: ArgumentParser):
   return sort_fifo_from_ns
 
 
-def sort_fifo_from_ns(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def sort_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -70,9 +70,7 @@ def get_reverse_sorting_parser(parser: ArgumentParser):
   return sort_reverse_from_ns
 
 
-def sort_reverse_from_ns(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def sort_reverse_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

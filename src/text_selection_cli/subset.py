@@ -1,3 +1,4 @@
+from logging import Logger
 from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
@@ -8,6 +9,7 @@ from text_selection_cli.argparse_helper import (parse_existing_directory,
 from text_selection_cli.default_args import add_directory_argument
 from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import get_dataset_path, try_load_dataset, try_save_dataset
+from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
 from text_selection_core.subsets import rename_subset
 
 
@@ -21,9 +23,7 @@ def get_subset_renaming_parser(parser: ArgumentParser):
   return rename_subsets_ns
 
 
-def rename_subsets_ns(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def rename_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

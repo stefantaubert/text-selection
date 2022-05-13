@@ -1,3 +1,4 @@
+from logging import Logger
 import math
 from argparse import ArgumentParser, Namespace
 from logging import getLogger
@@ -16,6 +17,7 @@ from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import (get_data_weights_path, get_dataset_path,
                                             try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_dataset)
+from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
 from text_selection_core.common import SelectionDefaultParameters, WeightSelectionParameters
 from text_selection_core.selection.fifo_selection import original_mode, select_fifo, subset_mode
 from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
@@ -32,9 +34,7 @@ def get_id_selection_parser(parser: ArgumentParser):
   return select_ids_from_ns
 
 
-def select_ids_from_ns(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def select_ids_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -75,9 +75,7 @@ def get_fifo_selection_parser(parser: ArgumentParser):
   return select_fifo_from_ns
 
 
-def select_fifo_from_ns(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -140,9 +138,7 @@ def get_greedy_selection_parser(parser: ArgumentParser):
   return greedy_selection_ns
 
 
-def greedy_selection_ns(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -199,9 +195,7 @@ def get_kld_selection_parser(parser: ArgumentParser):
   return kld_selection_ns
 
 
-def kld_selection_ns(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def kld_selection_ns(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

@@ -1,5 +1,5 @@
 from argparse import ArgumentParser, Namespace
-from logging import getLogger
+from logging import Logger, getLogger
 from pathlib import Path
 from typing import cast
 
@@ -10,6 +10,7 @@ from text_selection_cli.default_args import (add_directory_argument, add_encodin
 from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import (get_dataset_path, try_load_dataset, try_load_file,
                                             try_save_dataset)
+from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
 from text_selection_core.common import SelectionDefaultParameters
 from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.regex_filter import filter_regex_pattern
@@ -23,9 +24,7 @@ def get_duplicate_selection_parser(parser: ArgumentParser):
   return select_duplicates_ns
 
 
-def select_duplicates_ns(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def select_duplicates_ns(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -71,9 +70,7 @@ def get_regex_match_selection_parser(parser: ArgumentParser):
   return regex_match_selection
 
 
-def regex_match_selection(ns: Namespace):
-  logger = getLogger(__name__)
-  logger.debug(ns)
+def regex_match_selection(ns: Namespace, logger: Logger, flogger: Logger):
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

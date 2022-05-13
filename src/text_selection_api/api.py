@@ -5,8 +5,8 @@ from typing import Dict, Optional
 from ordered_set import OrderedSet
 from text_selection_app.io_handling import (get_data_symbols_path,
                                             get_data_weights_path, get_dataset_path,
-                                            load_dataset, save_data_symbols,
-                                            try_save_data_weights, save_dataset)
+                                            try_load_dataset, save_data_symbols,
+                                            try_save_data_weights, try_save_dataset)
 from text_selection_core.types import (Dataset, Lines, DataWeights,
                                        Subset, SubsetName)
 
@@ -105,7 +105,7 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
       raise ValueError(f"Symbols contain not all lines!")
 
   dataset_path = get_dataset_path(directory)
-  save_dataset(dataset_path, dataset)
+  try_save_dataset(dataset_path, dataset)
 
   for weight_name, data_weights in weights.items():
     weights_path = get_data_weights_path(directory, weight_name)
@@ -120,7 +120,7 @@ def get_selection(directory: Path, subset_name: SubsetName) -> Subset:
   dataset_path = get_dataset_path(directory)
   if not dataset_path.is_file():
     raise ValueError("Dataset does not exist!")
-  dataset = load_dataset(dataset_path)
+  dataset = try_load_dataset(dataset_path)
   if subset_name not in dataset.subsets:
     raise ValueError("Subset does not exist!")
   result = dataset.subsets[subset_name]

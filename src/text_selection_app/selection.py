@@ -13,8 +13,9 @@ from text_selection_app.default_args import (add_directory_argument, add_file_ar
                                              add_from_and_to_subsets_arguments,
                                              add_to_subset_argument, parse_weights_name)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path, load_dataset,
-                                            save_dataset, try_load_data_weights, try_load_file)
+from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
+                                            try_load_data_weights, try_load_dataset, try_load_file,
+                                            try_save_dataset)
 from text_selection_core.common import SelectionDefaultParameters, WeightSelectionParameters
 from text_selection_core.selection.fifo_selection import original_mode, select_fifo, subset_mode
 from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
@@ -43,7 +44,10 @@ def select_ids_from_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     error, changed_anything = select_ids(dataset, ns.to_subset, ns.ids)
 
@@ -56,7 +60,7 @@ def select_ids_from_ns(ns: Namespace):
       assert not changed_anything
     else:
       if changed_anything:
-        save_dataset(get_dataset_path(data_folder), dataset)
+        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")
 
@@ -83,7 +87,10 @@ def select_fifo_from_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     weights_path = get_data_weights_path(data_folder, ns.weights)
     weights = try_load_data_weights(weights_path, logger)
@@ -105,7 +112,7 @@ def select_fifo_from_ns(ns: Namespace):
       assert not changed_anything
     else:
       if changed_anything:
-        save_dataset(get_dataset_path(data_folder), dataset)
+        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")
 
@@ -145,7 +152,10 @@ def greedy_selection_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     weights_path = get_data_weights_path(data_folder, ns.weights)
     weights = try_load_data_weights(weights_path, logger)
@@ -173,7 +183,7 @@ def greedy_selection_ns(ns: Namespace):
       assert not changed_anything
     else:
       if changed_anything:
-        save_dataset(get_dataset_path(data_folder), dataset)
+        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")
 
@@ -201,7 +211,10 @@ def kld_selection_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     weights_path = get_data_weights_path(data_folder, ns.weights)
     weights = try_load_data_weights(weights_path, logger)
@@ -229,6 +242,6 @@ def kld_selection_ns(ns: Namespace):
       assert not changed_anything
     else:
       if changed_anything:
-        save_dataset(get_dataset_path(data_folder), dataset)
+        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")

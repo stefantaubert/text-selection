@@ -11,7 +11,8 @@ from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse
 from text_selection_app.default_args import add_directory_argument
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
-                                            try_load_data_weights, load_dataset, save_dataset)
+                                            try_load_data_weights, try_load_dataset,
+                                            try_save_dataset)
 from text_selection_core.common import (SelectionDefaultParameters, SortingDefaultParameters,
                                         WeightSelectionParameters)
 from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
@@ -39,7 +40,10 @@ def sort_fifo_from_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     default_params = SortingDefaultParameters(dataset, ns.subsets)
     error, changed_anything = sort_fifo(default_params)
@@ -53,7 +57,7 @@ def sort_fifo_from_ns(ns: Namespace):
       assert not changed_anything
     else:
       if changed_anything:
-        save_dataset(get_dataset_path(data_folder), dataset)
+        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")
 
@@ -78,7 +82,10 @@ def sort_reverse_from_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     default_params = SortingDefaultParameters(dataset, ns.subsets)
     error, changed_anything = sort_reverse(default_params)
@@ -92,6 +99,6 @@ def sort_reverse_from_ns(ns: Namespace):
       assert not changed_anything
     else:
       if changed_anything:
-        save_dataset(get_dataset_path(data_folder), dataset)
+        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")

@@ -9,9 +9,8 @@ from text_selection_app.argparse_helper import (get_optional, parse_existing_dir
 from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
                                              add_file_arguments, parse_weights_name)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (get_data_weights_path, load_dataset,
-                                            try_load_data_weights, try_load_file,
-                                            try_save_data_weights)
+from text_selection_app.io_handling import (get_data_weights_path, try_load_data_weights,
+                                            try_load_dataset, try_load_file, try_save_data_weights)
 from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
                                                      get_word_count_weights)
 
@@ -38,7 +37,10 @@ def create_uniform_weights_ns(ns: Namespace) -> None:
 
     weights_path = get_data_weights_path(data_folder, ns.name)
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     weights = get_uniform_weights(dataset.get_line_nrs())
 

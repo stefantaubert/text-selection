@@ -9,7 +9,7 @@ from text_selection_app.argparse_helper import (get_optional, parse_existing_dir
 from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
                                              add_file_arguments)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import DATASET_NAME, load_dataset, try_load_file
+from text_selection_app.io_handling import DATASET_NAME, try_load_dataset, try_load_file
 from text_selection_core.exporting.symbols_exporting import export_symbols
 
 
@@ -53,7 +53,11 @@ def export_txt_ns(ns: Namespace):
       name = ns.name
     target_file = target_folder / f"{name}.txt"
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
+
     lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
     if lines is None:
       logger.info("Skipped!")

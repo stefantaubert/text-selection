@@ -7,7 +7,7 @@ from text_selection_app.argparse_helper import (parse_existing_directory,
                                                 parse_non_empty_or_whitespace)
 from text_selection_app.default_args import add_directory_argument
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import get_dataset_path, load_dataset, save_dataset
+from text_selection_app.io_handling import get_dataset_path, try_load_dataset, try_save_dataset
 from text_selection_core.subsets import rename_subset
 
 
@@ -33,7 +33,10 @@ def rename_subsets_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     error, changed_anything = rename_subset(dataset, ns.name, ns.new_name)
 
@@ -45,4 +48,4 @@ def rename_subsets_ns(ns: Namespace):
       assert not changed_anything
     else:
       assert changed_anything
-      save_dataset(get_dataset_path(data_folder), dataset)
+      try_save_dataset(get_dataset_path(data_folder), dataset, logger)

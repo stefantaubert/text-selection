@@ -49,20 +49,32 @@ def try_load_file(path: Path, encoding: str, lsep: str, logger: Logger) -> Optio
   return lines
 
 
-def load_dataset(path: Path) -> Dataset:
-  logger = getLogger(__name__)
-  logger.debug(f"Loading '{path}'...")
-  result = cast(Dataset, load_obj(path))
-  logger.debug("Ok.")
+def try_load_dataset(path: Path, logger: Logger) -> Optional[Dataset]:
+  if not path.exists():
+    logger.error(f"Dataset file \"{path}\" was not found!")
+    return None
+
+  logger.info(f"Reading dataset from \"{path}\"...")
+  try:
+    result = cast(Dataset, load_obj(path))
+  except Exception as ex:
+    logger.error("Dataset couldn't be read!")
+    logger.exception(ex)
+    return None
+
   return result
 
 
-def save_dataset(path: Path, dataset: Dataset) -> None:
-  logger = getLogger(__name__)
-  logger.debug(f"Saving '{path}'...")
-  path.parent.mkdir(parents=True, exist_ok=True)
-  save_obj(dataset, path)
-  logger.debug("Ok.")
+def try_save_dataset(path: Path, dataset: Dataset, logger: Logger) -> bool:
+  logger.info(f"Saving dataset to \"{path}\"...")
+  assert path.parent.is_dir()
+  try:
+    save_obj(dataset, path)
+  except Exception as ex:
+    logger.error("Dataset couldn't be saved!")
+    logger.exception(ex)
+    return False
+  return True
 
 
 # def get_data_symbols_path(directory: Path) -> Path:
@@ -91,14 +103,14 @@ def get_data_weights_path(directory: Path, name: str) -> Path:
 
 def try_load_data_weights(path: Path, logger: Logger) -> Optional[DataWeights]:
   if not path.exists():
-    logger.error(f"File \"{path}\" was not found!")
+    logger.error(f"Weights file \"{path}\" was not found!")
     return None
 
   logger.info(f"Reading weights from \"{path}\"...")
   try:
     result = cast(DataWeights, load_obj(path))
   except Exception as ex:
-    logger.error("File couldn't be read!")
+    logger.error("Weights couldn't be read!")
     logger.exception(ex)
     return None
 
@@ -111,7 +123,7 @@ def try_save_data_weights(path: Path, data_weights: DataWeights, logger: Logger)
   try:
     save_obj(data_weights, path)
   except Exception as ex:
-    logger.error("File couldn't be saved!")
+    logger.error("Weights couldn't be saved!")
     logger.exception(ex)
     return False
   return True

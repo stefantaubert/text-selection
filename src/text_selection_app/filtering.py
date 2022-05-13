@@ -8,8 +8,8 @@ from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse
 from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (get_dataset_path, load_dataset, save_dataset,
-                                            try_load_file)
+from text_selection_app.io_handling import (get_dataset_path, try_load_dataset, try_load_file,
+                                            try_save_dataset)
 from text_selection_core.common import SelectionDefaultParameters
 from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.regex_filter import filter_regex_pattern
@@ -35,7 +35,10 @@ def select_duplicates_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
 
     lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
     if lines is None:
@@ -53,7 +56,7 @@ def select_duplicates_ns(ns: Namespace):
       assert not changed_anything
     else:
       if changed_anything:
-        save_dataset(get_dataset_path(data_folder), dataset)
+        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")
 
@@ -80,7 +83,11 @@ def regex_match_selection(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    dataset = load_dataset(dataset_path)
+    dataset = try_load_dataset(dataset_path, logger)
+    if dataset is None:
+      logger.info("Skipped!")
+      continue
+
     lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
     if lines is None:
       logger.info("Skipped!")
@@ -97,6 +104,6 @@ def regex_match_selection(ns: Namespace):
       assert not changed_anything
     else:
       if changed_anything:
-        save_dataset(get_dataset_path(data_folder), dataset)
+        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")

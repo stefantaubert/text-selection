@@ -44,11 +44,17 @@ class Dataset():
     return get_line_nrs(self.__line_count)
 
 
+def ensure_subset_exists(dataset: Dataset, name: SubsetName, logger: Logger) -> bool:
+  if name not in dataset.subsets:
+    dataset.subsets[name] = OrderedSet()
+    logger.debug(f"Created subset \"{name}\".")
+    return True
+  return False
+
+
 def move_lines_to_subset(dataset: Dataset, nrs: LineNrs, target: SubsetName, logger: Logger) -> None:
   logger.debug("Adjusting selection...")
-  if target not in dataset.subsets:
-    dataset.subsets[target] = OrderedSet()
-    logger.debug(f"Created non-existing target subset \"{target}\".")
+  ensure_subset_exists(dataset, target, logger)
   target_subset = dataset.subsets[target]
   logger.debug("Update target...")
   target_subset.update(nrs)

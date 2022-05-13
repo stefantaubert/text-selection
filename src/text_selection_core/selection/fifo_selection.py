@@ -1,5 +1,5 @@
-from logging import getLogger
-from typing import Literal
+from logging import Logger, getLogger
+from typing import Literal, Optional
 
 from ordered_set import OrderedSet
 
@@ -10,23 +10,29 @@ from text_selection_core.common import (SelectionDefaultParameters, WeightSelect
                                         validate_weights_parameters)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_initial_weights, get_target_weights_from_percent
-from text_selection_core.types import Subset, get_subsets_line_nrs, move_lines_to_subset
+from text_selection_core.types import (Subset, ensure_subset_exists, get_subsets_line_nrs,
+                                       move_lines_to_subset)
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
 original_mode = "original"
 subset_mode = "subset"
 
 
-def select_fifo(default_params: SelectionDefaultParameters, weight_params: WeightSelectionParameters, mode: Literal["original", "subset"]) -> ExecutionResult:
+def select_fifo(default_params: SelectionDefaultParameters, weight_params: WeightSelectionParameters, mode: Literal["original", "subset"], logger: Optional[Logger]) -> ExecutionResult:
+  if logger is None:
+    logger = getLogger(__name__)
+
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
   if error := validate_weights_parameters(weight_params, default_params.dataset):
     return error, False
 
+  changed_anything = ensure_subset_exists(
+    default_params.dataset, default_params.to_subset_name, logger)
+
   from_ids = OrderedSet(get_subsets_line_nrs(default_params.dataset,
                         default_params.from_subset_names))
-
   to_subset = default_params.dataset.subsets[default_params.to_subset_name]
   assert len(from_ids.intersection(to_subset)) == 0
 
@@ -49,7 +55,6 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
     iterator, weight_params.weights, weight_params.target, initial_weights)
 
   result: Subset = OrderedSet(weights_iterator)
-  changed_anything = False
 
   if len(result) > 0:
     logger = getLogger(__name__)

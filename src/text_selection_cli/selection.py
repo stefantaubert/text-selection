@@ -7,8 +7,7 @@ from ordered_set import OrderedSet
 from text_selection.selection import SelectionMode
 from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_file,
                                                 parse_non_empty_or_whitespace,
-                                                parse_non_negative_float,
-                                                parse_positive_integer)
+                                                parse_non_negative_float, parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_file_arguments,
                                              add_from_and_to_subsets_arguments,
                                              add_to_subset_argument)
@@ -75,7 +74,7 @@ def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
-  error, changed_anything = select_fifo(default_params, weights_params, ns.mode)
+  error, changed_anything = select_fifo(default_params, weights_params, ns.mode, flogger)
 
   success = error is None
 
@@ -93,8 +92,8 @@ def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
 
 def add_termination_criteria_arguments(parser: ArgumentParser) -> None:
   group = parser.add_argument_group("termination criteria arguments")
-  group.add_argument("weights", type=parse_existing_file, metavar="weights",
-                     help="weights name")
+  group.add_argument("weights", type=parse_existing_file, metavar="WEIGHTS-PATH",
+                     help="weights path")
   group.add_argument("--limit", type=parse_non_negative_float, metavar="FLOAT",
                      help="weights limit", default=math.inf)
   group.add_argument("-i", "--limit-include-already-selected", action="store_true",

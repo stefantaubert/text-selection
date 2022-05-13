@@ -10,8 +10,8 @@ def get_uniform_weights(line_nrs: range) -> DataWeights:
 
 def get_word_count_weights(lines: Lines, sep: str) -> DataWeights:
   texts = (
-    (data_id, line)
-    for data_id, line in enumerate(lines, start=1)
+    (line_nr, line)
+    for line_nr, line in enumerate(lines)
   )
 
   if sep == "":

@@ -7,7 +7,6 @@ from typing import Tuple
 import numpy as np
 from ordered_set import OrderedSet
 from pandas import DataFrame
-from text_utils import Symbol
 
 from text_selection_core.types import Dataset, DataWeights, Line, Lines, Subset, SubsetName
 
@@ -29,7 +28,7 @@ def get_subsets_ordered(dataset: Dataset) -> OrderedSet[str]:
   return OrderedSet(dataset.subsets.keys())
 
 
-def get_all_symbols(items: Iterable[Line], ssep: str) -> Generator[Symbol, None, None]:
+def get_all_symbols(items: Iterable[Line], ssep: str) -> Generator[str, None, None]:
   result = (
     symbol
     for item in items

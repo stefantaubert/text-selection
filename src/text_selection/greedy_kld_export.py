@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from math import inf
 from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set

@@ -2,15 +2,13 @@ import argparse
 import codecs
 import os
 from argparse import ArgumentParser, ArgumentTypeError, _ArgumentGroup
-from collections import OrderedDict
 from functools import partial
 from logging import Logger
 from os import cpu_count
 from pathlib import Path
 from shutil import copy
 from typing import Callable, Generator, List, Optional
-from typing import OrderedDict as OrderedDictType
-from typing import Set, Tuple, TypeVar
+from typing import TypeVar
 
 from ordered_set import OrderedSet
 

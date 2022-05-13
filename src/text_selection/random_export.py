@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
-from typing import Set, Tuple
+from typing import Set
 
 from ordered_set import OrderedSet
 

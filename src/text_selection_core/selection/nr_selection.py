@@ -1,20 +1,10 @@
 from logging import getLogger
-from typing import Literal
 
 from ordered_set import OrderedSet
 
-from text_selection_core.algorithms.fifo import (get_fifo_original_positions_iterator,
-                                                 get_fifo_subset_iterator)
-from text_selection_core.common import (SelectionDefaultParameters, WeightSelectionParameters,
-                                        validate_selection_default_parameters,
-                                        validate_weights_parameters)
-from text_selection_core.filtering.weights_filter import WeightsFilterParameters
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.helper import get_initial_weights, get_target_weights_from_percent
-from text_selection_core.types import (Dataset, LineNr, LineNrs, Subset, SubsetName,
-                                       get_subsets_line_nrs, move_lines_to_subset)
+from text_selection_core.types import (Dataset, LineNrs, Subset, SubsetName, move_lines_to_subset)
 from text_selection_core.validation import SubsetNotExistsError, ValidationError
-from text_selection_core.weights.weights_iterator import WeightsIterator
 
 
 class NrsNotExistError(ValidationError):

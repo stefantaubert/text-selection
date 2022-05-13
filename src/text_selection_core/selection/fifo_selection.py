@@ -8,7 +8,6 @@ from text_selection_core.algorithms.fifo import (get_fifo_original_positions_ite
 from text_selection_core.common import (SelectionDefaultParameters, WeightSelectionParameters,
                                         validate_selection_default_parameters,
                                         validate_weights_parameters)
-from text_selection_core.filtering.weights_filter import WeightsFilterParameters
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_initial_weights, get_target_weights_from_percent
 from text_selection_core.types import Subset, get_subsets_line_nrs, move_lines_to_subset

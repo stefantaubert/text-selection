@@ -1,18 +1,11 @@
 from argparse import ArgumentParser, Namespace
-from logging import Logger, getLogger
-from pathlib import Path
-from typing import cast
+from logging import Logger
 
-from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
-                                                parse_non_empty, parse_non_empty_or_whitespace)
-from text_selection_cli.default_args import (add_encoding_argument, add_file_arguments,
-                                             add_from_and_to_subsets_arguments,
+from text_selection_cli.argparse_helper import parse_non_empty_or_whitespace
+from text_selection_cli.default_args import (add_file_arguments, add_from_and_to_subsets_arguments,
                                              add_project_argument)
 from text_selection_cli.globals import ExecutionResult
-from text_selection_cli.helper import get_datasets
-from text_selection_cli.io_handling import (get_dataset_path, try_load_dataset, try_load_file,
-                                            try_save_dataset)
-from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
+from text_selection_cli.io_handling import (try_load_dataset, try_load_file, try_save_dataset)
 from text_selection_core.common import SelectionDefaultParameters
 from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.regex_filter import filter_regex_pattern

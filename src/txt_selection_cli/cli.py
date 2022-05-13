@@ -8,7 +8,7 @@ from pathlib import Path
 from pkgutil import iter_modules
 from tempfile import gettempdir
 from time import perf_counter
-from typing import Callable, Dict, Generator, List, Tuple
+from typing import Callable, Generator, List, Tuple
 
 from txt_selection_cli.deinitialization import get_deinitialization_parser
 from txt_selection_cli.globals import ExecutionResult

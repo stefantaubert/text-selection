@@ -1,11 +1,10 @@
 
 from argparse import ArgumentParser
-from collections import OrderedDict
 from multiprocessing import cpu_count
 
 from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, get_optional,
                                                 parse_codec, parse_existing_file, parse_non_empty,
-                                                parse_non_empty_or_whitespace, parse_path,
+                                                parse_non_empty_or_whitespace,
                                                 parse_positive_integer)
 
 DEFAULT_N_JOBS = cpu_count()

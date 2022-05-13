@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 from text_selection_core.types import Dataset, Lines, SubsetName
 from text_selection_core.validation import (LinesCountNotMatchingError, SubsetNotExistsError,

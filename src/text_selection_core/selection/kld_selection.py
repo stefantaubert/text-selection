@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from logging import getLogger
 
-import numpy as np
 from ordered_set import OrderedSet
 
 from text_selection.common.mapping_iterator import map_indices

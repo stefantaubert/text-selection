@@ -1,6 +1,6 @@
 from typing import Dict, List
 from typing import OrderedDict as OrderedDictType
-from typing import Tuple, TypeVar
+from typing import TypeVar
 
 from ordered_set import OrderedSet
 from text_selection.greedy.greedy_methods import (get_greedy_cover,

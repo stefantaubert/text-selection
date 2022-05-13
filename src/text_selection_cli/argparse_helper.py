@@ -1,7 +1,6 @@
 import argparse
 import codecs
 from argparse import ArgumentTypeError
-from collections import OrderedDict
 from functools import partial
 from pathlib import Path
 from typing import Callable, List, Optional, TypeVar

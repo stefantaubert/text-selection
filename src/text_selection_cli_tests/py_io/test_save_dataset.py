@@ -3,7 +3,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 from text_selection_cli.io_handling import FILE_EXTENSION, try_save_dataset
-from text_selection_core.types import Dataset, Subset
+from text_selection_core.types import Dataset
 
 
 def test_empty__creates_file():

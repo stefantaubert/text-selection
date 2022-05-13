@@ -1,23 +1,11 @@
-import math
 from argparse import ArgumentParser, Namespace
-from logging import Logger, getLogger
-from pathlib import Path
-from typing import cast
+from logging import Logger
 
-from text_selection.selection import SelectionMode
-from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
-                                                parse_non_empty_or_whitespace,
-                                                parse_non_negative_float)
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_non_empty_or_whitespace)
 from text_selection_cli.default_args import add_project_argument
 from text_selection_cli.globals import ExecutionResult
-from text_selection_cli.helper import get_datasets
-from text_selection_cli.io_handling import (get_data_weights_path, get_dataset_path,
-                                            try_load_data_weights, try_load_dataset,
-                                            try_save_dataset)
-from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
-from text_selection_core.common import (SelectionDefaultParameters, SortingDefaultParameters,
-                                        WeightSelectionParameters)
-from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
+from text_selection_cli.io_handling import (try_load_dataset, try_save_dataset)
+from text_selection_core.common import SortingDefaultParameters
 from text_selection_core.sorting.fifo_sorting import sort_fifo
 from text_selection_core.sorting.reverse_sorting import sort_reverse
 

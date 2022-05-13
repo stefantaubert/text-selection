@@ -1,20 +1,9 @@
 from logging import getLogger
-from typing import Literal
 
 from ordered_set import OrderedSet
-from txt_selection.algorithms.fifo import get_fifo_id_iterator, get_fifo_original_positions_iterator, get_fifo_subset_iterator
-from txt_selection.common import (SelectionDefaultParameters, WeightSelectionParameters,
-                                  validate_selection_default_parameters,
-                                  validate_weights_parameters)
-from txt_selection.filtering.weights_filter import \
-    WeightsFilterParameters
 from txt_selection.globals import ExecutionResult
-from txt_selection.helper import (get_initial_weights,
-                                  get_target_weights_from_percent)
-from txt_selection.types import (DataId, DataIds, Dataset, Subset, SubsetName,
-                                 get_subsets_ids, move_ids_to_subset)
+from txt_selection.types import (DataIds, Dataset, Subset, SubsetName, move_ids_to_subset)
 from txt_selection.validation import SubsetNotExistsError, ValidationError
-from txt_selection.weights.weights_iterator import WeightsIterator
 
 
 class IdsNotExistError(ValidationError):

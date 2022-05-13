@@ -1,11 +1,5 @@
-import codecs
-from argparse import ArgumentTypeError
-from functools import partial
-from logging import Logger, getLogger
+from logging import Logger
 from pathlib import Path
-from typing import Callable, Optional
-from typing import OrderedDict as OrderedDictType
-from typing import TypeVar
 
 from general_utils import get_all_files_in_all_subfolders
 from ordered_set import OrderedSet

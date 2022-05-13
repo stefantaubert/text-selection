@@ -1,16 +1,14 @@
-import os
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Generator, List, cast
+from typing import List
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
-from txt_selection_cli.globals import SEL_ENC, SEL_EXT, SEL_LSEP, ExecutionResult
+from txt_selection_cli.globals import ExecutionResult, SEL_EXT
 from txt_selection_cli.helper import (ConvertToOrderedSetAction, add_encoding_argument,
                                       get_all_files_in_all_subfolders, parse_existing_directory,
-                                      parse_non_empty, parse_non_empty_or_whitespace, parse_path,
-                                      try_save_selection)
+                                      parse_non_empty, parse_non_empty_or_whitespace, try_save_selection)
 from txt_selection_cli.logging_configuration import get_file_logger, init_and_get_console_logger
 
 

@@ -1,16 +1,10 @@
-import math
 from argparse import ArgumentParser, Namespace
-from logging import Logger, getLogger
-from pathlib import Path
-from typing import cast
+from logging import Logger
 
-from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
-                                                parse_non_empty_or_whitespace)
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_non_empty_or_whitespace)
 from text_selection_cli.default_args import add_project_argument
 from text_selection_cli.globals import ExecutionResult
-from text_selection_cli.helper import get_datasets
-from text_selection_cli.io_handling import get_dataset_path, try_load_dataset, try_save_dataset
-from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
+from text_selection_cli.io_handling import try_load_dataset, try_save_dataset
 from text_selection_core.subsets import add_subsets, remove_subsets
 
 

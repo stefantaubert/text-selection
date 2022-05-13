@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from typing import Iterable, Optional
+from typing import Optional
 
 from ordered_set import OrderedSet
 
 from text_selection.selection import FirstKeySelector, SelectionMode
-from text_selection_core.types import (Dataset, DataWeights, LineNr, Subset, SubsetName, Weight,
-                                       get_subsets_line_nrs)
+from text_selection_core.types import (Dataset, DataWeights, SubsetName, Weight)
 from text_selection_core.validation import (InvalidPercentualValueError, NonDivergentSubsetsError,
                                             SubsetNotExistsError, ValidationError,
                                             WeightsDoNotContainAllKeysError)

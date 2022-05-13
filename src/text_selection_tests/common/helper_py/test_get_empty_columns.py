@@ -1,6 +1,4 @@
 import numpy as np
-from numpy.core.fromnumeric import shape
-from ordered_set import OrderedSet
 from text_selection.common.helper import get_empty_columns
 
 

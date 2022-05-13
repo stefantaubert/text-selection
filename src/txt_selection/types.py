@@ -1,11 +1,10 @@
 from collections import OrderedDict
 from copy import deepcopy
-from logging import Logger, getLogger
-from typing import Dict, Generator, Iterable, List
+from logging import Logger
+from typing import Generator, List
 from typing import OrderedDict as OrderedDictType
 from typing import Union
 
-import numpy as np
 from ordered_set import OrderedSet
 
 LineNr = int

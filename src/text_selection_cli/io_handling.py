@@ -1,7 +1,7 @@
 import pickle
-from logging import Logger, getLogger
+from logging import Logger
 from pathlib import Path
-from typing import Any, List, Optional, cast
+from typing import Any, Optional, cast
 
 from text_selection_core.types import Dataset, DataWeights, Lines
 

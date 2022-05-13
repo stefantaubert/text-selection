@@ -1,24 +1,16 @@
 import math
 from argparse import ArgumentParser, Namespace
-from logging import Logger, getLogger
-from pathlib import Path
-from typing import cast
+from logging import Logger
 
 from text_selection.selection import SelectionMode
-from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
-                                                parse_existing_file, parse_non_empty,
-                                                parse_non_empty_or_whitespace,
-                                                parse_non_negative_float,
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_file,
+                                                parse_non_empty_or_whitespace, parse_non_negative_float,
                                                 parse_non_negative_integer)
 from text_selection_cli.default_args import (add_file_arguments, add_from_and_to_subsets_arguments,
-                                             add_project_argument, add_to_subset_argument,
-                                             parse_weights_name)
+                                             add_project_argument, add_to_subset_argument)
 from text_selection_cli.globals import ExecutionResult
-from text_selection_cli.helper import get_datasets
-from text_selection_cli.io_handling import (get_data_weights_path, get_dataset_path,
-                                            try_load_data_weights, try_load_dataset, try_load_file,
-                                            try_save_dataset)
-from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
+from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset,
+                                            try_load_file, try_save_dataset)
 from text_selection_core.common import SelectionDefaultParameters, WeightSelectionParameters
 from text_selection_core.selection.fifo_selection import original_mode, select_fifo, subset_mode
 from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy

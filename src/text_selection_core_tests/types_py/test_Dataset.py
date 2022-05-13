@@ -1,4 +1,3 @@
-from ordered_set import OrderedSet
 
 
 # def test_creates_three_empty_subsets_on_init():

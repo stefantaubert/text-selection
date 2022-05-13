@@ -1,17 +1,10 @@
 from argparse import ArgumentParser, Namespace
-from logging import Logger, getLogger
-from pathlib import Path
-from typing import cast
+from logging import Logger
 
-from text_selection_cli.argparse_helper import (get_optional, parse_existing_directory,
-                                                parse_non_empty, parse_non_empty_or_whitespace,
-                                                parse_path, parse_positive_float)
-from text_selection_cli.default_args import (add_encoding_argument, add_file_arguments,
-                                             add_project_argument, parse_weights_name)
-from text_selection_cli.helper import get_datasets
-from text_selection_cli.io_handling import (get_data_weights_path, try_load_data_weights,
-                                            try_load_dataset, try_load_file, try_save_data_weights)
-from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
+from text_selection_cli.argparse_helper import (parse_path, parse_positive_float)
+from text_selection_cli.default_args import (add_file_arguments, add_project_argument)
+from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset,
+                                            try_load_file, try_save_data_weights)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
                                                      get_word_count_weights)

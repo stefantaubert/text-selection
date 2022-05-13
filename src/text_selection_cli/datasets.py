@@ -1,18 +1,12 @@
 from argparse import ArgumentParser, Namespace
-from logging import Logger, getLogger
+from logging import Logger
 from pathlib import Path
-from shutil import copy2
 from typing import cast
 
-from text_selection_cli.argparse_helper import (parse_existing_file, parse_non_empty,
-                                                parse_non_empty_or_whitespace, parse_path)
-from text_selection_cli.default_args import (add_encoding_argument, add_file_arguments,
-                                             add_project_argument)
+from text_selection_cli.argparse_helper import parse_non_empty_or_whitespace
+from text_selection_cli.default_args import (add_file_arguments, add_project_argument)
 from text_selection_cli.globals import ExecutionResult
-from text_selection_cli.helper import get_datasets
-from text_selection_cli.io_handling import (get_dataset_path, try_load_dataset, try_load_file,
-                                            try_save_dataset)
-from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
+from text_selection_cli.io_handling import (get_dataset_path, try_load_file, try_save_dataset)
 from text_selection_core.types import create_dataset_from_line_count
 
 

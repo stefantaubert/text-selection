@@ -1,4 +1,4 @@
-from text_selection_core.types import DataWeights, LineNrs, Lines
+from text_selection_core.types import DataWeights, Lines
 
 
 def get_uniform_weights(line_nrs: range) -> DataWeights:

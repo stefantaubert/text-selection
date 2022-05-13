@@ -1,5 +1,5 @@
 [project]
-name = "txt-selection"
+name = "text-selection"
 version = "0.0.1"
 description = "CLI to select lines of a single file."
 readme = "README.md"
@@ -49,19 +49,22 @@ Homepage = "https://github.com/stefantaubert/text-selection"
 Issues = "https://github.com/stefantaubert/text-selection/issues"
 
 [project.scripts]
-txt-selection-cli = "txt_selection_cli.cli:run_prod"
+text-selection-cli = "text_selection_cli.cli:run_prod"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = [
-  "txt_selection",
-  "txt_selection_cli"
+  "text_selection",
+  "text_selection_core",
+  "text_selection_cli",
 ]
 exclude = [
-  "txt_selection_tests",
-  "txt_selection_debug",
-  "txt_selection_cli_debug",
-  "txt_selection_cli_tests",
+  "text_selection_tests",
+  "text_selection_debug",
+  "text_selection_core_tests",
+  "text_selection_core_debug",
+  "text_selection_cli_debug",
+  "text_selection_cli_tests",
 ]
 namespaces = true
 
@@ -69,8 +72,9 @@ namespaces = true
 log_cli = true
 log_level = "DEBUG"
 testpaths = [
-  "src/txt_selection_tests",
-  "src/txt_selection_cli_tests"
+  "src/text_selection_tests",
+  "src/text_selection_core_tests",
+  "src/text_selection_cli_tests"
 ]
 
 [tool.autopep8]
@@ -82,13 +86,13 @@ max_line_length = 100
 line_length = 100
 indent = 2
 known_first_party = [
-  "txt_selection",
-  "txt_selection_cli"
+  "text_selection",
+  "text_selection_core",
+  "text_selection_cli",
 ]
 known_third_party = [
   "tqdm",
   "ordered_set",
-  "pronunciation_dictionary"
 ]
 
 [tool.pyright]
@@ -103,7 +107,7 @@ exclude = [
   "**/__pycache__",
   ".git",
   "**/*.egg-info",
-  "**/*_debug"
+  "**/*_debug",
 ]
 venvPath = "/home/mi/.local/share/virtualenvs"
 venv = "text-selection-AnI7IYeo"

@@ -127,6 +127,10 @@ def parse_args(args: List[str]):
     parser.print_help()
 
 
-if __name__ == "__main__":
+def run_prod():
   args = sys.argv[1:]
   parse_args(args)
+
+
+if __name__ == "__main__":
+  run_prod()

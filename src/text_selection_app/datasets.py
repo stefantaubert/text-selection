@@ -6,23 +6,19 @@ from typing import cast
 
 from text_selection_app.argparse_helper import (parse_existing_file, parse_non_empty,
                                                 parse_non_empty_or_whitespace, parse_path)
-from text_selection_app.default_args import add_encoding_argument
+from text_selection_app.default_args import add_encoding_argument, add_file_arguments
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import get_dataset_path, save_dataset
 from text_selection_core.types import create_dataset_from_line_count
 
 
-def get_dataset_creation_from_text_parser(parser: ArgumentParser):
-  parser.description = "This command reads the lines of a textfile and creates a dataset from it."
+def get_init_parser(parser: ArgumentParser):
+  parser.description = "This command reads the lines of a textfile and initializes a dataset from it."
   parser.add_argument("directory", type=parse_path, metavar="directory",
                       help="directory to write")
-  parser.add_argument("text", type=parse_existing_file, metavar="text",
-                      help="path to text file")
-  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
-                      help="line separator")
-  add_encoding_argument(parser, "encoding of text")
-  parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
-                      help="name of the initial subset containing all Id's", default="base")
+  add_file_arguments(parser)
+  parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="NAME",
+                      help="name of the initial subset containing all Id's")
   parser.add_argument("-o", "--overwrite", action="store_true",
                       help="overwrite complete directory")
   return create_dataset_from_text_ns
@@ -36,7 +32,7 @@ def create_dataset_from_text_ns(ns: Namespace):
   if data_folder.is_dir() and not ns.overwrite:
     logger.error("Directory already exists!")
     return
-    
+
   logger.info("Reading data...")
   lines = cast(Path, ns.text).read_text(ns.encoding).split(ns.lsep)
 

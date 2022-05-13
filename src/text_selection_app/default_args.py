@@ -3,7 +3,8 @@ from argparse import ArgumentParser
 from collections import OrderedDict
 from multiprocessing import cpu_count
 
-from text_selection_app.argparse_helper import (get_optional, parse_codec, parse_non_empty,
+from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, get_optional,
+                                                parse_codec, parse_non_empty,
                                                 parse_non_empty_or_whitespace, parse_path,
                                                 parse_positive_integer)
 
@@ -11,18 +12,42 @@ DEFAULT_N_JOBS = cpu_count()
 DEFAULT_CHUNKSIZE = 500
 DEFAULT_MAXTASKSPERCHILD = None
 
+parse_weights_name = parse_non_empty_or_whitespace
+
+
+def add_from_and_to_subsets_arguments(parser: ArgumentParser) -> None:
+  add_from_subsets_argument(parser)
+  add_to_subset_argument(parser)
+
+
+def add_from_subsets_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+",
+                      metavar="from-subsets", help="from subset", action=ConvertToOrderedSetAction)
+
+
+def add_to_subset_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("to_subset", type=parse_non_empty_or_whitespace,
+                      metavar="to-subset", help="to subset")
+
 
 def add_directory_argument(parser: ArgumentParser) -> None:
   parser.add_argument("directory", type=parse_path, metavar="directory",
                       help="directory containing data")
 
 
-def add_file_arguments(parser: ArgumentParser) -> None:
+def add_file_arguments(parser: ArgumentParser, include_sep: bool = False) -> None:
   parser.add_argument("file", type=parse_non_empty_or_whitespace,
                       help="name of the file containing the lines")
   parser.add_argument("--lsep", type=parse_non_empty, default="\n",
                       help="line separator")
+  if include_sep:
+    add_sep_argument(parser)
   add_encoding_argument(parser, "encoding of file")
+
+
+def add_sep_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("--sep", type=str, metavar="SYMBOL",
+                      help="separator symbol for symbols/words", default=" ")
 
 
 def add_n_jobs_argument(parser: ArgumentParser) -> None:

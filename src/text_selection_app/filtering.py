@@ -6,7 +6,7 @@ from typing import cast
 from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
                                                 parse_non_empty, parse_non_empty_or_whitespace)
 from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
-                                             add_file_arguments)
+                                             add_file_arguments, add_from_and_to_subsets_arguments)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import get_dataset_path, load_dataset, save_dataset
 from text_selection_core.common import SelectionDefaultParameters
@@ -18,10 +18,7 @@ def get_duplicate_selection_parser(parser: ArgumentParser):
   parser.description = "Select duplicate entries."
   add_directory_argument(parser)
   add_file_arguments(parser)
-  parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="from-subsets",
-                      help="from subset", action=ConvertToOrderedSetAction)
-  parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
-                      help="to subset")
+  add_from_and_to_subsets_arguments(parser)
   return select_duplicates_ns
 
 
@@ -67,10 +64,7 @@ def get_regex_match_selection_parser(parser: ArgumentParser):
   parser.description = "Select entries matching regex pattern."
   add_directory_argument(parser)
   add_file_arguments(parser)
-  parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+",
-                      metavar="from-subsets", help="from subset", action=ConvertToOrderedSetAction)
-  parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
-                      help="to subset")
+  add_from_and_to_subsets_arguments(parser)
   parser.add_argument("pattern", type=parse_non_empty_or_whitespace, metavar="REGEX",
                       help="to subset")
   return regex_match_selection

@@ -9,7 +9,9 @@ from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse
                                                 parse_non_empty, parse_non_empty_or_whitespace,
                                                 parse_non_negative_float,
                                                 parse_non_negative_integer)
-from text_selection_app.default_args import add_directory_argument, add_file_arguments
+from text_selection_app.default_args import (add_directory_argument, add_file_arguments,
+                                             add_from_and_to_subsets_arguments,
+                                             add_to_subset_argument, parse_weights_name)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
                                             load_data_weights, load_dataset, save_dataset)
@@ -23,8 +25,7 @@ from text_selection_core.selection.nr_selection import select_ids
 def get_id_selection_parser(parser: ArgumentParser):
   parser.description = "Select Id's."
   add_directory_argument(parser)
-  parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
-                      help="to subset")
+  add_to_subset_argument(parser)
   parser.add_argument("ids", type=parse_non_negative_integer, nargs="+", metavar="ids",
                       help="ids to select", action=ConvertToOrderedSetAction)
   return select_ids_from_ns
@@ -61,22 +62,12 @@ def select_ids_from_ns(ns: Namespace):
 
 
 def get_fifo_selection_parser(parser: ArgumentParser):
-  parser.description = f"Select Id's by FIFO principle."
+  parser.description = "Select Id's by FIFO principle."
   add_directory_argument(parser)
-  parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="from-subsets",
-                      help="from subset", action=ConvertToOrderedSetAction)
-  parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
-                      help="to subset")
-  parser.add_argument("--weights", type=parse_non_empty_or_whitespace, metavar="NAME",
-                      help="weights name", default="weights")
+  add_from_and_to_subsets_arguments(parser)
   parser.add_argument("--mode", type=parse_non_empty_or_whitespace, metavar="MODE",
                       help="mode", default="subset", choices=[subset_mode, original_mode])
-  parser.add_argument("--limit", type=parse_non_negative_float, metavar="FLOAT",
-                      help="weights limit", default=math.inf)
-  parser.add_argument("-i", "--limit-include-already-selected", action="store_true",
-                      help="include already selected Id's for limit")
-  parser.add_argument("-p", "--limit-percent", action="store_true",
-                      help="limit is percentual; in this case it needs to be in interval (0, 100]")
+  add_termination_criteria_arguments(parser)
   return select_fifo_from_ns
 
 
@@ -119,26 +110,26 @@ def select_fifo_from_ns(ns: Namespace):
         logger.info("Didn't changed anything!")
 
 
+def add_termination_criteria_arguments(parser: ArgumentParser) -> None:
+  group = parser.add_argument_group("termination criteria arguments")
+  group.add_argument("weights", type=parse_weights_name, metavar="NAME",
+                     help="weights name", default="weights")
+  group.add_argument("--limit", type=parse_non_negative_float, metavar="FLOAT",
+                     help="weights limit", default=math.inf)
+  group.add_argument("-i", "--limit-include-already-selected", action="store_true",
+                     help="include already selected Id's for limit")
+  group.add_argument("-p", "--limit-percent", action="store_true",
+                     help="limit is percentual; in this case it needs to be in interval (0, 100]")
+
+
 def get_greedy_selection_parser(parser: ArgumentParser):
   parser.description = "Select Id's by greedy principle."
   add_directory_argument(parser)
-  parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="from-subsets",
-                      help="from subset", action=ConvertToOrderedSetAction)
-  parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
-                      help="to subset")
-  add_file_arguments(parser)
-  parser.add_argument("--ssep", type=str, default="",
-                      help="symbol separator")
+  add_from_and_to_subsets_arguments(parser)
+  add_file_arguments(parser, True)
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
-  parser.add_argument("--weights", type=parse_non_empty_or_whitespace, metavar="NAME",
-                      help="weights name", default="weights")
-  parser.add_argument("--limit", type=parse_non_negative_float, metavar="FLOAT",
-                      help="weights limit", default=math.inf)
-  parser.add_argument("-i", "--limit-include-already-selected", action="store_true",
-                      help="include already selected Id's for limit")
-  parser.add_argument("-p", "--limit-percent", action="store_true",
-                      help="limit is percentual; in this case it needs to be in interval (0, 100]")
+  add_termination_criteria_arguments(parser)
   return greedy_selection_ns
 
 
@@ -171,7 +162,7 @@ def greedy_selection_ns(ns: Namespace):
     lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-    params = GreedySelectionParameters(lines, ns.ssep, ns.include_selected, SelectionMode.FIRST)
+    params = GreedySelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
     weights_params = WeightSelectionParameters(
       weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
@@ -193,23 +184,11 @@ def greedy_selection_ns(ns: Namespace):
 def get_kld_selection_parser(parser: ArgumentParser):
   parser.description = "Select Id's by KLD principle."
   add_directory_argument(parser)
-  parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="from-subsets",
-                      help="from subset", action=ConvertToOrderedSetAction)
-  parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
-                      help="to subset")
-  add_file_arguments(parser)
-  parser.add_argument("--ssep", type=str, default="",
-                      help="symbol separator")
+  add_from_and_to_subsets_arguments(parser)
+  add_file_arguments(parser, True)
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
-  parser.add_argument("--weights", type=parse_non_empty_or_whitespace, metavar="NAME",
-                      help="weights name", default="weights")
-  parser.add_argument("--limit", type=parse_non_negative_float, metavar="FLOAT",
-                      help="weights limit", default=math.inf)
-  parser.add_argument("-i", "--limit-include-already-selected", action="store_true",
-                      help="include already selected Id's for limit")
-  parser.add_argument("-p", "--limit-percent", action="store_true",
-                      help="limit is percentual; in this case it needs to be in interval (0, 100]")
+  add_termination_criteria_arguments(parser)
   return kld_selection_ns
 
 
@@ -242,7 +221,7 @@ def kld_selection_ns(ns: Namespace):
     lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-    params = KldSelectionParameters(lines, ns.ssep, ns.include_selected, SelectionMode.FIRST)
+    params = KldSelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
     weights_params = WeightSelectionParameters(
       weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 

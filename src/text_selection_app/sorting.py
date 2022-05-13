@@ -20,7 +20,7 @@ from text_selection_core.sorting.reverse_sorting import sort_reverse
 
 
 def get_fifo_sorting_parser(parser: ArgumentParser):
-  parser.description = f"Sort Id's by FIFO principle."
+  parser.description = "Sort Id's by FIFO principle."
   add_directory_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",
                       help="subsets", action=ConvertToOrderedSetAction)

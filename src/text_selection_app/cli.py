@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from logging import getLogger
 from typing import Callable, Dict, Generator, List, Tuple
 
-from text_selection_app.datasets import (get_backup_parser, get_dataset_creation_from_text_parser,
+from text_selection_app.datasets import (get_backup_parser, get_init_parser,
                                          get_restore_parser)
 from text_selection_app.export import get_export_txt_parser
 from text_selection_app.filtering import get_duplicate_selection_parser
@@ -33,7 +33,7 @@ def formatter(prog):
 
 
 def get_dataset_parsers() -> Parsers:
-  yield "create-from-text", "create dataset from text", get_dataset_creation_from_text_parser
+  yield "create-from-text", "create dataset from text", get_init_parser
   yield "backup", "backup dataset", get_backup_parser
   yield "restore", "restore dataset", get_restore_parser
   yield "get-stats", "getting statistics", get_statistics_generation_parser

@@ -14,7 +14,8 @@ from text_selection_app.default_args import (add_directory_argument, add_file_ar
                                              add_to_subset_argument, parse_weights_name)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
-                                            load_data_weights, load_dataset, save_dataset)
+                                            load_data_weights, load_dataset, save_dataset,
+                                            try_load_file)
 from text_selection_core.common import SelectionDefaultParameters, WeightSelectionParameters
 from text_selection_core.selection.fifo_selection import original_mode, select_fifo, subset_mode
 from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
@@ -23,7 +24,7 @@ from text_selection_core.selection.nr_selection import select_ids
 
 
 def get_id_selection_parser(parser: ArgumentParser):
-  parser.description = "Select Id's."
+  parser.description = "Select lines."
   add_directory_argument(parser)
   add_to_subset_argument(parser)
   parser.add_argument("ids", type=parse_non_negative_integer, nargs="+", metavar="ids",
@@ -62,7 +63,7 @@ def select_ids_from_ns(ns: Namespace):
 
 
 def get_fifo_selection_parser(parser: ArgumentParser):
-  parser.description = "Select Id's by FIFO principle."
+  parser.description = "Select lines by FIFO principle."
   add_directory_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   parser.add_argument("--mode", type=parse_non_empty_or_whitespace, metavar="MODE",
@@ -112,18 +113,18 @@ def select_fifo_from_ns(ns: Namespace):
 
 def add_termination_criteria_arguments(parser: ArgumentParser) -> None:
   group = parser.add_argument_group("termination criteria arguments")
-  group.add_argument("weights", type=parse_weights_name, metavar="NAME",
+  group.add_argument("weights", type=parse_weights_name, metavar="weights",
                      help="weights name", default="weights")
   group.add_argument("--limit", type=parse_non_negative_float, metavar="FLOAT",
                      help="weights limit", default=math.inf)
   group.add_argument("-i", "--limit-include-already-selected", action="store_true",
-                     help="include already selected Id's for limit")
+                     help="include already selected lines for limit")
   group.add_argument("-p", "--limit-percent", action="store_true",
                      help="limit is percentual; in this case it needs to be in interval (0, 100]")
 
 
 def get_greedy_selection_parser(parser: ArgumentParser):
-  parser.description = "Select Id's by greedy principle."
+  parser.description = "Select lines by greedy principle."
   add_directory_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser, True)
@@ -151,15 +152,12 @@ def greedy_selection_ns(ns: Namespace):
         "Weights were not found! Skipping...")
       continue
 
-    symbols_path = data_folder / cast(str, ns.file)
-    if not symbols_path.exists():
-      logger.error(
-        "File was not found! Skipping...")
-      continue
-
     dataset = load_dataset(dataset_path)
     weights = load_data_weights(weights_path)
-    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
+    lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
+    if lines is None:
+      logger.info("Skipped!")
+      continue
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
     params = GreedySelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
@@ -182,7 +180,7 @@ def greedy_selection_ns(ns: Namespace):
 
 
 def get_kld_selection_parser(parser: ArgumentParser):
-  parser.description = "Select Id's by KLD principle."
+  parser.description = "Select lines by KLD principle."
   add_directory_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser, True)
@@ -210,15 +208,12 @@ def kld_selection_ns(ns: Namespace):
         "Weights were not found! Skipping...")
       continue
 
-    symbols_path = data_folder / cast(str, ns.file)
-    if not symbols_path.exists():
-      logger.error(
-        "File was not found! Skipping...")
-      continue
-
     dataset = load_dataset(dataset_path)
     weights = load_data_weights(weights_path)
-    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
+    lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
+    if lines is None:
+      logger.info("Skipped!")
+      continue
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
     params = KldSelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)

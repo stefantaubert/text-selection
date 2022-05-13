@@ -5,7 +5,7 @@ from text_selection_core.types import Dataset, LineNrs, Subset, SubsetName, move
 from text_selection_core.validation import SubsetNotExistsError, ValidationError
 
 
-class AnyIdAlreadySelectedError(ValidationError):
+class AnyLineAlreadySelectedError(ValidationError):
   def __init__(self, subset: Subset, nrs: LineNrs) -> None:
     super().__init__()
     self.subset = subset
@@ -19,7 +19,7 @@ class AnyIdAlreadySelectedError(ValidationError):
 
   @property
   def default_message(self) -> str:
-    return f"Some of the Id's ({', '.join(self.nrs.intersection(self.subset))}) were already filtered!"
+    return f"Some of the lines ({', '.join(self.nrs.intersection(self.subset))}) were already filtered!"
 
 
 def filter_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs) -> ExecutionResult:
@@ -27,7 +27,7 @@ def filter_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs) -> Ex
     return error, False
 
   to_subset = dataset[to_subset_name]
-  if error := AnyIdAlreadySelectedError.validate(to_subset, nrs):
+  if error := AnyLineAlreadySelectedError.validate(to_subset, nrs):
     return error, False
 
   changed_anything = False

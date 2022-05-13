@@ -5,8 +5,7 @@ from argparse import ArgumentParser
 from logging import getLogger
 from typing import Callable, Dict, Generator, List, Tuple
 
-from text_selection_app.datasets import (get_backup_parser, get_init_parser,
-                                         get_restore_parser)
+from text_selection_app.datasets import get_backup_parser, get_init_parser, get_restore_parser
 from text_selection_app.export import get_export_txt_parser
 from text_selection_app.filtering import get_duplicate_selection_parser
 #from text_selection_app.n_grams import get_n_grams_extraction_parser

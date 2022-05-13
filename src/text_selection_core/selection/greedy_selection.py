@@ -76,7 +76,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
 
   if len(result) > 0:
     logger = getLogger(__name__)
-    logger.debug(f"Selected {len(result)} Id's.")
+    logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
 
@@ -125,7 +125,7 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
 
   if len(result) > 0:
     logger = getLogger(__name__)
-    logger.debug(f"Selected {len(result)} Id's.")
+    logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
 

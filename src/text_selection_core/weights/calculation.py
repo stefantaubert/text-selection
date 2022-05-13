@@ -1,8 +1,8 @@
 from text_selection_core.types import DataWeights, LineNrs, Lines
 
 
-def get_uniform_weights(ids: LineNrs) -> DataWeights:
-  result = dict.fromkeys(ids, 1)
+def get_uniform_weights(line_nrs: range) -> DataWeights:
+  result = dict.fromkeys(line_nrs, 1)
   return result
 
 

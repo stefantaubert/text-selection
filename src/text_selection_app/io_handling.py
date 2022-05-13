@@ -1,7 +1,7 @@
 import pickle
-from logging import getLogger
+from logging import Logger, getLogger
 from pathlib import Path
-from typing import Any, List, cast
+from typing import Any, List, Optional, cast
 
 from text_selection_core.types import Dataset, DataWeights, Lines
 
@@ -29,8 +29,25 @@ def load_obj(path: Path) -> Any:
 def get_dataset_path(directory: Path) -> Path:
   return directory / DATASET_FULL_NAME
 
-def load_file(path: Path) -> Lines:
-  pass
+
+def try_load_file(path: Path, encoding: str, lsep: str, logger: Logger) -> Optional[Lines]:
+  if not path.exists():
+    logger.error(f"File \"{path}\" was not found!")
+    return None
+
+  logger.info(f"Reading \"{path}\"...")
+  try:
+    text = path.read_text(encoding)
+  except Exception as ex:
+    logger.error("File couldn't be read!")
+    logger.exception(ex)
+    return None
+
+  logger.info("Separating lines...")
+  lines = text.split(lsep)
+  del text
+  return lines
+
 
 def load_dataset(path: Path) -> Dataset:
   logger = getLogger(__name__)

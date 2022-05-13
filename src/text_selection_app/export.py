@@ -9,7 +9,7 @@ from text_selection_app.argparse_helper import (get_optional, parse_existing_dir
 from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
                                              add_file_arguments)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import DATASET_NAME, load_dataset
+from text_selection_app.io_handling import DATASET_NAME, load_dataset, try_load_file
 from text_selection_core.exporting.symbols_exporting import export_symbols
 
 
@@ -44,12 +44,6 @@ def export_txt_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    symbols_path = data_folder / cast(str, ns.file)
-    if not symbols_path.exists():
-      logger.error(
-        "File was not found! Skipping...")
-      continue
-
     output_directory = root_folder
     if ns.output_directory is not None:
       output_directory = ns.output_directory
@@ -60,7 +54,10 @@ def export_txt_ns(ns: Namespace):
     target_file = target_folder / f"{name}.txt"
 
     dataset = load_dataset(dataset_path)
-    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
+    lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
+    if lines is None:
+      logger.info("Skipped!")
+      continue
 
     logger.debug("Exporting...")
     error, text = export_symbols(dataset, ns.subset, lines)

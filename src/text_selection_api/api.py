@@ -15,7 +15,7 @@ def check_dataset_is_valid(dataset: Dataset) -> bool:
   if not isinstance(dataset, Dataset):
     return False
 
-  if not isinstance(dataset.nrs, OrderedSet):
+  if not isinstance(dataset.create_line_nrs, OrderedSet):
     return False
 
   if not len(dataset.subsets) > 0:
@@ -27,7 +27,7 @@ def check_dataset_is_valid(dataset: Dataset) -> bool:
     if not isinstance(dataset.subsets[key], OrderedSet):
       return False
 
-    if not dataset.subsets[key].issubset(dataset.nrs):
+    if not dataset.subsets[key].issubset(dataset.create_line_nrs):
       return False
 
   all_keys_from_all_subsets = list(
@@ -40,7 +40,7 @@ def check_dataset_is_valid(dataset: Dataset) -> bool:
   if some_keys_duplicate:
     return False
 
-  not_all_keys_in_subsets = len(all_keys_from_all_subsets) != len(dataset.nrs)
+  not_all_keys_in_subsets = len(all_keys_from_all_subsets) != len(dataset.create_line_nrs)
   if not_all_keys_in_subsets:
     return False
 
@@ -91,8 +91,8 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
     if weights_path.exists() and not overwrite:
       raise ValueError(f"Weights '{weight_name}' already exist!")
     # TODO extra function
-    if data_weights.keys() != set(dataset.nrs):
-      raise ValueError(f"Weights '{weight_name}' contain not all Id's!")
+    if data_weights.keys() != set(dataset.create_line_nrs):
+      raise ValueError(f"Weights '{weight_name}' contain not all lines!")
 
   if symbols is not None:
     if not check_symbols_are_valid(symbols):
@@ -101,8 +101,8 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
     symbols_path = get_data_symbols_path(directory)
     if symbols_path.exists() and not overwrite:
       raise ValueError(f"Symbols already exist!")
-    if symbols.keys() != set(dataset.nrs):
-      raise ValueError(f"Symbols contain not all Id's!")
+    if symbols.keys() != set(dataset.create_line_nrs):
+      raise ValueError(f"Symbols contain not all lines!")
 
   dataset_path = get_dataset_path(directory)
   save_dataset(dataset_path, dataset)

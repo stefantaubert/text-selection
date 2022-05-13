@@ -41,7 +41,8 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
   if mode == subset_mode:
     iterator = get_fifo_subset_iterator(from_ids)
   elif mode == original_mode:
-    iterator = get_fifo_original_positions_iterator(from_ids, default_params.dataset.nrs)
+    original_line_nrs = OrderedSet(default_params.dataset.get_line_nrs())
+    iterator = get_fifo_original_positions_iterator(from_ids, original_line_nrs)
   else:
     assert False
 
@@ -53,7 +54,7 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
 
   if len(result) > 0:
     logger = getLogger(__name__)
-    logger.debug(f"Selected {len(result)} Id's.")
+    logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
 

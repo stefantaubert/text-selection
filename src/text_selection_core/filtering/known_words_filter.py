@@ -37,7 +37,7 @@ def filter_sentences_containing_only_known_words(default_params: SelectionDefaul
   changed_anything = False
   if len(result) > 0:
     logger = getLogger(__name__)
-    logger.debug(f"Filtered {len(result)} Id's.")
+    logger.debug(f"Filtered {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
   return None, changed_anything

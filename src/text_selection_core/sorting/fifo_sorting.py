@@ -13,7 +13,8 @@ def sort_fifo(default_params: SortingDefaultParameters) -> ExecutionResult:
   for subset_name in default_params.subset_names:
     subset = default_params.dataset.subsets[subset_name]
 
-    iterator = get_fifo_original_positions_iterator(subset, default_params.dataset.nrs)
+    original_line_nrs = OrderedSet(default_params.dataset.get_line_nrs())
+    iterator = get_fifo_original_positions_iterator(subset, original_line_nrs)
 
     ordered_subset = OrderedSet(iterator)
     if ordered_subset != subset:

@@ -122,13 +122,14 @@ def get_selection_statistics(dataset: Dataset):
   data = []
   for subset_name in get_subsets_ordered(dataset):
     subset = dataset.subsets[subset_name]
+
     data.append((
       subset_name,
       len(subset),
-      len(dataset.nrs) - len(subset),
-      len(dataset.nrs),
-      len(subset) / len(dataset.nrs) * 100,
-      (len(dataset.nrs) - len(subset)) / len(dataset.nrs) * 100,
+      dataset.line_count - len(subset),
+      dataset.line_count,
+      len(subset) / dataset.line_count * 100,
+      (dataset.line_count - len(subset)) / dataset.line_count * 100,
     ))
 
   df = DataFrame(

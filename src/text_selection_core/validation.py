@@ -1,6 +1,6 @@
 from ordered_set import OrderedSet
 
-from text_selection_core.types import Lines, Dataset, DataWeights, SubsetName
+from text_selection_core.types import Dataset, DataWeights, Lines, SubsetName
 
 
 class ValidationError():
@@ -61,7 +61,9 @@ class SubsetNotExistsError(ValidationError):
 
   @property
   def default_message(self) -> str:
-    return f"Subset \"{self.name}\" does not exist!"
+    choose_from = iter(self.dataset.subsets)
+    choose_from = (f"\"{x}\"" for x in choose_from)
+    return f"Subset \"{self.name}\" does not exist! Choose from: {', '.join(choose_from)}."
 
 
 class InvalidPercentualValueError(ValidationError):
@@ -100,7 +102,7 @@ class NonDivergentSubsetsError(ValidationError):
 
   @property
   def default_message(self) -> str:
-    return f"Subsets need to be distinct!"
+    return "Subsets need to be distinct!"
 
 
 class WeightsDoNotContainAllKeysError(ValidationError):
@@ -111,13 +113,13 @@ class WeightsDoNotContainAllKeysError(ValidationError):
 
   @classmethod
   def validate(cls, dataset: Dataset, weights: DataWeights):
-    if set(dataset.nrs) != set(weights):
+    if len(weights) != dataset.line_count:
       return cls(dataset, weights)
     return None
 
   @property
   def default_message(self) -> str:
-    return f"Weights Id's does not match with Id's from dataset!"
+    return "Weights line count does not match with dataset lines count!"
 
 
 class SymbolsDoNotContainAllKeysError(ValidationError):
@@ -128,10 +130,10 @@ class SymbolsDoNotContainAllKeysError(ValidationError):
 
   @classmethod
   def validate(cls, dataset: Dataset, symbols: Lines):
-    if set(dataset.nrs) != set(symbols.keys()):
+    if set(dataset.create_line_nrs) != set(symbols.keys()):
       return cls(dataset, symbols)
     return None
 
   @property
   def default_message(self) -> str:
-    return f"Symbol Id's does not match with Id's from dataset!"
+    return f"Symbol lines does not match with lines from dataset!"

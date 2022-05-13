@@ -89,7 +89,7 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
 
   if len(result) > 0:
     logger = getLogger(__name__)
-    logger.debug(f"Selected {len(result)} Id's.")
+    logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
 

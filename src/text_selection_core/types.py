@@ -22,24 +22,28 @@ SubsetName = str
 
 
 class Dataset():
-  def __init__(self, nrs: LineNrs):
-    self.__nrs = nrs
-    self.__subsets: OrderedDictType[SubsetName, Subset] = OrderedDict()
+  def __init__(self, line_count: int):
     super().__init__()
 
+    assert line_count > 0
+    self.__line_count = line_count
+    self.__subsets: OrderedDictType[SubsetName, Subset] = OrderedDict()
+
   @property
-  def nrs(self) -> LineNrs:
-    return self.__nrs
+  def line_count(self) -> int:
+    return self.__line_count
 
   @property
   def subsets(self) -> OrderedDictType[SubsetName, Subset]:
     return self.__subsets
 
+  def get_line_nrs(self) -> range:
+    return range(1, self.__line_count + 1)
+
 
 def create_dataset_from_line_count(count: int, default_subset_name: SubsetName) -> Dataset:
-  subset = OrderedSet(range(1, count + 1))
-  res = Dataset(subset)
-  res.subsets[default_subset_name] = deepcopy(subset)
+  res = Dataset(count)
+  res.subsets[default_subset_name] = res.create_line_nrs
   return res
 
 

@@ -25,13 +25,13 @@ class NrsNotExistError(ValidationError):
 
   @classmethod
   def validate(cls, dataset: Dataset, ids: LineNrs):
-    if not ids.issubset(dataset.nrs):
+    if not ids.issubset(dataset.get_line_nrs()):
       return cls(dataset, ids)
     return None
 
   @property
   def default_message(self) -> str:
-    return f"Ids {', '.join(self.ids.difference(self.dataset.nrs))} do not exist in the dataset!"
+    return f"Line number(s) {', '.join(self.ids.difference(self.dataset.get_line_nrs()))} do(es) not exist in the dataset!"
 
 
 def select_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs) -> ExecutionResult:
@@ -50,7 +50,7 @@ def select_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs) -> Ex
   logger = getLogger(__name__)
 
   if len(result) > 0:
-    logger.debug(f"Selected {len(result)} Id's.")
+    logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(dataset, result, to_subset_name, logger)
     changed_anything = True
 

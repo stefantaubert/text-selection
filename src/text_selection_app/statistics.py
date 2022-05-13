@@ -11,7 +11,8 @@ from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse
 from text_selection_app.default_args import (add_directory_argument, add_file_arguments,
                                              parse_weights_name)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import get_data_weights_path, load_data_weights, load_dataset
+from text_selection_app.io_handling import (get_data_weights_path, load_data_weights, load_dataset,
+                                            try_load_file)
 from text_selection_core.statistics import generate_statistics
 
 
@@ -46,14 +47,12 @@ def statistics_generation_ns(ns: Namespace) -> None:
       current_weights = load_data_weights(weights_path)
       weights.append((weights_name, current_weights))
 
-    symbols_path = data_folder / cast(str, ns.file)
-    if not symbols_path.exists():
-      logger.error(
-        "File was not found! Skipping...")
-      continue
-    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
-
     dataset = load_dataset(dataset_path)
+    lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
+    if lines is None:
+      logger.info("Skipped!")
+      continue
+
     logger.debug("Generating statistics...")
     dfs = generate_statistics(dataset, lines, ns.sep, weights)
     stats_path = root_folder / "statistics.csv"

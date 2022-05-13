@@ -10,7 +10,7 @@ from text_selection_app.default_args import (add_directory_argument, add_encodin
                                              add_file_arguments, parse_weights_name)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, load_data_weights, load_dataset,
-                                            save_data_weights)
+                                            save_data_weights, try_load_file)
 from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
                                                      get_word_count_weights)
 
@@ -39,13 +39,13 @@ def create_uniform_weights_ns(ns: Namespace) -> None:
 
     dataset = load_dataset(dataset_path)
 
-    weights = get_uniform_weights(dataset.nrs)
+    weights = get_uniform_weights(dataset.get_line_nrs())
 
     save_data_weights(weights_path, weights)
 
 
 def get_word_count_weights_creation_parser(parser: ArgumentParser):
-  parser.description = f"This command creates weights containing the word/symbol counts."
+  parser.description = "This command creates weights containing the word/symbol counts."
   add_directory_argument(parser)
   add_file_arguments(parser, True)
   parser.add_argument("name", type=parse_weights_name, metavar="NAME",
@@ -67,13 +67,10 @@ def create_word_count_weights_ns(ns: Namespace) -> None:
 
     weights_path = get_data_weights_path(data_folder, ns.name)
 
-    symbols_path = data_folder / cast(str, ns.file)
-    if not symbols_path.exists():
-      logger.error(
-        "File was not found! Skipping...")
+    lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
+    if lines is None:
+      logger.info("Skipped!")
       continue
-
-    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
 
     weights = get_word_count_weights(lines, ns.sep)
 

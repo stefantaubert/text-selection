@@ -8,7 +8,8 @@ from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse
 from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import get_dataset_path, load_dataset, save_dataset
+from text_selection_app.io_handling import (get_dataset_path, load_dataset, save_dataset,
+                                            try_load_file)
 from text_selection_core.common import SelectionDefaultParameters
 from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.regex_filter import filter_regex_pattern
@@ -34,15 +35,12 @@ def select_duplicates_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    symbols_path = data_folder / cast(str, ns.name)
-
-    if not symbols_path.exists():
-      logger.error(
-        "Symbols were not found! Skipping...")
-      continue
-
     dataset = load_dataset(dataset_path)
-    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
+
+    lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
+    if lines is None:
+      logger.info("Skipped!")
+      continue
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
     error, changed_anything = filter_duplicates(default_params, lines)
@@ -82,15 +80,11 @@ def regex_match_selection(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    symbols_path = data_folder / cast(str, ns.name)
-
-    if not symbols_path.exists():
-      logger.error(
-        "Symbols were not found! Skipping...")
-      continue
-
     dataset = load_dataset(dataset_path)
-    lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
+    lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
+    if lines is None:
+      logger.info("Skipped!")
+      continue
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
     error, changed_anything = filter_regex_pattern(default_params, lines, ns.pattern)

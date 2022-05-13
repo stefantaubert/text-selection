@@ -36,7 +36,7 @@ def select_ids_from_ns(ns: Namespace):
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent
@@ -79,7 +79,7 @@ def select_fifo_from_ns(ns: Namespace):
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent
@@ -144,7 +144,7 @@ def greedy_selection_ns(ns: Namespace):
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent
@@ -203,7 +203,7 @@ def kld_selection_ns(ns: Namespace):
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent

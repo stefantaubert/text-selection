@@ -29,7 +29,7 @@ def statistics_generation_ns(ns: Namespace) -> None:
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent

@@ -39,7 +39,7 @@
 #   logger = getLogger(__name__)
 #   logger.debug(ns)
 #   root_folder = cast(Path, ns.directory)
-#   datasets = get_datasets(root_folder)
+#   datasets = get_datasets(root_folder, logger)
 
 #   if ns.name in {DATASET_NAME, DATA_SYMBOLS_NAME}:
 #     logger.error("The given name is not valid.")

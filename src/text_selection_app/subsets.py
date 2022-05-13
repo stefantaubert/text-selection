@@ -24,7 +24,7 @@ def add_subsets_ns(ns: Namespace):
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent
@@ -63,7 +63,7 @@ def remove_subsets_ns(ns: Namespace):
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent

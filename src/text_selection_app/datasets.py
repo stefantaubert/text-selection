@@ -8,7 +8,7 @@ from text_selection_app.argparse_helper import (parse_existing_file, parse_non_e
                                                 parse_non_empty_or_whitespace, parse_path)
 from text_selection_app.default_args import add_encoding_argument, add_file_arguments
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import get_dataset_path, try_save_dataset, try_load_file
+from text_selection_app.io_handling import get_dataset_path, try_load_file, try_save_dataset
 from text_selection_core.types import create_dataset_from_line_count
 
 
@@ -51,7 +51,7 @@ def backup_ns(ns: Namespace):
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent
@@ -77,7 +77,7 @@ def restore_ns(ns: Namespace):
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent

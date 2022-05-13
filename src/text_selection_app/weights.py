@@ -27,7 +27,7 @@ def create_uniform_weights_ns(ns: Namespace) -> None:
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent
@@ -60,7 +60,7 @@ def create_word_count_weights_ns(ns: Namespace) -> None:
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent
@@ -97,7 +97,7 @@ def create_weights_division_ns(ns: Namespace) -> None:
   logger = getLogger(__name__)
   logger.debug(ns)
   root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder)
+  datasets = get_datasets(root_folder, logger)
 
   for i, dataset_path in enumerate(datasets, start=1):
     data_folder = dataset_path.parent

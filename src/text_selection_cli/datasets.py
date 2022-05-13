@@ -8,6 +8,7 @@ from text_selection_cli.argparse_helper import (parse_existing_file, parse_non_e
                                                 parse_non_empty_or_whitespace, parse_path)
 from text_selection_cli.default_args import (add_directory_argument, add_encoding_argument,
                                              add_file_arguments)
+from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import get_dataset_path, try_load_file, try_save_dataset
 from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
@@ -23,7 +24,7 @@ def get_init_parser(parser: ArgumentParser):
   return create_dataset_from_text_ns
 
 
-def create_dataset_from_text_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def create_dataset_from_text_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   data_folder = cast(Path, ns.directory)
 
   lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
@@ -47,7 +48,7 @@ def get_backup_parser(parser: ArgumentParser):
   return backup_ns
 
 
-def backup_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def backup_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -58,8 +59,14 @@ def backup_ns(ns: Namespace, logger: Logger, flogger: Logger):
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
     backup_path = data_folder / f"{ns.name}.pkl"
+    try:
+      copy2(dataset_path, backup_path)
+    except Exception as ex:
+      logger.error("Backup couldn't be created!")
+      logger.exception(ex)
+      continue
 
-    copy2(dataset_path, backup_path)
+  return True, None
 
 
 def get_restore_parser(parser: ArgumentParser):
@@ -70,7 +77,7 @@ def get_restore_parser(parser: ArgumentParser):
   return restore_ns
 
 
-def restore_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def restore_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

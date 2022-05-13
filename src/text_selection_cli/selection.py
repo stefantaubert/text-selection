@@ -1,7 +1,7 @@
-from logging import Logger
+from text_selection_cli.globals import ExecutionResult
 import math
 from argparse import ArgumentParser, Namespace
-from logging import getLogger
+from logging import Logger, getLogger
 from pathlib import Path
 from typing import cast
 
@@ -34,7 +34,7 @@ def get_id_selection_parser(parser: ArgumentParser):
   return select_ids_from_ns
 
 
-def select_ids_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def select_ids_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -75,7 +75,7 @@ def get_fifo_selection_parser(parser: ArgumentParser):
   return select_fifo_from_ns
 
 
-def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -138,7 +138,7 @@ def get_greedy_selection_parser(parser: ArgumentParser):
   return greedy_selection_ns
 
 
-def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -195,7 +195,7 @@ def get_kld_selection_parser(parser: ArgumentParser):
   return kld_selection_ns
 
 
-def kld_selection_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def kld_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

@@ -35,7 +35,7 @@
 #   return n_grams_extraction_ns
 
 
-# def n_grams_extraction_ns(ns: Namespace, logger: Logger, flogger: Logger):
+# def n_grams_extraction_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
 #   logger = getLogger(__name__)
 #   logger.debug(ns)
 #   root_folder = cast(Path, ns.directory)

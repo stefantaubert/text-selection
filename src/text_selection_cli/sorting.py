@@ -1,7 +1,6 @@
-from logging import Logger
 import math
 from argparse import ArgumentParser, Namespace
-from logging import getLogger
+from logging import Logger, getLogger
 from pathlib import Path
 from typing import cast
 
@@ -30,7 +29,7 @@ def get_fifo_sorting_parser(parser: ArgumentParser):
   return sort_fifo_from_ns
 
 
-def sort_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def sort_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -70,7 +69,7 @@ def get_reverse_sorting_parser(parser: ArgumentParser):
   return sort_reverse_from_ns
 
 
-def sort_reverse_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def sort_reverse_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -100,3 +99,4 @@ def sort_reverse_from_ns(ns: Namespace, logger: Logger, flogger: Logger):
         try_save_dataset(get_dataset_path(data_folder), dataset, logger)
       else:
         logger.info("Didn't changed anything!")
+from text_selection_cli.globals import ExecutionResult

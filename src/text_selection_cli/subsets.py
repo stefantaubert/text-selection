@@ -1,7 +1,7 @@
-from logging import Logger
+from text_selection_cli.globals import ExecutionResult
 import math
 from argparse import ArgumentParser, Namespace
-from logging import getLogger
+from logging import Logger, getLogger
 from pathlib import Path
 from typing import cast
 
@@ -22,7 +22,7 @@ def get_subsets_creation_parser(parser: ArgumentParser):
   return add_subsets_ns
 
 
-def add_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def add_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -59,7 +59,7 @@ def get_subsets_removal_parser(parser: ArgumentParser):
   return add_subsets_ns
 
 
-def remove_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def remove_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

@@ -1,6 +1,5 @@
-from logging import Logger
 from argparse import ArgumentParser, Namespace
-from logging import getLogger
+from logging import Logger, getLogger
 from pathlib import Path
 from typing import cast
 
@@ -15,6 +14,7 @@ from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import (get_data_weights_path, try_load_data_weights,
                                             try_load_dataset, try_load_file)
 from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
+from text_selection_core.globals import ExecutionResult
 from text_selection_core.statistics import generate_statistics
 
 
@@ -27,7 +27,7 @@ def get_statistics_generation_parser(parser: ArgumentParser):
   return statistics_generation_ns
 
 
-def statistics_generation_ns(ns: Namespace, logger: Logger, flogger: Logger) -> None:
+def statistics_generation_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

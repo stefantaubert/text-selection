@@ -1,6 +1,6 @@
-from logging import Logger
+from text_selection_cli.globals import ExecutionResult
 from argparse import ArgumentParser, Namespace
-from logging import getLogger
+from logging import Logger, getLogger
 from pathlib import Path
 from typing import cast
 
@@ -23,7 +23,7 @@ def get_subset_renaming_parser(parser: ArgumentParser):
   return rename_subsets_ns
 
 
-def rename_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def rename_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

@@ -1,6 +1,5 @@
-from logging import Logger
 from argparse import ArgumentParser, Namespace
-from logging import getLogger
+from logging import Logger, getLogger
 from pathlib import Path
 from typing import cast
 
@@ -13,6 +12,7 @@ from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import (get_data_weights_path, try_load_data_weights,
                                             try_load_dataset, try_load_file, try_save_data_weights)
 from text_selection_cli.logging_configuration import get_file_logger, init_and_return_loggers
+from text_selection_core.globals import ExecutionResult
 from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
                                                      get_word_count_weights)
 
@@ -25,7 +25,7 @@ def get_uniform_weights_creation_parser(parser: ArgumentParser):
   return create_uniform_weights_ns
 
 
-def create_uniform_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> None:
+def create_uniform_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -56,7 +56,7 @@ def get_word_count_weights_creation_parser(parser: ArgumentParser):
   return create_word_count_weights_ns
 
 
-def create_word_count_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> None:
+def create_word_count_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -91,7 +91,7 @@ def get_weights_division_parser(parser: ArgumentParser):
   return create_weights_division_ns
 
 
-def create_weights_division_ns(ns: Namespace, logger: Logger, flogger: Logger) -> None:
+def create_weights_division_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

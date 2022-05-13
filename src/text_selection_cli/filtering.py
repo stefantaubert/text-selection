@@ -7,6 +7,7 @@ from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse
                                                 parse_non_empty, parse_non_empty_or_whitespace)
 from text_selection_cli.default_args import (add_directory_argument, add_encoding_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments)
+from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import (get_dataset_path, try_load_dataset, try_load_file,
                                             try_save_dataset)
@@ -24,7 +25,7 @@ def get_duplicate_selection_parser(parser: ArgumentParser):
   return select_duplicates_ns
 
 
-def select_duplicates_ns(ns: Namespace, logger: Logger, flogger: Logger):
+def select_duplicates_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 
@@ -70,7 +71,7 @@ def get_regex_match_selection_parser(parser: ArgumentParser):
   return regex_match_selection
 
 
-def regex_match_selection(ns: Namespace, logger: Logger, flogger: Logger):
+def regex_match_selection(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   root_folder = cast(Path, ns.directory)
   datasets = get_datasets(root_folder, logger)
 

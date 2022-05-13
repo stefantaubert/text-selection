@@ -11,7 +11,7 @@ from time import perf_counter
 from typing import Callable, Dict, Generator, List, Tuple
 
 from text_selection_cli.argparse_helper import get_optional, parse_path
-from text_selection_cli.datasets import get_backup_parser, get_init_parser, get_restore_parser
+from text_selection_cli.datasets import get_init_parser
 from text_selection_cli.export import get_export_txt_parser
 from text_selection_cli.filtering import get_duplicate_selection_parser
 from text_selection_cli.globals import ExecutionResult
@@ -52,8 +52,6 @@ def formatter(prog):
 
 def get_dataset_parsers() -> Parsers:
   yield "create-from-text", "create dataset from text", get_init_parser
-  yield "backup", "backup dataset", get_backup_parser
-  yield "restore", "restore dataset", get_restore_parser
   yield "get-stats", "getting statistics", get_statistics_generation_parser
 
 
@@ -119,8 +117,10 @@ def _init_parser():
     for command, description, method in methods:
       method_parser = subparsers_of_subparser.add_parser(
         command, help=description, formatter_class=formatter)
+      # init parser
+      invoke_method = method(method_parser)
       method_parser.set_defaults(**{
-        INVOKE_HANDLER_VAR: method(method_parser),
+        INVOKE_HANDLER_VAR: invoke_method,
       })
       logging_group = method_parser.add_argument_group("logging arguments")
       logging_group.add_argument("--log", type=get_optional(parse_path), metavar="FILE",

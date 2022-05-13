@@ -5,7 +5,7 @@ from text_selection_core.validation import (LinesCountNotMatchingError, SubsetNo
                                             ValidationError)
 
 
-def export_symbols(dataset: Dataset, subset_name: SubsetName, lines: Lines) -> Tuple[Optional[ValidationError], str]:
+def export_symbols(dataset: Dataset, subset_name: SubsetName, lines: Lines, sep: str) -> Tuple[Optional[ValidationError], str]:
   if error := SubsetNotExistsError.validate(dataset, subset_name):
     return error, None
 
@@ -18,5 +18,5 @@ def export_symbols(dataset: Dataset, subset_name: SubsetName, lines: Lines) -> T
     for data_id in subset
   )
 
-  result = "\n".join(strings)
+  result = sep.join(strings)
   return None, result

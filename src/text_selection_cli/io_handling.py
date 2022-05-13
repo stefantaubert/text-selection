@@ -32,10 +32,10 @@ def get_dataset_path(directory: Path) -> Path:
 
 def try_load_file(path: Path, encoding: str, lsep: str, logger: Logger) -> Optional[Lines]:
   if not path.exists():
-    logger.error(f"File \"{path}\" was not found!")
+    logger.error(f"File \"{path.absolute()}\" was not found!")
     return None
 
-  logger.info(f"Reading \"{path}\"...")
+  logger.info(f"Reading \"{path.absolute()}\"...")
   try:
     text = path.read_text(encoding)
   except Exception as ex:
@@ -51,10 +51,10 @@ def try_load_file(path: Path, encoding: str, lsep: str, logger: Logger) -> Optio
 
 def try_load_dataset(path: Path, logger: Logger) -> Optional[Dataset]:
   if not path.exists():
-    logger.error(f"Dataset file \"{path}\" was not found!")
+    logger.error(f"Dataset file \"{path.absolute()}\" was not found!")
     return None
 
-  logger.info(f"Reading dataset from \"{path}\"...")
+  logger.info(f"Reading dataset from \"{path.absolute()}\"...")
   try:
     result = cast(Dataset, load_obj(path))
   except Exception as ex:
@@ -66,7 +66,7 @@ def try_load_dataset(path: Path, logger: Logger) -> Optional[Dataset]:
 
 
 def try_save_dataset(path: Path, dataset: Dataset, logger: Logger) -> bool:
-  logger.info(f"Saving dataset to \"{path}\"...")
+  logger.info(f"Saving dataset to \"{path.absolute()}\"...")
   assert path.parent.is_dir()
   try:
     save_obj(dataset, path)
@@ -103,10 +103,10 @@ def get_data_weights_path(directory: Path, name: str) -> Path:
 
 def try_load_data_weights(path: Path, logger: Logger) -> Optional[DataWeights]:
   if not path.exists():
-    logger.error(f"Weights file \"{path}\" was not found!")
+    logger.error(f"Weights file \"{path.absolute()}\" was not found!")
     return None
 
-  logger.info(f"Reading weights from \"{path}\"...")
+  logger.info(f"Reading weights from \"{path.absolute()}\"...")
   try:
     result = cast(DataWeights, load_obj(path))
   except Exception as ex:
@@ -118,7 +118,7 @@ def try_load_data_weights(path: Path, logger: Logger) -> Optional[DataWeights]:
 
 
 def try_save_data_weights(path: Path, data_weights: DataWeights, logger: Logger) -> bool:
-  logger.info(f"Saving weights to \"{path}\"...")
+  logger.info(f"Saving weights to \"{path.absolute()}\"...")
   assert path.parent.is_dir()
   try:
     save_obj(data_weights, path)

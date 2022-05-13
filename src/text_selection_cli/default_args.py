@@ -4,7 +4,7 @@ from collections import OrderedDict
 from multiprocessing import cpu_count
 
 from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, get_optional,
-                                                parse_codec, parse_non_empty,
+                                                parse_codec, parse_existing_file, parse_non_empty,
                                                 parse_non_empty_or_whitespace, parse_path,
                                                 parse_positive_integer)
 
@@ -30,9 +30,9 @@ def add_to_subset_argument(parser: ArgumentParser) -> None:
                       metavar="to-subset", help="to subset")
 
 
-def add_directory_argument(parser: ArgumentParser) -> None:
-  parser.add_argument("directory", type=parse_path, metavar="directory",
-                      help="directory containing data")
+def add_project_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("project", type=parse_existing_file, metavar="project",
+                      help="directory containing project data")
 
 
 def add_file_arguments(parser: ArgumentParser, include_sep: bool = False) -> None:

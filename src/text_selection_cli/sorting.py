@@ -8,7 +8,8 @@ from text_selection.selection import SelectionMode
 from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
                                                 parse_non_empty_or_whitespace,
                                                 parse_non_negative_float)
-from text_selection_cli.default_args import add_directory_argument
+from text_selection_cli.default_args import add_project_argument
+from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.helper import get_datasets
 from text_selection_cli.io_handling import (get_data_weights_path, get_dataset_path,
                                             try_load_data_weights, try_load_dataset,
@@ -23,80 +24,59 @@ from text_selection_core.sorting.reverse_sorting import sort_reverse
 
 def get_fifo_sorting_parser(parser: ArgumentParser):
   parser.description = "Sort lines by FIFO principle."
-  add_directory_argument(parser)
+  add_project_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",
                       help="subsets", action=ConvertToOrderedSetAction)
   return sort_fifo_from_ns
 
 
 def sort_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
-  root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder, logger)
+  dataset = try_load_dataset(ns.project, logger)
+  if dataset is None:
+    return False, False
 
-  for i, dataset_path in enumerate(datasets, start=1):
-    data_folder = dataset_path.parent
-    data_name = str(data_folder.relative_to(root_folder)
-                    ) if root_folder != data_folder else "root"
-    logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
+  default_params = SortingDefaultParameters(dataset, ns.subsets)
+  error, changed_anything = sort_fifo(default_params)
 
-    dataset = try_load_dataset(dataset_path, logger)
-    if dataset is None:
-      logger.info("Skipped!")
-      continue
+  success = error is None
 
-    default_params = SortingDefaultParameters(dataset, ns.subsets)
-    error, changed_anything = sort_fifo(default_params)
+  if not success:
+    logger.error(f"{error.default_message}")
+    return False, False
 
-    success = error is None
-
+  if changed_anything:
+    success = try_save_dataset(ns.project, dataset, logger)
     if not success:
-      print(error)
-      logger.error(f"{error.default_message}")
-      logger.info("Skipped.")
-      assert not changed_anything
-    else:
-      if changed_anything:
-        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
-      else:
-        logger.info("Didn't changed anything!")
+      return False, False
+
+  return True, changed_anything
 
 
 def get_reverse_sorting_parser(parser: ArgumentParser):
   parser.description = "Reverse sorting."
-  add_directory_argument(parser)
+  add_project_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",
                       help="subsets", action=ConvertToOrderedSetAction)
   return sort_reverse_from_ns
 
 
 def sort_reverse_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
-  root_folder = cast(Path, ns.directory)
-  datasets = get_datasets(root_folder, logger)
+  dataset = try_load_dataset(ns.project, logger)
+  if dataset is None:
+    return False, False
 
-  for i, dataset_path in enumerate(datasets, start=1):
-    data_folder = dataset_path.parent
-    data_name = str(data_folder.relative_to(root_folder)
-                    ) if root_folder != data_folder else "root"
-    logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
+  default_params = SortingDefaultParameters(dataset, ns.subsets)
+  error, changed_anything = sort_reverse(default_params)
 
-    dataset = try_load_dataset(dataset_path, logger)
-    if dataset is None:
-      logger.info("Skipped!")
-      continue
+  success = error is None
 
-    default_params = SortingDefaultParameters(dataset, ns.subsets)
-    error, changed_anything = sort_reverse(default_params)
+  if not success:
+    logger.error(f"{error.default_message}")
+    return False, False
 
-    success = error is None
-
+  if changed_anything:
+    success = try_save_dataset(ns.project, dataset, logger)
     if not success:
-      print(error)
-      logger.error(f"{error.default_message}")
-      logger.info("Skipped.")
-      assert not changed_anything
-    else:
-      if changed_anything:
-        try_save_dataset(get_dataset_path(data_folder), dataset, logger)
-      else:
-        logger.info("Didn't changed anything!")
-from text_selection_cli.globals import ExecutionResult
+      return False, False
+
+  return True, changed_anything

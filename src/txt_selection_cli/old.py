@@ -6,7 +6,7 @@ from typing import Dict, Generator, List, Set, cast
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
-from text_selection_app.argparse_helper import parse_non_negative_integer
+from text_selection_cli.argparse_helper import parse_non_negative_integer
 from txt_selection_cli.globals import SEL_ENC, SEL_EXT, SEL_LSEP, ExecutionResult
 from txt_selection_cli.helper import (ConvertToOrderedSetAction, add_encoding_argument,
                                       get_all_files_in_all_subfolders, parse_existing_directory,

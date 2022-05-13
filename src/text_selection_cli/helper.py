@@ -10,7 +10,7 @@ from typing import TypeVar
 from general_utils import get_all_files_in_all_subfolders
 from ordered_set import OrderedSet
 
-from text_selection_app.io_handling import DATASET_FULL_NAME
+from text_selection_cli.io_handling import DATASET_FULL_NAME
 
 
 def get_datasets(folder: Path, logger: Logger) -> OrderedSet[Path]:

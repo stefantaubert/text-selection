@@ -3,7 +3,7 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 
-from text_selection_app.io_handling import try_load_data_weights, try_save_data_weights
+from text_selection_cli.io_handling import try_load_data_weights, try_save_data_weights
 from text_selection_core.types import DataWeights
 
 

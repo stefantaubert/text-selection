@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import cast
 
 from text_selection.selection import SelectionMode
-from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
                                                 parse_non_empty_or_whitespace,
                                                 parse_non_negative_float)
-from text_selection_app.default_args import add_directory_argument
-from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
+from text_selection_cli.default_args import add_directory_argument
+from text_selection_cli.helper import get_datasets
+from text_selection_cli.io_handling import (get_data_weights_path, get_dataset_path,
                                             try_load_data_weights, try_load_dataset,
                                             try_save_dataset)
 from text_selection_core.common import (SelectionDefaultParameters, SortingDefaultParameters,

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from ordered_set import OrderedSet
-from text_selection_app.io_handling import (get_data_symbols_path,
+from text_selection_cli.io_handling import (get_data_symbols_path,
                                             get_data_weights_path, get_dataset_path,
                                             try_load_dataset, save_data_symbols,
                                             try_save_data_weights, try_save_dataset)

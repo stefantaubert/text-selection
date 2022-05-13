@@ -5,17 +5,17 @@ from argparse import ArgumentParser
 from logging import getLogger
 from typing import Callable, Dict, Generator, List, Tuple
 
-from text_selection_app.datasets import get_backup_parser, get_init_parser, get_restore_parser
-from text_selection_app.export import get_export_txt_parser
-from text_selection_app.filtering import get_duplicate_selection_parser
+from text_selection_cli.datasets import get_backup_parser, get_init_parser, get_restore_parser
+from text_selection_cli.export import get_export_txt_parser
+from text_selection_cli.filtering import get_duplicate_selection_parser
 #from text_selection_app.n_grams import get_n_grams_extraction_parser
-from text_selection_app.selection import (get_fifo_selection_parser, get_greedy_selection_parser,
+from text_selection_cli.selection import (get_fifo_selection_parser, get_greedy_selection_parser,
                                           get_id_selection_parser, get_kld_selection_parser)
-from text_selection_app.sorting import get_fifo_sorting_parser, get_reverse_sorting_parser
-from text_selection_app.statistics import get_statistics_generation_parser
-from text_selection_app.subset import get_subset_renaming_parser
-from text_selection_app.subsets import get_subsets_creation_parser, get_subsets_removal_parser
-from text_selection_app.weights import (get_uniform_weights_creation_parser,
+from text_selection_cli.sorting import get_fifo_sorting_parser, get_reverse_sorting_parser
+from text_selection_cli.statistics import get_statistics_generation_parser
+from text_selection_cli.subset import get_subset_renaming_parser
+from text_selection_cli.subsets import get_subsets_creation_parser, get_subsets_removal_parser
+from text_selection_cli.weights import (get_uniform_weights_creation_parser,
                                         get_weights_division_parser,
                                         get_word_count_weights_creation_parser)
 

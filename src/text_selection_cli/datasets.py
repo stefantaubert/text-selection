@@ -4,11 +4,11 @@ from pathlib import Path
 from shutil import copy2
 from typing import cast
 
-from text_selection_app.argparse_helper import (parse_existing_file, parse_non_empty,
+from text_selection_cli.argparse_helper import (parse_existing_file, parse_non_empty,
                                                 parse_non_empty_or_whitespace, parse_path)
-from text_selection_app.default_args import add_encoding_argument, add_file_arguments
-from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import get_dataset_path, try_load_file, try_save_dataset
+from text_selection_cli.default_args import add_encoding_argument, add_file_arguments
+from text_selection_cli.helper import get_datasets
+from text_selection_cli.io_handling import get_dataset_path, try_load_file, try_save_dataset
 from text_selection_core.types import create_dataset_from_line_count
 
 

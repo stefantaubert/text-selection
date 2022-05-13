@@ -30,7 +30,7 @@ def add_to_subset_argument(parser: ArgumentParser) -> None:
 
 
 def add_dataset_argument(parser: ArgumentParser) -> None:
-  parser.add_argument("dataset", type=parse_existing_file, metavar="dataset",
+  parser.add_argument("dataset", type=parse_existing_file, metavar="DATASET-PATH",
                       help="dataset file")
 
 

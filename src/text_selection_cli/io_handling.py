@@ -67,8 +67,8 @@ def try_load_dataset(path: Path, logger: Logger) -> Optional[Dataset]:
 
 def try_save_dataset(path: Path, dataset: Dataset, logger: Logger) -> bool:
   logger.info(f"Saving dataset to \"{path.absolute()}\"...")
-  assert path.parent.is_dir()
   try:
+    path.parent.mkdir(parents=True, exist_ok=True)
     save_obj(dataset, path)
   except Exception as ex:
     logger.error("Dataset couldn't be saved!")
@@ -119,8 +119,8 @@ def try_load_data_weights(path: Path, logger: Logger) -> Optional[DataWeights]:
 
 def try_save_data_weights(path: Path, data_weights: DataWeights, logger: Logger) -> bool:
   logger.info(f"Saving weights to \"{path.absolute()}\"...")
-  assert path.parent.is_dir()
   try:
+    path.parent.mkdir(parents=True, exist_ok=True)
     save_obj(data_weights, path)
   except Exception as ex:
     logger.error("Weights couldn't be saved!")

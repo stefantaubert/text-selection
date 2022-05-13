@@ -1,5 +1,5 @@
 from logging import Logger, getLogger
-from typing import Generator, Iterable, Iterator, Optional, Tuple, TypeVar
+from typing import Generator, Iterator, Optional, TypeVar
 
 from ordered_set import OrderedSet
 
@@ -28,6 +28,8 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
   if changed_anything := len(result) > 0:
     logger.debug(f"Filtered {len(result)} line(s).")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
+  else:
+    logger.info("No duplicate lines exist!")
 
   return None, changed_anything
 

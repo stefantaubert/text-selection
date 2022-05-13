@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 from text_selection_core.types import DataWeights, Lines
 
 
@@ -23,7 +25,7 @@ def get_word_count_weights(lines: Lines, sep: str) -> DataWeights:
       for data_id, item in texts
     )
 
-  result = dict(words_counts)
+  result = dict(tqdm(words_counts, desc="Getting counts", unit=" line(s)", total=len(lines)))
 
   return result
 

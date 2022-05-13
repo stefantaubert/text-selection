@@ -27,7 +27,6 @@ def get_line_nrs(line_count) -> range:
 class Dataset():
   def __init__(self, line_count: int, default_subset_name: str):
     super().__init__()
-    assert line_count > 0
     self.__line_count = line_count
     self.__subsets: OrderedDictType[SubsetName, Subset] = OrderedDict((
       (default_subset_name, OrderedSet(get_line_nrs(line_count))),

@@ -38,6 +38,7 @@ def rename_subsets_ns(ns: Namespace):
       logger.info("Skipped!")
       continue
 
+    logger.info("Renaming subset...")
     error, changed_anything = rename_subset(dataset, ns.name, ns.new_name)
 
     success = error is None

@@ -37,6 +37,7 @@ def add_subsets_ns(ns: Namespace):
       logger.info("Skipped!")
       continue
 
+    logger.info("Adding subset(s)...")
     error, changed_anything = add_subsets(dataset, ns.names)
 
     success = error is None
@@ -75,6 +76,7 @@ def remove_subsets_ns(ns: Namespace):
       logger.info("Skipped!")
       continue
 
+    logger.info("Removing subset(s)...")
     error, changed_anything = remove_subsets(dataset, ns.names)
 
     success = error is None

@@ -32,6 +32,7 @@ def create_dataset_from_text_ns(ns: Namespace):
     logger.info("Skipped!")
     return False, None
 
+  logger.info("Creating dataset...")
   dataset = create_dataset_from_line_count(len(lines), ns.name)
 
   save_dataset(get_dataset_path(data_folder), dataset)

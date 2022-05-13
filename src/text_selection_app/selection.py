@@ -13,9 +13,8 @@ from text_selection_app.default_args import (add_directory_argument, add_file_ar
                                              add_from_and_to_subsets_arguments,
                                              add_to_subset_argument, parse_weights_name)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
-                                            load_data_weights, load_dataset, save_dataset,
-                                            try_load_file)
+from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path, load_dataset,
+                                            save_dataset, try_load_data_weights, try_load_file)
 from text_selection_core.common import SelectionDefaultParameters, WeightSelectionParameters
 from text_selection_core.selection.fifo_selection import original_mode, select_fifo, subset_mode
 from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
@@ -83,14 +82,14 @@ def select_fifo_from_ns(ns: Namespace):
     data_name = str(data_folder.relative_to(root_folder)
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
-    weights_path = get_data_weights_path(data_folder, ns.weights)
-    if not weights_path.exists():
-      logger.error(
-        "Weights were not found! Skipping...")
-      continue
 
     dataset = load_dataset(dataset_path)
-    weights = load_data_weights(weights_path)
+
+    weights_path = get_data_weights_path(data_folder, ns.weights)
+    weights = try_load_data_weights(weights_path, logger)
+    if weights is None:
+      logger.info("Skipped.")
+      continue
 
     default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
     weights_params = WeightSelectionParameters(
@@ -146,14 +145,14 @@ def greedy_selection_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
+    dataset = load_dataset(dataset_path)
+
     weights_path = get_data_weights_path(data_folder, ns.weights)
-    if not weights_path.exists():
-      logger.error(
-        "Weights were not found! Skipping...")
+    weights = try_load_data_weights(weights_path, logger)
+    if weights is None:
+      logger.info("Skipped.")
       continue
 
-    dataset = load_dataset(dataset_path)
-    weights = load_data_weights(weights_path)
     lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
     if lines is None:
       logger.info("Skipped!")
@@ -202,14 +201,14 @@ def kld_selection_ns(ns: Namespace):
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
+    dataset = load_dataset(dataset_path)
+
     weights_path = get_data_weights_path(data_folder, ns.weights)
-    if not weights_path.exists():
-      logger.error(
-        "Weights were not found! Skipping...")
+    weights = try_load_data_weights(weights_path, logger)
+    if weights is None:
+      logger.info("Skipped.")
       continue
 
-    dataset = load_dataset(dataset_path)
-    weights = load_data_weights(weights_path)
     lines = try_load_file(data_folder / ns.file, ns.encoding, ns.lsep, logger)
     if lines is None:
       logger.info("Skipped!")

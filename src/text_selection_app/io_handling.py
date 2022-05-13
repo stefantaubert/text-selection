@@ -89,20 +89,32 @@ def get_data_weights_path(directory: Path, name: str) -> Path:
   return directory / f"{name}{FILE_EXTENSION}"
 
 
-def load_data_weights(path: Path) -> DataWeights:
-  logger = getLogger(__name__)
-  logger.debug(f"Loading '{path}'...")
-  result = cast(DataWeights, load_obj(path))
-  logger.debug("Ok.")
+def try_load_data_weights(path: Path, logger: Logger) -> Optional[DataWeights]:
+  if not path.exists():
+    logger.error(f"File \"{path}\" was not found!")
+    return None
+
+  logger.info(f"Reading weights from \"{path}\"...")
+  try:
+    result = cast(DataWeights, load_obj(path))
+  except Exception as ex:
+    logger.error("File couldn't be read!")
+    logger.exception(ex)
+    return None
+
   return result
 
 
-def save_data_weights(path: Path, data_weights: DataWeights) -> None:
-  logger = getLogger(__name__)
-  logger.debug(f"Saving '{path}'...")
-  path.parent.mkdir(parents=True, exist_ok=True)
-  save_obj(data_weights, path)
-  logger.debug("Ok.")
+def try_save_data_weights(path: Path, data_weights: DataWeights, logger: Logger) -> bool:
+  logger.info(f"Saving weights to \"{path}\"...")
+  assert path.parent.is_dir()
+  try:
+    save_obj(data_weights, path)
+  except Exception as ex:
+    logger.error("File couldn't be saved!")
+    logger.exception(ex)
+    return False
+  return True
 
 
 # def get_data_n_grams_path(directory: Path, name: str) -> Path:

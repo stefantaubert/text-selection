@@ -122,18 +122,18 @@ class WeightsDoNotContainAllKeysError(ValidationError):
     return "Weights line count does not match with dataset lines count!"
 
 
-class SymbolsDoNotContainAllKeysError(ValidationError):
+class LinesCountNotMatchingError(ValidationError):
   def __init__(self, dataset: Dataset, symbols: Lines) -> None:
     super().__init__()
     self.dataset = dataset
     self.symbols = symbols
 
   @classmethod
-  def validate(cls, dataset: Dataset, symbols: Lines):
-    if set(dataset.create_line_nrs) != set(symbols.keys()):
-      return cls(dataset, symbols)
+  def validate(cls, dataset: Dataset, lines: Lines):
+    if dataset.line_count != len(lines):
+      return cls(dataset, lines)
     return None
 
   @property
   def default_message(self) -> str:
-    return f"Symbol lines does not match with lines from dataset!"
+    return "Lines count does not match with count from dataset!"

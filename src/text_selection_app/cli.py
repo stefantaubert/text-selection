@@ -52,7 +52,7 @@ def get_subset_parsers() -> Parsers:
 def get_subsets_parsers() -> Parsers:
   yield "add", "add subsets", get_subsets_creation_parser
   yield "remove", "remove subsets", get_subsets_removal_parser
-  yield "select-ids", "select entries by id", get_id_selection_parser
+  yield "select-lines", "select entries by line number", get_id_selection_parser
   yield "select-fifo", "select entries FIFO-style", get_fifo_selection_parser
   yield "select-greedy", "select entries greedy-style", get_greedy_selection_parser
   yield "select-kld", "select entries kld-style", get_kld_selection_parser

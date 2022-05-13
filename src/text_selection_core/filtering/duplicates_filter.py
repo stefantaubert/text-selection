@@ -15,7 +15,7 @@ def filter_duplicates(default_params: SelectionDefaultParameters, data_symbols: 
 
   select_from = ((line_nr, data_symbols[line_nr])
                  for line_nr in get_subsets_line_nrs(default_params.dataset, default_params.from_subset_names))
-  duplicates = get_duplicates(select_from)
+  duplicates = get_duplicates_line_nrs(select_from)
   result: Subset = OrderedSet(duplicates)
   changed_anything = False
   if len(result) > 0:
@@ -29,7 +29,7 @@ def filter_duplicates(default_params: SelectionDefaultParameters, data_symbols: 
 T = TypeVar("T")
 
 
-def get_duplicates(items: Iterable[Tuple[T, str]]) -> Generator[T, None, None]:
+def get_duplicates_line_nrs(items: Iterable[Tuple[T, str]]) -> Generator[T, None, None]:
   collected = set()
   for key, item in items:
     if item in collected:

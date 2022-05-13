@@ -43,7 +43,7 @@ class Dataset():
 
 def create_dataset_from_line_count(count: int, default_subset_name: SubsetName) -> Dataset:
   res = Dataset(count)
-  res.subsets[default_subset_name] = res.create_line_nrs
+  res.subsets[default_subset_name] = OrderedSet(res.get_line_nrs())
   return res
 
 

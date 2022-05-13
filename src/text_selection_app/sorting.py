@@ -11,7 +11,7 @@ from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse
 from text_selection_app.default_args import add_directory_argument
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
-                                            load_data_weights, load_dataset, save_dataset)
+                                            try_load_data_weights, load_dataset, save_dataset)
 from text_selection_core.common import (SelectionDefaultParameters, SortingDefaultParameters,
                                         WeightSelectionParameters)
 from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy

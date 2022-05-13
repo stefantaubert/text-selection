@@ -9,8 +9,9 @@ from text_selection_app.argparse_helper import (get_optional, parse_existing_dir
 from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
                                              add_file_arguments, parse_weights_name)
 from text_selection_app.helper import get_datasets
-from text_selection_app.io_handling import (get_data_weights_path, load_data_weights, load_dataset,
-                                            save_data_weights, try_load_file)
+from text_selection_app.io_handling import (get_data_weights_path, load_dataset,
+                                            try_load_data_weights, try_load_file,
+                                            try_save_data_weights)
 from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
                                                      get_word_count_weights)
 
@@ -41,7 +42,7 @@ def create_uniform_weights_ns(ns: Namespace) -> None:
 
     weights = get_uniform_weights(dataset.get_line_nrs())
 
-    save_data_weights(weights_path, weights)
+    try_save_data_weights(weights_path, weights, logger)
 
 
 def get_word_count_weights_creation_parser(parser: ArgumentParser):
@@ -72,9 +73,10 @@ def create_word_count_weights_ns(ns: Namespace) -> None:
       logger.info("Skipped!")
       continue
 
+    logger.info("Calculating weights...")
     weights = get_word_count_weights(lines, ns.sep)
 
-    save_data_weights(weights_path, weights)
+    try_save_data_weights(weights_path, weights, logger)
 
 
 def get_weights_division_parser(parser: ArgumentParser):
@@ -101,17 +103,15 @@ def create_weights_division_ns(ns: Namespace) -> None:
                     ) if root_folder != data_folder else "root"
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
-    weights_path = get_data_weights_path(data_folder, ns.name)
-
-    if not weights_path.is_file():
-      logger.error("Weights were not found! Skipped.")
-      continue
-
     new_name: str = ns.name if ns.new_name is None else ns.new_name
     target_weights_path = get_data_weights_path(data_folder, new_name)
 
-    weights = load_data_weights(weights_path)
+    weights_path = get_data_weights_path(data_folder, ns.name)
+    weights = try_load_data_weights(weights_path, logger)
+    if weights is None:
+      logger.info("Skipped.")
+      continue
 
     divide_weights_inplace(weights, ns.divisor)
 
-    save_data_weights(target_weights_path, weights)
+    try_save_data_weights(target_weights_path, weights, logger)

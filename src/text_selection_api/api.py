@@ -6,7 +6,7 @@ from ordered_set import OrderedSet
 from text_selection_app.io_handling import (get_data_symbols_path,
                                             get_data_weights_path, get_dataset_path,
                                             load_dataset, save_data_symbols,
-                                            save_data_weights, save_dataset)
+                                            try_save_data_weights, save_dataset)
 from text_selection_core.types import (Dataset, Lines, DataWeights,
                                        Subset, SubsetName)
 
@@ -109,7 +109,7 @@ def create(directory: Path, dataset: Dataset, weights: Dict[str, DataWeights], s
 
   for weight_name, data_weights in weights.items():
     weights_path = get_data_weights_path(directory, weight_name)
-    save_data_weights(weights_path, data_weights)
+    try_save_data_weights(weights_path, data_weights)
 
   if symbols is not None:
     symbols_path = get_data_symbols_path(directory)

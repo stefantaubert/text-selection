@@ -20,8 +20,6 @@ def get_uniform_weights_creation_parser(parser: ArgumentParser):
   add_directory_argument(parser)
   parser.add_argument("name", type=parse_weights_name, metavar="NAME",
                       help="name of the weights")
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite weights")
   return create_uniform_weights_ns
 
 
@@ -56,8 +54,6 @@ def get_word_count_weights_creation_parser(parser: ArgumentParser):
   add_file_arguments(parser, True)
   parser.add_argument("name", type=parse_weights_name, metavar="NAME",
                       help="name of the weights")
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite weights")
   return create_word_count_weights_ns
 
 
@@ -101,8 +97,6 @@ def get_weights_division_parser(parser: ArgumentParser):
                       help="divisor")
   parser.add_argument("--new-name", type=get_optional(parse_non_empty_or_whitespace), metavar="NAME",
                       help="custom new name of the weights", default=None)
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite weights")
   return create_weights_division_ns
 
 

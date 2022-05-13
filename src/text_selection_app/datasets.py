@@ -18,9 +18,7 @@ def get_init_parser(parser: ArgumentParser):
                       help="directory to write")
   add_file_arguments(parser)
   parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="NAME",
-                      help="name of the initial subset containing all Id's")
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite complete directory")
+                      help="name of the initial subset containing all line numbers")
   return create_dataset_from_text_ns
 
 
@@ -47,8 +45,6 @@ def get_backup_parser(parser: ArgumentParser):
                       help="directory to write")
   parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
                       help="name of the backup", default="backup")
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite backup if it exists")
   return backup_ns
 
 

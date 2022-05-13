@@ -23,8 +23,6 @@ def get_export_txt_parser(parser: ArgumentParser):
                       help="name of the exported text-file if not same as subset", default=None)
   parser.add_argument("-out", "--output-directory", type=get_optional(parse_path), metavar="PATH",
                       help="custom output directory if not same as input directory", default=None)
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite n-grams")
 
   return export_txt_ns
 

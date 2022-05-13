@@ -90,9 +90,9 @@ def add_encoding_argument(parser: ArgumentParser, help_str: str = "encoding of t
                       help=help_str + "; see all available codecs at https://docs.python.org/3.8/library/codecs.html#standard-encodings", default=DEFAULT_ENCODING)
 
 
-def add_overwrite_argument(parser: ArgumentParser) -> None:
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite existing files")
+# def add_overwrite_argument(parser: ArgumentParser) -> None:
+#   parser.add_argument("-o", "--overwrite", action="store_true",
+#                       help="overwrite existing files")
 
 
 def add_output_directory_argument(parser: ArgumentParser) -> None:

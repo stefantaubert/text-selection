@@ -21,8 +21,6 @@ def get_statistics_generation_parser(parser: ArgumentParser):
   parser.add_argument("--weights", type=parse_weights_name, nargs="*", metavar="NAME",
                       help="name of the weights", default=[], action=ConvertToOrderedSetAction)
   add_file_arguments(parser, True)
-  parser.add_argument("-o", "--overwrite", action="store_true",
-                      help="overwrite")
   return statistics_generation_ns
 
 

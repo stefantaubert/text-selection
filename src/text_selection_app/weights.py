@@ -37,10 +37,6 @@ def create_uniform_weights_ns(ns: Namespace) -> None:
 
     weights_path = get_data_weights_path(data_folder, ns.name)
 
-    if weights_path.is_file() and not ns.overwrite:
-      logger.error("Weights already exist! Skipped.")
-      continue
-
     dataset = load_dataset(dataset_path)
 
     weights = get_uniform_weights(dataset.nrs)
@@ -70,10 +66,6 @@ def create_word_count_weights_ns(ns: Namespace) -> None:
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
     weights_path = get_data_weights_path(data_folder, ns.name)
-
-    if weights_path.is_file() and not ns.overwrite:
-      logger.error("Weights already exist! Skipped.")
-      continue
 
     symbols_path = data_folder / cast(str, ns.file)
     if not symbols_path.exists():
@@ -120,10 +112,6 @@ def create_weights_division_ns(ns: Namespace) -> None:
 
     new_name: str = ns.name if ns.new_name is None else ns.new_name
     target_weights_path = get_data_weights_path(data_folder, new_name)
-
-    if target_weights_path.is_file() and not ns.overwrite:
-      logger.error("Weights already exist! Skipped.")
-      continue
 
     weights = load_data_weights(weights_path)
 

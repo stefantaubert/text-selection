@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, List, cast
 
-from text_selection_core.types import Dataset, DataWeights
+from text_selection_core.types import Dataset, DataWeights, Lines
 
 DATASET_NAME = "data"
 # DATA_SYMBOLS_NAME = "symbols"
@@ -29,6 +29,8 @@ def load_obj(path: Path) -> Any:
 def get_dataset_path(directory: Path) -> Path:
   return directory / DATASET_FULL_NAME
 
+def load_file(path: Path) -> Lines:
+  pass
 
 def load_dataset(path: Path) -> Dataset:
   logger = getLogger(__name__)

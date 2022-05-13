@@ -59,10 +59,6 @@ def export_txt_ns(ns: Namespace):
       name = ns.name
     target_file = target_folder / f"{name}.txt"
 
-    if target_file.is_file() and not ns.overwrite:
-      logger.info(f"File {str(target_file)} already exists. Skipping...")
-      continue
-
     dataset = load_dataset(dataset_path)
     lines = symbols_path.read_text(ns.encoding).split(ns.lsep)
 

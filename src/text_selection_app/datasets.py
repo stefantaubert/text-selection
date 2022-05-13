@@ -27,10 +27,6 @@ def create_dataset_from_text_ns(ns: Namespace):
   logger.debug(ns)
   data_folder = cast(Path, ns.directory)
 
-  if data_folder.is_dir() and not ns.overwrite:
-    logger.error("Directory already exists!")
-    return
-
   logger.info("Reading data...")
   lines = cast(Path, ns.text).read_text(ns.encoding).split(ns.lsep)
 
@@ -61,9 +57,6 @@ def backup_ns(ns: Namespace):
     logger.info(f"Processing {data_name} ({i}/{len(datasets)})")
 
     backup_path = data_folder / f"{ns.name}.pkl"
-    if backup_path.is_file() and not ns.overwrite:
-      logger.error("Backup already exist! Skipped.")
-      continue
 
     copy2(dataset_path, backup_path)
 

@@ -4,7 +4,7 @@ from typing import Optional
 from ordered_set import OrderedSet
 
 from text_selection.selection import FirstKeySelector, SelectionMode
-from text_selection_core.types import (Dataset, DataWeights, SubsetName, Weight)
+from text_selection_core.types import Dataset, DataWeights, SubsetName, Weight
 from text_selection_core.validation import (InvalidPercentualValueError, NonDivergentSubsetsError,
                                             SubsetNotExistsError, ValidationError,
                                             WeightsDoNotContainAllKeysError)
@@ -35,10 +35,10 @@ def validate_selection_default_parameters(params: SelectionDefaultParameters) ->
   if error := SubsetNotExistsError.validate_names(params.dataset, params.from_subset_names):
     return error
 
-  if error := SubsetNotExistsError.validate(params.dataset, params.to_subset_name):
-    return error
+  # if error := SubsetNotExistsError.validate(params.dataset, params.to_subset_name):
+  #   return error
 
-  if error := NonDivergentSubsetsError.validate_names(params.from_subset_names, params. to_subset_name):
+  if error := NonDivergentSubsetsError.validate_names(params.from_subset_names, params.to_subset_name):
     return error
 
 

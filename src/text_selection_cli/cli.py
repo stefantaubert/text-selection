@@ -190,7 +190,7 @@ def parse_args(args: List[str]) -> None:
           "Not everything was successfull!")
       flogger.error("Not everything was successfull!")
 
-    if not changed_anything:
+    if changed_anything is not None and not changed_anything:
       root_logger.info("Didn't changed anything.")
       flogger.info("Didn't changed anything.")
 

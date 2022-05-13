@@ -8,7 +8,7 @@ from ordered_set import OrderedSet
 
 from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_file,
                                                 parse_path)
-from text_selection_cli.default_args import (add_file_arguments, add_project_argument)
+from text_selection_cli.default_args import (add_file_arguments, add_dataset_argument)
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset,
                                             try_load_file)
 from text_selection_core.globals import ExecutionResult
@@ -17,7 +17,7 @@ from text_selection_core.statistics import generate_statistics
 
 def get_statistics_generation_parser(parser: ArgumentParser):
   parser.description = "This command creates statistics as csv-file."
-  add_project_argument(parser)
+  add_dataset_argument(parser)
   parser.add_argument("path", type=parse_path, help="statistics output path (csv)")
   parser.add_argument("--weights", type=parse_existing_file, nargs="*", metavar="PATH",
                       help="path to weights", default=OrderedSet(), action=ConvertToOrderedSetAction)
@@ -26,7 +26,7 @@ def get_statistics_generation_parser(parser: ArgumentParser):
 
 
 def statistics_generation_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
-  dataset = try_load_dataset(ns.project, logger)
+  dataset = try_load_dataset(ns.dataset, logger)
   if dataset is None:
     return False, False
 

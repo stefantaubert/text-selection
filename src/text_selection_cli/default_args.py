@@ -29,13 +29,13 @@ def add_to_subset_argument(parser: ArgumentParser) -> None:
                       metavar="to-subset", help="to subset")
 
 
-def add_project_argument(parser: ArgumentParser) -> None:
-  parser.add_argument("project", type=parse_existing_file, metavar="project",
-                      help="directory containing project data")
+def add_dataset_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("dataset", type=parse_existing_file, metavar="dataset",
+                      help="dataset file")
 
 
 def add_file_arguments(parser: ArgumentParser, include_sep: bool = False) -> None:
-  parser.add_argument("file", type=parse_non_empty_or_whitespace,
+  parser.add_argument("file", type=parse_existing_file, metavar="FILE-PATH",
                       help="name of the file containing the lines")
   parser.add_argument("--lsep", type=parse_non_empty, default="\n",
                       help="line separator")

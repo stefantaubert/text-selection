@@ -1,16 +1,16 @@
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-from text_selection_cli.argparse_helper import (parse_non_empty_or_whitespace, parse_path)
-from text_selection_cli.default_args import (add_file_arguments, add_project_argument)
+from text_selection_cli.argparse_helper import parse_non_empty_or_whitespace, parse_path
+from text_selection_cli.default_args import add_dataset_argument, add_file_arguments
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import try_load_dataset, try_load_file
 from text_selection_core.exporting.symbols_exporting import export_symbols
 
 
 def get_export_txt_parser(parser: ArgumentParser):
-  parser.description = f"This command."
-  add_project_argument(parser)
+  parser.description = "This command exports a subset of the file."
+  add_dataset_argument(parser)
   parser.add_argument("subset", type=parse_non_empty_or_whitespace, metavar="subset",
                       help="subset which should be exported")
   add_file_arguments(parser)
@@ -20,7 +20,7 @@ def get_export_txt_parser(parser: ArgumentParser):
 
 
 def export_txt_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
-  dataset = try_load_dataset(ns.project, logger)
+  dataset = try_load_dataset(ns.dataset, logger)
   if dataset is None:
     return False, None
 

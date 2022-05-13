@@ -13,7 +13,7 @@ from text_selection_core.weights.calculation import (divide_weights_inplace, get
 def get_uniform_weights_creation_parser(parser: ArgumentParser):
   parser.description = "This command creates uniform weights."
   add_dataset_argument(parser)
-  parser.add_argument("output", type=parse_path, metavar="PATH",
+  parser.add_argument("output", type=parse_path, metavar="OUTPUT-PATH",
                       help="output path to save the weights")
   return create_uniform_weights_ns
 
@@ -35,7 +35,7 @@ def get_word_count_weights_creation_parser(parser: ArgumentParser):
   parser.description = "This command creates weights containing the word/symbol counts."
   add_dataset_argument(parser)
   add_file_arguments(parser, True)
-  parser.add_argument("output", type=parse_path, metavar="PATH",
+  parser.add_argument("output", type=parse_path, metavar="OUTPUT-PATH",
                       help="output path to save the weights")
   return create_word_count_weights_ns
 
@@ -56,9 +56,9 @@ def create_word_count_weights_ns(ns: Namespace, logger: Logger, flogger: Logger)
 def get_weights_division_parser(parser: ArgumentParser):
   parser.description = "This command creates weights containing the ..."
   add_dataset_argument(parser)
-  parser.add_argument("weights", type=parse_path, metavar="PATH",
+  parser.add_argument("weights", type=parse_path, metavar="WEIGHTS-PATH",
                       help="output path to save the weights")
-  parser.add_argument("divisor", type=parse_positive_float, metavar="divisor",
+  parser.add_argument("divisor", type=parse_positive_float, metavar="DIVISOR",
                       help="divisor")
   return create_weights_division_ns
 

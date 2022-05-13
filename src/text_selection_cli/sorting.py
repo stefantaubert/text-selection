@@ -1,11 +1,11 @@
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-from text_selection_cli.argparse_helper import (
-  ConvertToOrderedSetAction, parse_non_empty_or_whitespace)
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction,
+                                                parse_non_empty_or_whitespace)
 from text_selection_cli.default_args import add_dataset_argument
 from text_selection_cli.globals import ExecutionResult
-from text_selection_cli.io_handling import (try_load_dataset, try_save_dataset)
+from text_selection_cli.io_handling import try_load_dataset, try_save_dataset
 from text_selection_core.common import SortingDefaultParameters
 from text_selection_core.sorting.fifo_sorting import sort_fifo
 from text_selection_core.sorting.reverse_sorting import sort_reverse
@@ -14,7 +14,7 @@ from text_selection_core.sorting.reverse_sorting import sort_reverse
 def get_fifo_sorting_parser(parser: ArgumentParser):
   parser.description = "Sort lines by FIFO principle."
   add_dataset_argument(parser)
-  parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",
+  parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="subsets", action=ConvertToOrderedSetAction)
   return sort_fifo_from_ns
 
@@ -44,7 +44,7 @@ def sort_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executi
 def get_reverse_sorting_parser(parser: ArgumentParser):
   parser.description = "Reverse sorting."
   add_dataset_argument(parser)
-  parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",
+  parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="subsets", action=ConvertToOrderedSetAction)
   return sort_reverse_from_ns
 

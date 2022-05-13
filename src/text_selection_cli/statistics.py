@@ -18,7 +18,7 @@ from text_selection_core.statistics import generate_statistics
 def get_statistics_generation_parser(parser: ArgumentParser):
   parser.description = "This command creates statistics as csv-file."
   add_dataset_argument(parser)
-  parser.add_argument("path", type=parse_path, help="statistics output path (csv)")
+  parser.add_argument("path", type=parse_path, metavar="OUTPUT-PATH", help="statistics output path (csv)")
   parser.add_argument("--weights", type=parse_existing_file, nargs="*", metavar="PATH",
                       help="path to weights", default=OrderedSet(), action=ConvertToOrderedSetAction)
   add_file_arguments(parser, True)

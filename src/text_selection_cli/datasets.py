@@ -11,7 +11,7 @@ from text_selection_core.types import Dataset
 def get_init_parser(parser: ArgumentParser):
   parser.description = "This command reads the lines of a textfile and initializes a dataset from it."
   add_file_arguments(parser)
-  parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="SUBSET-NAME",
+  parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="SUBSET",
                       help="name of the initial subset containing all line numbers")
   parser.add_argument("dataset", type=parse_path, metavar="DATASET-PATH",
                       help="output dataset file")

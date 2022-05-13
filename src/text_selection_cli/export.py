@@ -11,10 +11,10 @@ from text_selection_core.exporting.symbols_exporting import export_symbols
 def get_export_txt_parser(parser: ArgumentParser):
   parser.description = "This command exports a subset of the file."
   add_dataset_argument(parser)
-  parser.add_argument("subset", type=parse_non_empty_or_whitespace, metavar="subset",
+  parser.add_argument("subset", type=parse_non_empty_or_whitespace, metavar="SUBSET",
                       help="subset which should be exported")
   add_file_arguments(parser)
-  parser.add_argument("path", type=parse_path, metavar="path",
+  parser.add_argument("path", type=parse_path, metavar="OUTPUT-PATH",
                       help="path to the exported text-file")
   return export_txt_ns
 

@@ -21,12 +21,12 @@ def add_from_and_to_subsets_arguments(parser: ArgumentParser) -> None:
 
 def add_from_subsets_argument(parser: ArgumentParser) -> None:
   parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+",
-                      metavar="from-subsets", help="from subset", action=ConvertToOrderedSetAction)
+                      metavar="FROM-SUBSET", help="from subset", action=ConvertToOrderedSetAction)
 
 
 def add_to_subset_argument(parser: ArgumentParser) -> None:
   parser.add_argument("to_subset", type=parse_non_empty_or_whitespace,
-                      metavar="to-subset", help="to subset")
+                      metavar="TO-SUBSET", help="to subset")
 
 
 def add_dataset_argument(parser: ArgumentParser) -> None:
@@ -45,8 +45,8 @@ def add_file_arguments(parser: ArgumentParser, include_sep: bool = False) -> Non
 
 
 def add_sep_argument(parser: ArgumentParser) -> None:
-  parser.add_argument("--sep", type=str, metavar="SYMBOL",
-                      help="separator symbol for symbols/words", default=" ")
+  parser.add_argument("--sep", type=str, metavar="STRING",
+                      help="separator for symbols/words", default=" ")
 
 
 def add_n_jobs_argument(parser: ArgumentParser) -> None:
@@ -55,12 +55,12 @@ def add_n_jobs_argument(parser: ArgumentParser) -> None:
 
 
 def add_chunksize_argument(parser: ArgumentParser, target: str = "files", default: int = DEFAULT_CHUNKSIZE) -> None:
-  parser.add_argument("-s", "--chunksize", type=parse_positive_integer, metavar="NUMBER",
+  parser.add_argument("-s", "--chunksize", type=parse_positive_integer, metavar="SIZE",
                       help=f"amount of {target} to chunk into one job", default=default)
 
 
 def add_maxtaskperchild_argument(parser: ArgumentParser) -> None:
-  parser.add_argument("-m", "--maxtasksperchild", type=get_optional(parse_positive_integer), metavar="NUMBER",
+  parser.add_argument("-m", "--maxtasksperchild", type=get_optional(parse_positive_integer), metavar="COUNT",
                       help="amount of tasks per child", default=DEFAULT_MAXTASKSPERCHILD)
 
 

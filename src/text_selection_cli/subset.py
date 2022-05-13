@@ -11,9 +11,9 @@ from text_selection_core.subsets import rename_subset
 def get_subset_renaming_parser(parser: ArgumentParser):
   parser.description = "This command rename a subset."
   add_dataset_argument(parser)
-  parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="name",
+  parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="SUBSET",
                       help="subset that should be renamed")
-  parser.add_argument("new_name", type=parse_non_empty_or_whitespace, metavar="new-name",
+  parser.add_argument("new_name", type=parse_non_empty_or_whitespace, metavar="NEW-NAME",
                       help="new name")
   return rename_subsets_ns
 

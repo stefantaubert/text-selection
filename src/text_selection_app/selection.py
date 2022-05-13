@@ -9,6 +9,7 @@ from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse
                                                 parse_non_empty, parse_non_empty_or_whitespace,
                                                 parse_non_negative_float,
                                                 parse_non_negative_integer)
+from text_selection_app.default_args import add_directory_argument, add_file_arguments
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
                                             load_data_weights, load_dataset, save_dataset)
@@ -21,8 +22,7 @@ from text_selection_core.selection.nr_selection import select_ids
 
 def get_id_selection_parser(parser: ArgumentParser):
   parser.description = "Select Id's."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
                       help="to subset")
   parser.add_argument("ids", type=parse_non_negative_integer, nargs="+", metavar="ids",
@@ -62,8 +62,7 @@ def select_ids_from_ns(ns: Namespace):
 
 def get_fifo_selection_parser(parser: ArgumentParser):
   parser.description = f"Select Id's by FIFO principle."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="from-subsets",
                       help="from subset", action=ConvertToOrderedSetAction)
   parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
@@ -122,16 +121,12 @@ def select_fifo_from_ns(ns: Namespace):
 
 def get_greedy_selection_parser(parser: ArgumentParser):
   parser.description = "Select Id's by greedy principle."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="from-subsets",
                       help="from subset", action=ConvertToOrderedSetAction)
   parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
                       help="to subset")
-  parser.add_argument("file", type=parse_non_empty_or_whitespace,
-                      help="name of the file containing the lines")
-  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
-                      help="line separator")
+  add_file_arguments(parser)
   parser.add_argument("--ssep", type=str, default="",
                       help="symbol separator")
   parser.add_argument("--include-selected", action="store_true",
@@ -197,16 +192,12 @@ def greedy_selection_ns(ns: Namespace):
 
 def get_kld_selection_parser(parser: ArgumentParser):
   parser.description = "Select Id's by KLD principle."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("from_subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="from-subsets",
                       help="from subset", action=ConvertToOrderedSetAction)
   parser.add_argument("to_subset", type=parse_non_empty_or_whitespace, metavar="to-subset",
                       help="to subset")
-  parser.add_argument("file", type=parse_non_empty_or_whitespace,
-                      help="name of the file containing the lines")
-  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
-                      help="line separator")
+  add_file_arguments(parser)
   parser.add_argument("--ssep", type=str, default="",
                       help="symbol separator")
   parser.add_argument("--include-selected", action="store_true",

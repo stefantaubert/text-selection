@@ -6,26 +6,21 @@ from typing import cast
 from text_selection_app.argparse_helper import (get_optional, parse_existing_directory,
                                                 parse_non_empty, parse_non_empty_or_whitespace,
                                                 parse_path)
-from text_selection_app.default_args import add_encoding_argument
+from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
+                                             add_file_arguments)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import DATASET_NAME, load_dataset
 from text_selection_core.exporting.symbols_exporting import export_symbols
 
 
 def get_export_txt_parser(parser: ArgumentParser):
-  parser.description = f"This command calculates n-grams."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  parser.description = f"This command."
+  add_directory_argument(parser)
   parser.add_argument("subset", type=parse_non_empty_or_whitespace, metavar="subset",
                       help="subset which should be exported")
-  parser.add_argument("file", type=parse_non_empty_or_whitespace,
-                      help="name of the file containing the lines")
-  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
-                      help="line separator")
+  add_file_arguments(parser)
   parser.add_argument("--name", type=get_optional(parse_non_empty_or_whitespace), metavar="NAME",
                       help="name of the exported text-file if not same as subset", default=None)
-  #add_string_format_argument(parser, "text files")
-  add_encoding_argument(parser, "encoding of the text files")
   parser.add_argument("-out", "--output-directory", type=get_optional(parse_path), metavar="PATH",
                       help="custom output directory if not same as input directory", default=None)
   parser.add_argument("-o", "--overwrite", action="store_true",

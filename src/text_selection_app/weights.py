@@ -6,6 +6,8 @@ from typing import cast
 from text_selection_app.argparse_helper import (get_optional, parse_existing_directory,
                                                 parse_non_empty, parse_non_empty_or_whitespace,
                                                 parse_positive_float)
+from text_selection_app.default_args import (add_directory_argument, add_encoding_argument,
+                                             add_file_arguments)
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, load_data_weights, load_dataset,
                                             save_data_weights)
@@ -15,8 +17,7 @@ from text_selection_core.weights.calculation import (divide_weights_inplace, get
 
 def get_uniform_weights_creation_parser(parser: ArgumentParser):
   parser.description = "This command creates uniform weights."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
                       help="name of the weights", default="weights")
   parser.add_argument("-o", "--overwrite", action="store_true",
@@ -51,16 +52,12 @@ def create_uniform_weights_ns(ns: Namespace) -> None:
 
 def get_word_count_weights_creation_parser(parser: ArgumentParser):
   parser.description = f"This command creates weights containing the word/symbol counts."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
-  parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",
-                      help="name of the weights", default="weights")
-  parser.add_argument("file", type=parse_non_empty_or_whitespace,
-                      help="name of the file containing the lines")
-  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
-                      help="line separator")
+  add_directory_argument(parser)
+  add_file_arguments(parser)
   parser.add_argument("--sep", type=str, metavar="SYMBOL",
                       help="separator symbol for symbols/words", default=" ")
+  parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="NAME",
+                      help="name of the weights")
   parser.add_argument("-o", "--overwrite", action="store_true",
                       help="overwrite weights")
   return create_word_count_weights_ns
@@ -99,8 +96,7 @@ def create_word_count_weights_ns(ns: Namespace) -> None:
 
 def get_weights_division_parser(parser: ArgumentParser):
   parser.description = "This command creates weights containing the ..."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("divisor", type=parse_positive_float, metavar="divisor",
                       help="divisor")
   parser.add_argument("--name", type=parse_non_empty_or_whitespace, metavar="NAME",

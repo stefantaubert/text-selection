@@ -8,6 +8,7 @@ from ordered_set import OrderedSet
 
 from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
                                                 parse_non_empty, parse_non_empty_or_whitespace)
+from text_selection_app.default_args import add_directory_argument, add_file_arguments
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import get_data_weights_path, load_data_weights, load_dataset
 from text_selection_core.statistics import generate_statistics
@@ -15,14 +16,10 @@ from text_selection_core.statistics import generate_statistics
 
 def get_statistics_generation_parser(parser: ArgumentParser):
   parser.description = "This command creates statistics."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("--weights", type=parse_non_empty_or_whitespace, nargs="*", metavar="NAME",
                       help="name of the weights", default=[], action=ConvertToOrderedSetAction)
-  parser.add_argument("file", type=parse_non_empty_or_whitespace,
-                      help="name of the file")
-  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
-                      help="line separator")
+  add_file_arguments(parser)
   parser.add_argument("--ssep", type=str, default="",
                       help="symbol separator")
   parser.add_argument("-o", "--overwrite", action="store_true",

@@ -36,7 +36,8 @@ def create_dataset_from_text_ns(ns: Namespace):
   if data_folder.is_dir() and not ns.overwrite:
     logger.error("Directory already exists!")
     return
-
+    
+  logger.info("Reading data...")
   lines = cast(Path, ns.text).read_text(ns.encoding).split(ns.lsep)
 
   dataset = create_dataset_from_line_count(len(lines), ns.name)

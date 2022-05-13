@@ -8,6 +8,7 @@ from text_selection.selection import SelectionMode
 from text_selection_app.argparse_helper import (ConvertToOrderedSetAction, parse_existing_directory,
                                                 parse_non_empty_or_whitespace,
                                                 parse_non_negative_float)
+from text_selection_app.default_args import add_directory_argument
 from text_selection_app.helper import get_datasets
 from text_selection_app.io_handling import (get_data_weights_path, get_dataset_path,
                                             load_data_weights, load_dataset, save_dataset)
@@ -20,8 +21,7 @@ from text_selection_core.sorting.reverse_sorting import sort_reverse
 
 def get_fifo_sorting_parser(parser: ArgumentParser):
   parser.description = f"Sort Id's by FIFO principle."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",
                       help="subsets", action=ConvertToOrderedSetAction)
   return sort_fifo_from_ns
@@ -60,8 +60,7 @@ def sort_fifo_from_ns(ns: Namespace):
 
 def get_reverse_sorting_parser(parser: ArgumentParser):
   parser.description = "Reverse sorting."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="subsets",
                       help="subsets", action=ConvertToOrderedSetAction)
   return sort_reverse_from_ns

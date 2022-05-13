@@ -3,12 +3,26 @@ from argparse import ArgumentParser
 from collections import OrderedDict
 from multiprocessing import cpu_count
 
-from text_selection_app.argparse_helper import (get_optional, parse_codec,
+from text_selection_app.argparse_helper import (get_optional, parse_codec, parse_non_empty,
+                                                parse_non_empty_or_whitespace, parse_path,
                                                 parse_positive_integer)
 
 DEFAULT_N_JOBS = cpu_count()
 DEFAULT_CHUNKSIZE = 500
 DEFAULT_MAXTASKSPERCHILD = None
+
+
+def add_directory_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("directory", type=parse_path, metavar="directory",
+                      help="directory containing data")
+
+
+def add_file_arguments(parser: ArgumentParser) -> None:
+  parser.add_argument("file", type=parse_non_empty_or_whitespace,
+                      help="name of the file containing the lines")
+  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
+                      help="line separator")
+  add_encoding_argument(parser, "encoding of file")
 
 
 def add_n_jobs_argument(parser: ArgumentParser) -> None:

@@ -3,6 +3,7 @@ from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
 from typing import cast
+from text_selection_app.default_args import add_directory_argument
 
 from text_selection_core.subsets import add_subsets, remove_subsets
 
@@ -15,8 +16,7 @@ from text_selection_app.io_handling import get_dataset_path, load_dataset, save_
 
 def get_subsets_creation_parser(parser: ArgumentParser):
   parser.description = "This command adds subsets."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)  
   parser.add_argument("names", type=parse_non_empty_or_whitespace, nargs="+", metavar="names",
                       help="names of subsets that should be added", action=ConvertToOrderedSetAction)
   return add_subsets_ns
@@ -51,8 +51,7 @@ def add_subsets_ns(ns: Namespace):
 
 def get_subsets_removal_parser(parser: ArgumentParser):
   parser.description = "This command removes subsets."
-  parser.add_argument("directory", type=parse_existing_directory, metavar="directory",
-                      help="directory containing data")
+  add_directory_argument(parser)  
   parser.add_argument("names", type=parse_non_empty_or_whitespace, nargs="+", metavar="names",
                       help="names of subsets that should be removed (Note: at least one subset needs to be left after removal)", action=ConvertToOrderedSetAction)
   return add_subsets_ns

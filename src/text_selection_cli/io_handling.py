@@ -3,6 +3,8 @@ from logging import Logger
 from pathlib import Path
 from typing import Any, Optional, cast
 
+import numpy as np
+
 from text_selection_core.types import Dataset, DataWeights, Lines
 
 DATASET_NAME = "data"
@@ -101,14 +103,14 @@ def get_data_weights_path(directory: Path, name: str) -> Path:
   return directory / f"{name}{FILE_EXTENSION}"
 
 
-def try_load_data_weights(path: Path, logger: Logger) -> Optional[DataWeights]:
+def try_load_data_weights(path: Path,  logger: Logger) -> Optional[DataWeights]:
   if not path.exists():
     logger.error(f"Weights file \"{path.absolute()}\" was not found!")
     return None
 
   logger.info(f"Reading weights from \"{path.absolute()}\"...")
   try:
-    result = cast(DataWeights, load_obj(path))
+    result = np.load(path, allow_pickle=False, fix_imports=False)
   except Exception as ex:
     logger.error("Weights couldn't be read!")
     logger.exception(ex)
@@ -121,7 +123,8 @@ def try_save_data_weights(path: Path, data_weights: DataWeights, logger: Logger)
   logger.info(f"Saving weights to \"{path.absolute()}\"...")
   try:
     path.parent.mkdir(parents=True, exist_ok=True)
-    save_obj(data_weights, path)
+    np.save(path, data_weights, allow_pickle=False, fix_imports=False)
+    # save_obj(data_weights, path)
   except Exception as ex:
     logger.error("Weights couldn't be saved!")
     logger.exception(ex)

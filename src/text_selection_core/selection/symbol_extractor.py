@@ -1,3 +1,4 @@
+import gc
 import itertools
 from collections import Counter, OrderedDict
 from functools import partial
@@ -59,8 +60,6 @@ def get_chunks(keys: List[str], chunk_size: Optional[int]) -> List[List[str]]:
 
 
 def get_array_mp(lines: Lines, subset: Subset, ssep: str, logger: Logger, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int]):
-  #chunksize = 1_000_000
-  #chunksize = 10_000
   subset_chunks = get_chunks(subset, chunksize)
   method = partial(
     get_array_v1_mp,
@@ -84,13 +83,15 @@ def get_array_mp(lines: Lines, subset: Subset, ssep: str, logger: Logger, chunks
     initializer=init_mp,
     initargs=(lines,),
   ) as pool:
-    sentences = dict(tqdm(pool.imap_unordered(
+    arrays = dict(tqdm(pool.imap_unordered(
         method, enumerate(subset_chunks), chunksize=1
     ), total=len(subset_chunks), desc="Generating data"))
-  arrays = sorted(sentences.items(), key=lambda kv: kv[0])
+  arrays = sorted(arrays.items(), key=lambda kv: kv[0])
   arrays = list(v for k, v in arrays)
-  result = merge_arrays(arrays)
-  return result
+  result, symbols = unify_arrays(arrays)
+  del arrays
+  result = np.concatenate(result, axis=0)
+  return result, symbols
 
 
 def init_mp(lines: Lines):
@@ -105,16 +106,16 @@ def get_array_v1_mp(i_subset: Tuple[int, Subset], ssep: str, logger: Logger):
   return i, result
 
 
-def merge_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tuple[np.ndarray, OrderedSet[str]]:
+def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tuple[np.ndarray, OrderedSet[str]]:
   all_symbols = OrderedSet({
     symbol
     for _, symbols in arrays_symbols
     for symbol in symbols
   })
 
-  result_data: np.ndarray = None
   final_arrays = []
   symbols: OrderedSet[str]
+
   for array, symbols in tqdm(arrays_symbols, desc="Merging results"):
     missing_symbols = all_symbols - symbols
     if len(missing_symbols) > 0:
@@ -130,10 +131,7 @@ def merge_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tu
 
     array = array[:, symbols_mapping]
     final_arrays.append(array)
-  del arrays_symbols
-  result_data = np.concatenate(final_arrays, axis=0)
-  del final_arrays
-  return result_data, all_symbols
+  return final_arrays, all_symbols
 
 
 def merge_arrays_v1(array_keys: List[Tuple[np.ndarray, OrderedSet[str]]]):

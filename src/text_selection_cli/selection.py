@@ -10,6 +10,7 @@ from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse
                                                 parse_non_negative_float, parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_file_arguments,
                                              add_from_and_to_subsets_arguments,
+                                             add_maxtasksperchild_argument, add_mp_group,
                                              add_to_subset_argument)
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
@@ -111,6 +112,7 @@ def get_greedy_selection_parser(parser: ArgumentParser):
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
   add_termination_criteria_arguments(parser)
+  add_mp_group(parser)
   return greedy_selection_ns
 
 
@@ -132,7 +134,8 @@ def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
-  error, changed_anything = select_greedy(default_params, params, weights_params, logger)
+  error, changed_anything = select_greedy(
+    default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
 
   success = error is None
 
@@ -153,9 +156,11 @@ def get_greedy_selection_epoch_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser, True)
-  parser.add_argument("epochs", type=parse_positive_integer, metavar="N-EPOCHS", help="number of epochs")
+  parser.add_argument("epochs", type=parse_positive_integer,
+                      metavar="N-EPOCHS", help="number of epochs")
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
+  add_mp_group(parser)
   # add_termination_criteria_arguments(parser)
   return greedy_selection_epoch_ns
 
@@ -175,9 +180,10 @@ def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) ->
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   params = GreedySelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
-  
+
   logger.info("Selecting...")
-  error, changed_anything = select_greedy_epochs(default_params, params, ns.epochs, logger)
+  error, changed_anything = select_greedy_epochs(
+    default_params, params, ns.epochs, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
 
   success = error is None
 

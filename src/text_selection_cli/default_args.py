@@ -8,7 +8,7 @@ from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, get_o
                                                 parse_positive_integer)
 
 DEFAULT_N_JOBS = cpu_count()
-DEFAULT_CHUNKSIZE = 500
+DEFAULT_CHUNKSIZE = 1_000_000
 DEFAULT_MAXTASKSPERCHILD = None
 
 parse_weights_name = parse_non_empty_or_whitespace
@@ -49,6 +49,14 @@ def add_sep_argument(parser: ArgumentParser) -> None:
                       help="separator for symbols/words", default=" ")
 
 
+def add_mp_group(parser: ArgumentParser):
+  group = parser.add_argument_group("multiprocessing arguments")
+  add_n_jobs_argument(group)
+  add_chunksize_argument(group)
+  add_maxtasksperchild_argument(group)
+  return group
+
+
 def add_n_jobs_argument(parser: ArgumentParser) -> None:
   parser.add_argument("-j", "--n-jobs", metavar='N', type=int,
                       choices=range(1, cpu_count() + 1), default=DEFAULT_N_JOBS, help="amount of parallel cpu jobs")
@@ -59,7 +67,7 @@ def add_chunksize_argument(parser: ArgumentParser, target: str = "files", defaul
                       help=f"amount of {target} to chunk into one job", default=default)
 
 
-def add_maxtaskperchild_argument(parser: ArgumentParser) -> None:
+def add_maxtasksperchild_argument(parser: ArgumentParser) -> None:
   parser.add_argument("-m", "--maxtasksperchild", type=get_optional(parse_positive_integer), metavar="COUNT",
                       help="amount of tasks per child", default=DEFAULT_MAXTASKSPERCHILD)
 

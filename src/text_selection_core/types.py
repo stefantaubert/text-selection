@@ -4,6 +4,7 @@ from typing import Generator, List
 from typing import OrderedDict as OrderedDictType
 from typing import Union
 
+import numpy as np
 from ordered_set import OrderedSet
 
 # zero-based line number
@@ -14,7 +15,7 @@ Lines = List[Line]
 
 Percent = float
 Weight = Union[float, int]
-DataWeights = List[Weight]
+DataWeights = np.ndarray
 
 Subset = LineNrs
 SubsetName = str

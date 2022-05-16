@@ -1,6 +1,6 @@
 from typing import Iterator
 
-from text_selection_core.types import LineNr, DataWeights, Weight
+from text_selection_core.types import DataWeights, LineNr, Weight
 
 
 class WeightsIterator(Iterator[LineNr]):
@@ -31,17 +31,17 @@ class WeightsIterator(Iterator[LineNr]):
       raise StopIteration()
 
     try:
-      selected_id = next(self.__iterator)
+      selected_line_nr = next(self.__iterator)
     except StopIteration:
       self.__enough_data_was_available = False
       raise StopIteration()
 
-    assert selected_id in self.__weights
-    selected_until_value = self.__weights[selected_id]
+    assert 0 <= selected_line_nr < len(self.__weights)
+    selected_until_value = self.__weights[selected_line_nr]
     new_total = self.__current_total + selected_until_value
     if new_total <= self.__target:
       self.__current_total = new_total
       self.__update_progress = selected_until_value
-      return selected_id
-    else:
-      raise StopIteration()
+      return selected_line_nr
+      
+    raise StopIteration()

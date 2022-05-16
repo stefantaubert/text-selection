@@ -122,6 +122,7 @@ def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tu
     ]
 
     array = array[:, symbols_mapping]
+    # TODO extract this to upper function and replace results in list instead
     if result is None:
       result = array
     else:

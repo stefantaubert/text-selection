@@ -65,7 +65,17 @@ def move_lines_to_subset(dataset: Dataset, nrs: LineNrs, target: SubsetName, log
   logger.debug("Done.")
 
 
-def get_subsets_line_nrs(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> Generator[LineNr, None, None]:
+def get_subsets_line_nrs_gen(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> Generator[LineNr, None, None]:
   from_subsets = (dataset.subsets[from_subset_name] for from_subset_name in subsets)
   lines = (line for subset in from_subsets for line in subset)
   return lines
+
+
+def get_subsets_line_nrs(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> Subset:
+  result = OrderedSet()
+  if len(subsets) == 0:
+    return result
+
+  for subset in subsets:
+    result.update(dataset.subsets[subset])
+  return result

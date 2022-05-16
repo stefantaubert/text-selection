@@ -1,4 +1,6 @@
 
+from typing import List
+
 from text_selection_core.types import DataWeights, Percent, Subset, Weight
 
 
@@ -24,3 +26,9 @@ def move_selection_between_subsets(from_subset: Subset, from_selection: Subset, 
 
   to_subset |= from_selection
   from_subset -= from_selection
+
+
+def split_adv(s: str, sep: str) -> List[str]:
+  if sep == "":
+    return list(s)
+  return s.split(sep)

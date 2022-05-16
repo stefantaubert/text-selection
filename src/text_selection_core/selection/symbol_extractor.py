@@ -16,6 +16,7 @@ from text_utils import Symbol, Symbols
 from tqdm import tqdm
 
 from text_selection.utils import log_mp_params
+from text_selection_core.helper import split_adv
 from text_selection_core.types import Lines, Subset
 
 SymbolIndex = int
@@ -30,7 +31,7 @@ def get_symbols_from_lines(lines: Lines, subset: Subset, ssep: str) -> Set[str]:
   symbols = {
     symbol
     for line_nr in tqdm(subset, desc="Getting unique symbols", unit=" line(s)")
-    for symbol in lines[line_nr].split(ssep)
+    for symbol in split_adv(lines[line_nr], ssep)
   }
   return symbols
 
@@ -43,10 +44,11 @@ def get_array(lines: Lines, subset: Subset, ssep: str, logger: Logger):
   # 1mio -> 10.079393691034056s
   # 10mio -> 92.748770733946s
   # get_array_v2(lines, subset, ssep, logger)  # 10.079393691034056s
-  get_array_mp(lines, subset, ssep, logger, 1_000_000, 16, None)
+  result = get_array_mp(lines, subset, ssep, logger, 1_000_000, 16, None)
   duration = perf_counter() - start
   logger = getLogger()
   logger.info(f"Duration: {duration}s")
+  return result
 
 
 def get_chunks(keys: List[str], chunk_size: Optional[int]) -> List[List[str]]:
@@ -118,8 +120,7 @@ def merge_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tu
     if len(missing_symbols) > 0:
       new_cols = np.zeros((len(array), len(missing_symbols)), dtype=np.uint32)
       array = np.append(array, new_cols, axis=1)
-      for missing_symbol in missing_symbols:
-        symbols.add(missing_symbol)
+      symbols.update(missing_symbols)
 
     assert len(symbols) == len(all_symbols)
     symbols_mapping = [
@@ -174,7 +175,7 @@ def merge_arrays_v1(array_keys: List[Tuple[np.ndarray, OrderedSet[str]]]):
 def get_array_v1(lines: Lines, subset: Subset, ssep: str, logger: Logger):
   counters = []
   for line_nr in xtqdm(subset, desc="Calculating counts", unit=" line(s)"):
-    line_counts = Counter(lines[line_nr].split(ssep))
+    line_counts = Counter(split_adv(lines[line_nr], ssep))
     counters.append(line_counts)
 
   #logger.info("Getting symbols")

@@ -8,7 +8,7 @@ from ordered_set import OrderedSet
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import (Line, LineNr, Lines, Subset, get_subsets_line_nrs,
+from text_selection_core.types import (Line, LineNr, Lines, Subset, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
 
 enchant_en_US = Literal["en_US"]
@@ -27,7 +27,7 @@ def filter_sentences_containing_only_known_words(default_params: SelectionDefaul
     return error, False
 
   select_from = ((data_id, params.data_symbols[data_id])
-                 for data_id in get_subsets_line_nrs(default_params.dataset, default_params. from_subset_names))
+                 for data_id in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
 
   assert params.language == enchant_en_US
   lexicon = enchant.Dict(params.language)

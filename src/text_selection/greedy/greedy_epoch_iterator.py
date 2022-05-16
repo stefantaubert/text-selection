@@ -18,7 +18,7 @@ class EpochProxyIterator(Iterator[int]):
   @property
   def was_enough_data_available(self) -> bool:
     return self.__enough_data_was_available
-
+    
   def __iter__(self) -> Iterator[int]:
     return self
 

@@ -7,7 +7,7 @@ from ordered_set import OrderedSet
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import Lines, Subset, get_subsets_line_nrs, move_lines_to_subset
+from text_selection_core.types import Lines, Subset, get_subsets_line_nrs_gen, move_lines_to_subset
 
 
 def filter_regex_pattern(default_params: SelectionDefaultParameters, data_symbols: Lines, pattern: str) -> ExecutionResult:
@@ -15,7 +15,7 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, data_symbol
     return error, False
 
   select_from = ((data_id, data_symbols[data_id])
-                 for data_id in get_subsets_line_nrs(default_params.dataset, default_params. from_subset_names))
+                 for data_id in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
   re_pattern = re.compile(pattern)
   items = get_matching_items(select_from, re_pattern)
   result: Subset = OrderedSet(items)

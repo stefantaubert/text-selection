@@ -7,7 +7,7 @@ from ordered_set import OrderedSet
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import (DataWeights, LineNr, Subset, Weight, get_subsets_line_nrs,
+from text_selection_core.types import (DataWeights, LineNr, Subset, Weight, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
 from text_selection_core.validation import WeightsDoNotContainAllKeysError
 
@@ -29,7 +29,7 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
     return error, False
 
   select_from = ((data_id, params[data_id])
-                 for data_id in get_subsets_line_nrs(default_params.dataset, default_params. from_subset_names))
+                 for data_id in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
 
   iterator = get_weight_keys(select_from, params.from_weight_incl,
                              params.to_weight_excl)

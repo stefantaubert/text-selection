@@ -6,7 +6,7 @@ from ordered_set import OrderedSet
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs,
+from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
 from text_selection_core.validation import LinesCountNotMatchingError
 
@@ -21,7 +21,7 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
   if error := LinesCountNotMatchingError.validate(default_params.dataset, lines):
     return error, False
 
-  line_nrs = get_subsets_line_nrs(default_params.dataset, default_params.from_subset_names)
+  line_nrs = get_subsets_line_nrs_gen(default_params.dataset, default_params.from_subset_names)
   duplicates = get_duplicates_line_nrs(lines, line_nrs)
   result: Subset = OrderedSet(duplicates)
 

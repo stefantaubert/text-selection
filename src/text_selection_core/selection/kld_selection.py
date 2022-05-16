@@ -12,7 +12,7 @@ from text_selection_core.common import (SelectionDefaultParameters, WeightSelect
                                         validate_weights_parameters)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_initial_weights, get_target_weights_from_percent
-from text_selection_core.types import Lines, Subset, get_subsets_line_nrs, move_lines_to_subset
+from text_selection_core.types import Lines, Subset, get_subsets_line_nrs_gen, move_lines_to_subset
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
 
@@ -31,7 +31,7 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
   if error := validate_weights_parameters(weight_params, default_params.dataset):
     return error, False
 
-  from_ids = OrderedSet(get_subsets_line_nrs(default_params.dataset,
+  from_ids = OrderedSet(get_subsets_line_nrs_gen(default_params.dataset,
                         default_params.from_subset_names))
 
   # if error := NGramsNotExistError.validate(params.lines, from_ids):

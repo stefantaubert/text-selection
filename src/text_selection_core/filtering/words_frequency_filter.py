@@ -9,7 +9,7 @@ from tqdm import tqdm
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs,
+from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
 
 
@@ -28,11 +28,11 @@ def filter_words_with_frequencies(default_params: SelectionDefaultParameters, pa
     return error, False
 
   select_from = ((line_nr, params.lines[line_nr])
-                 for line_nr in get_subsets_line_nrs(default_params.dataset, default_params. from_subset_names))
+                 for line_nr in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
   counter = get_counter(select_from, params.word_sep, params.trim_symbols, params.ignore_case)
 
   select_from = ((line_nr, params.lines[line_nr])
-                 for line_nr in get_subsets_line_nrs(default_params.dataset, default_params. from_subset_names))
+                 for line_nr in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
   items = get_matching_items(select_from, params.word_sep, params.trim_symbols,
                              params.ignore_case, params.from_count_incl, params.to_count_excl, counter)
   result: Subset = OrderedSet(items)

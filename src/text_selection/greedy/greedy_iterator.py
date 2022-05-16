@@ -3,6 +3,7 @@ from typing import Iterator, Tuple
 
 import numpy as np
 from ordered_set import OrderedSet
+
 from text_selection.selection import KeySelector
 
 
@@ -23,7 +24,13 @@ class GreedyIterator(Iterator[int]):
 
   @property
   def current_epoch(self) -> int:
+    """zero-based epoch"""
     return self._current_epoch
+
+  @property
+  def is_fresh_epoch(self) -> bool:
+    result = np.all(self.__covered_array == 0, axis=0)
+    return result
 
   def __next__(self) -> int:
     if len(self.__available_data_keys_ordered) == 0:

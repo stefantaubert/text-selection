@@ -10,7 +10,7 @@ from text_selection_core.common import (SelectionDefaultParameters, WeightSelect
                                         validate_weights_parameters)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_initial_weights, get_target_weights_from_percent
-from text_selection_core.types import (Subset, ensure_subset_exists, get_subsets_line_nrs,
+from text_selection_core.types import (Subset, ensure_subset_exists, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
@@ -31,7 +31,7 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
   changed_anything = ensure_subset_exists(
     default_params.dataset, default_params.to_subset_name, logger)
 
-  from_ids = OrderedSet(get_subsets_line_nrs(default_params.dataset,
+  from_ids = OrderedSet(get_subsets_line_nrs_gen(default_params.dataset,
                         default_params.from_subset_names))
   to_subset = default_params.dataset.subsets[default_params.to_subset_name]
   assert len(from_ids.intersection(to_subset)) == 0

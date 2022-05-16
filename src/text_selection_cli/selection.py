@@ -16,7 +16,8 @@ from text_selection_cli.io_handling import (try_load_data_weights, try_load_data
                                             try_save_dataset)
 from text_selection_core.common import SelectionDefaultParameters, WeightSelectionParameters
 from text_selection_core.selection.fifo_selection import original_mode, select_fifo, subset_mode
-from text_selection_core.selection.greedy_selection import GreedySelectionParameters, select_greedy
+from text_selection_core.selection.greedy_selection import (GreedySelectionParameters,
+                                                            select_greedy, select_greedy_epochs)
 from text_selection_core.selection.kld_selection import KldSelectionParameters, select_kld
 from text_selection_core.selection.nr_selection import select_ids
 
@@ -131,7 +132,52 @@ def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
-  error, changed_anything = select_greedy(default_params, params, weights_params)
+  error, changed_anything = select_greedy(default_params, params, weights_params, logger)
+
+  success = error is None
+
+  if not success:
+    logger.error(f"{error.default_message}")
+    return False, False
+
+  if changed_anything:
+    success = try_save_dataset(ns.dataset, dataset, logger)
+    if not success:
+      return False, False
+
+  return True, changed_anything
+
+
+def get_greedy_selection_epoch_parser(parser: ArgumentParser):
+  parser.description = "Select lines by greedy principle."
+  add_dataset_argument(parser)
+  add_from_and_to_subsets_arguments(parser)
+  add_file_arguments(parser, True)
+  parser.add_argument("epochs", type=parse_positive_integer, metavar="N-EPOCHS", help="number of epochs")
+  parser.add_argument("--include-selected", action="store_true",
+                      help="consider already selected for the selection")
+  # add_termination_criteria_arguments(parser)
+  return greedy_selection_epoch_ns
+
+
+def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
+  dataset = try_load_dataset(ns.dataset, logger)
+  if dataset is None:
+    return False, False
+
+  lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
+  if lines is None:
+    return False, False
+
+  # weights = try_load_data_weights(ns.weights, logger)
+  # if weights is None:
+  #   return False, False
+
+  default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
+  params = GreedySelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
+  
+  logger.info("Selecting...")
+  error, changed_anything = select_greedy_epochs(default_params, params, ns.epochs, logger)
 
   success = error is None
 

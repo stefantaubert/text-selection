@@ -1,22 +1,16 @@
-import gc
-import itertools
 from collections import Counter, OrderedDict
 from functools import partial
 from itertools import chain
 from logging import Logger, getLogger
-from math import ceil
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from time import perf_counter
-from typing import Dict, Generator, Iterable, Iterator, List, Optional
-from typing import OrderedDict as OrderedDictType
+from typing import Dict, List, Optional
 from typing import Set, Tuple
 
 import numpy as np
 from ordered_set import OrderedSet
-from text_utils import Symbol, Symbols
 from tqdm import tqdm
 
-from text_selection.utils import log_mp_params
 from text_selection_core.helper import split_adv
 from text_selection_core.types import Lines, Subset
 
@@ -88,10 +82,8 @@ def get_array_mp(lines: Lines, subset: Subset, ssep: str, logger: Logger, chunks
     ), total=len(subset_chunks), desc="Generating data"))
   arrays = sorted(arrays.items(), key=lambda kv: kv[0])
   arrays = list(v for k, v in arrays)
-  result, symbols = unify_arrays(arrays)
-  del arrays
-  result = np.concatenate(result, axis=0)
-  return result, symbols
+  arrays, symbols = unify_arrays(arrays)
+  return arrays, symbols
 
 
 def init_mp(lines: Lines):
@@ -113,7 +105,7 @@ def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tu
     for symbol in symbols
   })
 
-  final_arrays = []
+  result = None
   symbols: OrderedSet[str]
 
   for array, symbols in tqdm(arrays_symbols, desc="Merging results"):
@@ -130,8 +122,11 @@ def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tu
     ]
 
     array = array[:, symbols_mapping]
-    final_arrays.append(array)
-  return final_arrays, all_symbols
+    if result is None:
+      result = array
+    else:
+      result = np.append(result, array, axis=0)
+  return result, all_symbols
 
 
 def merge_arrays_v1(array_keys: List[Tuple[np.ndarray, OrderedSet[str]]]):

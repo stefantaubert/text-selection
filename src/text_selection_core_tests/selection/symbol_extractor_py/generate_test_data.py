@@ -7,7 +7,6 @@ from itertools import chain
 from logging import getLogger
 from multiprocessing import Pool, cpu_count
 
-from ordered_set import OrderedSet
 from tqdm import tqdm
 
 from text_selection_core.types import Lines

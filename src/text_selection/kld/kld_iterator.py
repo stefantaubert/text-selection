@@ -4,6 +4,7 @@ from typing import Iterator, Optional, Tuple, Union
 import numpy as np
 from ordered_set import OrderedSet
 from scipy import special
+
 from text_selection.selection import KeySelector
 
 
@@ -46,6 +47,10 @@ class KldIterator(Iterator[int]):
   @property
   def current_kld(self) -> float:
     return self.__current_kld
+
+  @property
+  def target_distributions(self) -> float:
+    return self.__target_dists
 
   def __next__(self) -> int:
     if len(self.__available_data_keys_ordered) == 0:

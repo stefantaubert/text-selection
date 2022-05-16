@@ -10,8 +10,7 @@ from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse
                                                 parse_non_negative_float, parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_file_arguments,
                                              add_from_and_to_subsets_arguments,
-                                             add_maxtasksperchild_argument, add_mp_group,
-                                             add_to_subset_argument)
+                                             add_mp_group, add_to_subset_argument)
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_dataset)
@@ -207,6 +206,7 @@ def get_kld_selection_parser(parser: ArgumentParser):
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
   add_termination_criteria_arguments(parser)
+  add_mp_group(parser)
   return kld_selection_ns
 
 
@@ -228,7 +228,8 @@ def kld_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executio
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
-  error, changed_anything = select_kld(default_params, params, weights_params)
+  error, changed_anything = select_kld(
+    default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
 
   success = error is None
 

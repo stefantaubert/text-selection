@@ -76,6 +76,7 @@ testpaths = [
   "src/text_selection_core_tests",
   "src/text_selection_cli_tests"
 ]
+console_output_style = "count"
 
 [tool.autopep8]
 indent-size = 2

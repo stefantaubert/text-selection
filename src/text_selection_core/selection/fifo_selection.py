@@ -2,6 +2,7 @@ from logging import Logger, getLogger
 from typing import Literal, Optional
 
 from ordered_set import OrderedSet
+from tqdm import tqdm
 
 from text_selection_core.algorithms.fifo import (get_fifo_original_positions_iterator,
                                                  get_fifo_subset_iterator)
@@ -54,7 +55,12 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
   weights_iterator = WeightsIterator(
     iterator, weight_params.weights, weight_params.target, initial_weights)
 
-  result: Subset = OrderedSet(weights_iterator)
+  result: Subset = OrderedSet()
+  with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
+    for line_nr in weights_iterator:
+      result.add(line_nr)
+      logger.debug(f"Selected L{line_nr+1}.")
+      pbar.update(weights_iterator.tqdm_update)
 
   if len(result) > 0:
     logger = getLogger(__name__)

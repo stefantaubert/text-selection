@@ -10,7 +10,7 @@ import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
-from text_selection_core.helper import get_chunks, get_dtype_from_count, split_adv, xtqdm
+from text_selection_core.helper import get_chunks, get_int_dtype_from_n, split_adv, xtqdm
 from text_selection_core.types import Lines, Subset
 
 SymbolCounts = np.ndarray
@@ -134,7 +134,7 @@ def get_array(lines: Lines, subset: Subset, ssep: str, ignore: Set[str]) -> Tupl
   symbols = OrderedSet(set(chain(*counters)))
   max_count = max(max(counter.values()) for counter in counters)
 
-  dtype = get_dtype_from_count(max_count)
+  dtype = get_int_dtype_from_n(max_count)
   # logger.debug(f"Chosen dtype \"{dtype}\" for numpy because maximum count is {max_count}.")
 
   # symbols.difference_update(ignore)

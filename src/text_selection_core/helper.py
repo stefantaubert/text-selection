@@ -35,12 +35,25 @@ dtype_order_uint = [
   # np.uint256,
 ]
 
+dtype_order_float = [
+  np.float16,
+  np.float32,
+  np.float64,
+]
 
-def get_dtype_from_count(count: int) -> np.dtype:
+
+def get_int_dtype_from_n(n: int) -> np.dtype:
   for dtype in dtype_order_uint:
-    if count < np.iinfo(dtype).max:
+    if n < np.iinfo(dtype).max:
       return dtype
-  raise ValueError("Parameter 'count' to big for numpy!")
+  raise ValueError("Parameter 'n' to big for numpy!")
+
+
+def get_float_dtype_from_n(n: float) -> np.dtype:
+  for dtype in dtype_order_float:
+    if n < np.finfo(dtype).max:
+      return dtype
+  raise ValueError("Parameter 'n' to big for numpy!")
 
 
 def get_target_weights_from_percent(from_subset: Subset, to_subset: Subset, weights: DataWeights, target: Percent, target_incl_selection: bool) -> Weight:

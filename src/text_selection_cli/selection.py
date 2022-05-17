@@ -75,7 +75,7 @@ def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
-  error, changed_anything = select_fifo(default_params, weights_params, ns.mode, flogger)
+  error, changed_anything = select_fifo(default_params, weights_params, ns.mode, logger)
 
   success = error is None
 

@@ -7,7 +7,7 @@ from text_selection_cli.io_handling import (try_load_data_weights, try_load_data
                                             try_save_data_weights)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
-                                                     get_word_count_weights)
+                                                     get_count_weights)
 
 
 def get_uniform_weights_creation_parser(parser: ArgumentParser):
@@ -46,7 +46,7 @@ def create_word_count_weights_ns(ns: Namespace, logger: Logger, flogger: Logger)
     return False, False
 
   logger.info("Calculating weights...")
-  weights = get_word_count_weights(lines, ns.sep, logger)
+  weights = get_count_weights(lines, ns.sep, logger)
 
   success = try_save_data_weights(ns.output, weights, logger)
 
@@ -69,7 +69,7 @@ def create_weights_division_ns(ns: Namespace, logger: Logger, flogger: Logger) -
     return False, False
 
   logger.info("Dividing weights...")
-  divide_weights_inplace(weights, ns.divisor)
+  divide_weights_inplace(weights, ns.divisor, logger)
 
   success = try_save_data_weights(ns.weights, weights, logger)
 

@@ -3,7 +3,7 @@ from logging import Logger
 import numpy as np
 from tqdm import tqdm
 
-from text_selection_core.helper import get_dtype_from_count
+from text_selection_core.helper import get_float_dtype_from_n, get_int_dtype_from_n
 from text_selection_core.types import DataWeights, Lines
 
 
@@ -13,7 +13,7 @@ def get_uniform_weights(line_nrs: range) -> DataWeights:
   return result
 
 
-def get_word_count_weights(lines: Lines, sep: str, logger: Logger) -> DataWeights:
+def get_count_weights(lines: Lines, sep: str, logger: Logger) -> DataWeights:
   if sep == "":
     words_counts = (len(line) for line in lines)
   else:
@@ -24,14 +24,28 @@ def get_word_count_weights(lines: Lines, sep: str, logger: Logger) -> DataWeight
 
   result = list(tqdm(words_counts, desc="Getting counts", unit=" line(s)", total=len(lines)))
   max_count = max(result)
-  dtype = get_dtype_from_count(max_count)
+  dtype = get_int_dtype_from_n(max_count)
   logger.debug(f"Chosen dtype \"{dtype}\" for numpy because maximum count is {max_count}.")
   result = np.array(result, dtype=dtype)
+  logger.debug(f"Min: {np.min(result, axis=0)}")
+  logger.debug(f"Mean: {np.mean(result, axis=0)}")
+  logger.debug(f"Median: {np.median(result, axis=0)}")
+  logger.debug(f"Max: {np.max(result, axis=0)}")
+  logger.debug(f"dtype: {result.dtype.name}")
   return result
 
 
-def divide_weights_inplace(weights: DataWeights, divide_by: float) -> None:
+def divide_weights_inplace(weights: DataWeights, divide_by: float, logger: Logger) -> None:
   assert divide_by > 0
+  max_weight = np.max(weights, axis=0)
+  dtype = get_float_dtype_from_n(max_weight)
+  logger.debug(f"Chosen dtype \"{dtype}\" for numpy because maximum count is {max_weight}.")
+  weights.dtype = dtype
   weights /= divide_by
+  logger.debug(f"Min: {np.min(weights, axis=0)}")
+  logger.debug(f"Mean: {np.mean(weights, axis=0)}")
+  logger.debug(f"Median: {np.median(weights, axis=0)}")
+  logger.debug(f"Max: {np.max(weights, axis=0)}")
+  logger.debug(f"dtype: {weights.dtype.name}")
   # for data_id in weights:
   #   weights[data_id] /= divide_by

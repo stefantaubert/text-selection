@@ -32,6 +32,18 @@ class GreedyIterator(Iterator[int]):
     result = np.all(self.__covered_array == 0, axis=0)
     return result
 
+  @property
+  def currently_uncovered(self) -> np.ndarray:
+    """returns indices of uncovered columns in the current epoch"""
+    result = np.flatnonzero(self.__covered_array == 0)
+    return result
+
+  @property
+  def currently_covered(self) -> np.ndarray:
+    """returns indices of covered columns in the current epoch"""
+    result = np.flatnonzero(self.__covered_array)
+    return result
+
   def __next__(self) -> int:
     if len(self.__available_data_keys_ordered) == 0:
       raise StopIteration()
@@ -46,7 +58,7 @@ class GreedyIterator(Iterator[int]):
 
     if len(potential_keys) > 1:
       logger = getLogger(__name__)
-      logger.info(f"Found {len(potential_keys)} candidates for the current iteration.")
+      logger.debug(f"Found {len(potential_keys)} candidates for the current iteration.")
 
     selected_key = self.__key_selector.select_key(potential_keys)
     assert 0 <= selected_key < len(self.__data)

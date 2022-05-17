@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from logging import Logger, getLogger
-from typing import Optional
+from typing import Optional, Set
 
 import numpy as np
 from ordered_set import OrderedSet
+from tqdm import tqdm
 
 from text_selection.common.mapping_iterator import map_indices
 from text_selection.kld.custom_kld_iterator import CustomKldIterator
@@ -27,7 +28,7 @@ class KldSelectionParameters():
   id_selection: SelectionMode
 
 
-def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionParameters, weight_params: WeightSelectionParameters, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
+def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionParameters, weight_params: WeightSelectionParameters, ignore: Set[str], chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
@@ -55,7 +56,7 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
     calc_line_nrs.update(to_line_nrs)
 
   data, symbols = get_array_mp(params.lines, calc_line_nrs,
-                               params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
+                               params.ssep, ignore, logger, chunksize, n_jobs, maxtasksperchild)
 
   if params.consider_to_subset:
     # if error := NGramsNotExistError.validate(params.lines, from_ids):
@@ -90,19 +91,28 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
   weights_iterator = WeightsIterator(
     mapping_iterator, weight_params.weights, weight_params.target, initial_weights)
 
-  result: Subset = OrderedSet(weights_iterator)
+  result: Subset = OrderedSet()
+  with tqdm(desc="KLD iterations", unit="it") as greedy_pbar:
+    with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
+      for line_nr in weights_iterator:
+        result.add(line_nr)
+        pbar.update(weights_iterator.tqdm_update)
+        greedy_pbar.update()
+
   changed_anything = False
 
   if not weights_iterator.was_enough_data_available:
-    warning = f"Not enough data was available! Stopped with a KLD of {kld_iterator.current_kld}."
+    warning = f"Not enough data was available! Stopped with a Kullback-Leibler distance of {kld_iterator.current_kld}."
     logger.warning(warning)
+  else:
+    logger.info(f"Final Kullback-Leibler distance: {kld_iterator.previous_kld}")
 
   if len(result) > 0:
     logger = getLogger(__name__)
     logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     for line_nr in result:
-      logger.debug(f"Selected L{line_nr}: \"{params.lines[line_nr]}\".")
+      logger.debug(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
     changed_anything = True
   else:
     logger.info("Didn't selected anything!")

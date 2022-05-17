@@ -5,12 +5,12 @@ from logging import Logger
 from ordered_set import OrderedSet
 
 from text_selection.selection import SelectionMode
-from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_file,
-                                                parse_non_empty_or_whitespace,
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, ConvertToSetAction,
+                                                parse_existing_file, parse_non_empty_or_whitespace,
                                                 parse_non_negative_float, parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_file_arguments,
-                                             add_from_and_to_subsets_arguments,
-                                             add_mp_group, add_to_subset_argument)
+                                             add_from_and_to_subsets_arguments, add_mp_group,
+                                             add_to_subset_argument)
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_dataset)
@@ -110,6 +110,7 @@ def get_greedy_selection_parser(parser: ArgumentParser):
   add_file_arguments(parser, True)
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
+  add_ignore_argument(parser)
   add_termination_criteria_arguments(parser)
   add_mp_group(parser)
   return greedy_selection_ns
@@ -134,7 +135,7 @@ def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
   error, changed_anything = select_greedy(
-    default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
+    default_params, params, weights_params, ns.ignore, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
 
   success = error is None
 
@@ -150,6 +151,11 @@ def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
   return True, changed_anything
 
 
+def add_ignore_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("--ignore", type=str, metavar="SYMBOL", nargs="*",
+                      help="ignore these symbols", default=set(), action=ConvertToSetAction)
+
+
 def get_greedy_selection_epoch_parser(parser: ArgumentParser):
   parser.description = "Select lines by greedy principle."
   add_dataset_argument(parser)
@@ -157,6 +163,7 @@ def get_greedy_selection_epoch_parser(parser: ArgumentParser):
   add_file_arguments(parser, True)
   parser.add_argument("epochs", type=parse_positive_integer,
                       metavar="N-EPOCHS", help="number of epochs")
+  add_ignore_argument(parser)
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
   add_mp_group(parser)
@@ -182,7 +189,7 @@ def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) ->
 
   logger.info("Selecting...")
   error, changed_anything = select_greedy_epochs(
-    default_params, params, ns.epochs, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
+    default_params, params, ns.epochs, ns.ignore, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
 
   success = error is None
 
@@ -205,6 +212,7 @@ def get_kld_selection_parser(parser: ArgumentParser):
   add_file_arguments(parser, True)
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
+  add_ignore_argument(parser)
   add_termination_criteria_arguments(parser)
   add_mp_group(parser)
   return kld_selection_ns
@@ -229,7 +237,7 @@ def kld_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executio
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
   error, changed_anything = select_kld(
-    default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
+    default_params, params, weights_params, ns.ignore, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
 
   success = error is None
 

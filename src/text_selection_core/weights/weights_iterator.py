@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Iterator
 
 from text_selection_core.types import DataWeights, LineNr, Weight
@@ -6,7 +7,6 @@ from text_selection_core.types import DataWeights, LineNr, Weight
 class WeightsIterator(Iterator[LineNr]):
   def __init__(self, iterator: Iterator[LineNr], weights: DataWeights, target: Weight, initial_weight: Weight) -> None:
     assert initial_weight >= 0
-
     super().__init__()
     self.__iterator = iterator
     self.__weights = weights
@@ -20,6 +20,14 @@ class WeightsIterator(Iterator[LineNr]):
     return self.__update_progress
 
   @property
+  def target_weight(self) -> bool:
+    return self.__target
+
+  @property
+  def current_weight(self) -> bool:
+    return self.__current_total
+
+  @property
   def was_enough_data_available(self) -> bool:
     return self.__enough_data_was_available
 
@@ -27,21 +35,30 @@ class WeightsIterator(Iterator[LineNr]):
     return self
 
   def __next__(self) -> int:
-    if self.__current_total >= self.__target:
+    logger = getLogger(__name__)
+    if self.__current_total > self.__target:
+      logger.debug("Target is overreached. Stopped.")
+      raise StopIteration()
+
+    if self.__current_total == self.__target:
+      logger.debug("Target is reached. Stopped.")
       raise StopIteration()
 
     try:
       selected_line_nr = next(self.__iterator)
     except StopIteration:
       self.__enough_data_was_available = False
+      logger.debug("Not enough data was available; target was not reached. Stopped.")
       raise StopIteration()
 
     assert 0 <= selected_line_nr < len(self.__weights)
-    selected_until_value = self.__weights[selected_line_nr]
-    new_total = self.__current_total + selected_until_value
+    selected_weight = self.__weights[selected_line_nr]
+    logger.debug(f"Selected weight: {selected_weight}")
+    new_total = self.__current_total + selected_weight
     if new_total <= self.__target:
       self.__current_total = new_total
-      self.__update_progress = selected_until_value
+      self.__update_progress = selected_weight
       return selected_line_nr
-      
+
+    logger.debug(f"Weight exceeds target ({self.__target}). Stopped.")
     raise StopIteration()

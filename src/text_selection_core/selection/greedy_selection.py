@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from logging import Logger
-from typing import Optional
+from logging import Logger, getLogger
+from typing import Optional, Set
 
 import numpy as np
 from ordered_set import OrderedSet
+from tqdm import tqdm
 
 from text_selection.common.mapping_iterator import map_indices
 from text_selection.greedy.greedy_epoch_iterator import EpochProxyIterator
@@ -27,7 +28,11 @@ class GreedySelectionParameters():
   id_selection: SelectionMode
 
 
-def select_greedy(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, weight_params: WeightSelectionParameters, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
+def select_greedy(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, weight_params: WeightSelectionParameters, ignore: Set[str], chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
+  greedy_logger = getLogger("text_selection.greedy.greedy_iterator")
+  greedy_logger.parent = logger
+  del greedy_logger
+
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
@@ -54,7 +59,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
     calc_line_nrs.update(to_line_nrs)
 
   data, symbols = get_array_mp(params.lines, calc_line_nrs,
-                               params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
+                               params.ssep, ignore, logger, chunksize, n_jobs, maxtasksperchild)
 
   if params.consider_to_subset:
     # if error := NGramsNotExistError.validate(params.lines, from_ids):
@@ -82,12 +87,22 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
     weight_params.target = get_target_weights_from_percent(
         from_line_nrs, to_line_nrs, weight_params.weights, weight_params.target, weight_params.target_incl_selection)
 
+  logger.debug(f"Weight parameters {str(weight_params)}")
   mapping_iterator = map_indices(greedy_iterator, from_ids_mapping)
   weights_iterator = WeightsIterator(
     mapping_iterator, weight_params.weights, weight_params.target, initial_weights)
 
-  result: Subset = OrderedSet(weights_iterator)
-  changed_anything = False
+  result: Subset = OrderedSet()
+  with tqdm(desc="Greedy iterations", unit="it") as greedy_pbar:
+    with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
+      for line_nr in weights_iterator:
+        result.add(line_nr)
+        logger.debug(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
+        uncovered_symbols = sorted(symbols[index] for index in greedy_iterator.currently_uncovered)
+        logger.debug(
+          f"Currently uncovered symbols: {' '.join(uncovered_symbols)} (#{len(uncovered_symbols)})")
+        pbar.update(weights_iterator.tqdm_update)
+        greedy_pbar.update()
 
   if not weights_iterator.was_enough_data_available:
     warning = f"Not enough data was available! Stopped at epoch {greedy_iterator.current_epoch + 1}"
@@ -97,11 +112,10 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
       warning += " (interrupted)."
     logger.warning(warning)
 
+  changed_anything = False
   if len(result) > 0:
     logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
-    for line_nr in result:
-      logger.debug(f"Selected L{line_nr}: \"{params.lines[line_nr]}\".")
     changed_anything = True
   else:
     logger.info("Didn't selected anything!")
@@ -109,7 +123,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
   return None, changed_anything
 
 
-def select_greedy_epochs(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, epochs: int, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
+def select_greedy_epochs(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, epochs: int, ignore: Set[str], chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
   assert epochs > 0
 
   if error := validate_selection_default_parameters(default_params):
@@ -136,7 +150,7 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
     calc_line_nrs.update(to_line_nrs)
 
   data, symbols = get_array_mp(params.lines, calc_line_nrs,
-                               params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
+                               params.ssep, ignore, logger, chunksize, n_jobs, maxtasksperchild)
 
   if params.consider_to_subset:
     # if error := NGramsNotExistError.validate(params.lines, from_ids):
@@ -157,12 +171,22 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
     key_selector=selector,
   )
 
-  weights_iterator = EpochProxyIterator(greedy_iterator, epochs)
-  mapping_iterator = map_indices(weights_iterator, from_ids_mapping)
+  epoch_iter = EpochProxyIterator(greedy_iterator, epochs)
+  mapping_iter = map_indices(epoch_iter, from_ids_mapping)
 
-  result: Subset = OrderedSet(mapping_iterator)
+  result: Subset = OrderedSet()
+  with tqdm(desc="Greedy iterations", unit="it") as greedy_pbar:
+    with tqdm(desc="Processing epochs", unit="ep", total=epoch_iter.target_epochs, initial=greedy_iterator.current_epoch) as pbar:
+      for line_nr in mapping_iter:
+        result.add(line_nr)
+        logger.debug(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
+        uncovered_symbols = sorted(symbols[index] for index in greedy_iterator.currently_uncovered)
+        logger.debug(
+          f"Currently uncovered symbols: {' '.join(uncovered_symbols)} (#{len(uncovered_symbols)})")
+        pbar.update(epoch_iter.tqdm_update)
+        greedy_pbar.update()
 
-  if not weights_iterator.was_enough_data_available:
+  if not epoch_iter.was_enough_data_available:
     warning = f"Not enough data was available! Stopped at epoch {greedy_iterator.current_epoch + 1}"
     if greedy_iterator.is_fresh_epoch:
       warning += " (not started yet)."
@@ -171,12 +195,9 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
     logger.warning(warning)
 
   changed_anything = False
-
   if len(result) > 0:
     logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
-    for line_nr in result:
-      logger.debug(f"Selected L{line_nr}: \"{params.lines[line_nr]}\".")
     changed_anything = True
   else:
     logger.info("Didn't selected anything!")

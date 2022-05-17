@@ -1,7 +1,7 @@
 from collections import Counter, OrderedDict
 from functools import partial
 from itertools import chain
-from logging import Logger, getLogger
+from logging import Logger
 from multiprocessing import Pool
 from time import perf_counter
 from typing import Dict, List, Optional, Set, Tuple
@@ -10,54 +10,43 @@ import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
-from text_selection_core.helper import get_dtype_from_count, split_adv
+from text_selection_core.helper import get_chunks, get_dtype_from_count, split_adv, xtqdm
 from text_selection_core.types import Lines, Subset
 
-SymbolIndex = int
 SymbolCounts = np.ndarray
+ColumnSymbols = OrderedSet[str]
 
 
-def xtqdm(x, desc=None, unit=None, total=None):
-  yield from x
+# def get_symbols_from_lines(lines: Lines, subset: Subset, ssep: str) -> Set[str]:
+#   symbols = {
+#     symbol
+#     for line_nr in tqdm(subset, desc="Getting unique symbols", unit=" line(s)")
+#     for symbol in split_adv(lines[line_nr], ssep)
+#   }
+#   return symbols
 
 
-def get_symbols_from_lines(lines: Lines, subset: Subset, ssep: str) -> Set[str]:
-  symbols = {
-    symbol
-    for line_nr in tqdm(subset, desc="Getting unique symbols", unit=" line(s)")
-    for symbol in split_adv(lines[line_nr], ssep)
-  }
-  return symbols
+# def get_array(lines: Lines, subset: Subset, ssep: str, logger: Logger):
+#   start = perf_counter()
+#   # 1mio -> 8.4
+#   # 10mio -> 84.94535316200927s
+#   # get_array_v1(lines, subset, ssep, logger)
+#   # 1mio -> 10.079393691034056s
+#   # 10mio -> 92.748770733946s
+#   # get_array_v2(lines, subset, ssep, logger)  # 10.079393691034056s
+#   result = get_array_mp(lines, subset, ssep, logger, 1_000_000, 16, None)
+#   duration = perf_counter() - start
+#   logger = getLogger()
+#   logger.info(f"Duration: {duration}s")
+#   return result
 
 
-def get_array(lines: Lines, subset: Subset, ssep: str, logger: Logger):
-  start = perf_counter()
-  # 1mio -> 8.4
-  # 10mio -> 84.94535316200927s
-  # get_array_v1(lines, subset, ssep, logger)
-  # 1mio -> 10.079393691034056s
-  # 10mio -> 92.748770733946s
-  # get_array_v2(lines, subset, ssep, logger)  # 10.079393691034056s
-  result = get_array_mp(lines, subset, ssep, logger, 1_000_000, 16, None)
-  duration = perf_counter() - start
-  logger = getLogger()
-  logger.info(f"Duration: {duration}s")
-  return result
-
-
-def get_chunks(keys: List[str], chunk_size: Optional[int]) -> List[List[str]]:
-  if chunk_size is None:
-    chunk_size = len(keys)
-  chunked_list = list(keys[i: i + chunk_size] for i in range(0, len(keys), chunk_size))
-  return chunked_list
-
-
-def get_array_mp(lines: Lines, subset: Subset, ssep: str, logger: Logger, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int]):
+def get_array_mp(lines: Lines, subset: Subset, ssep: str, ignore: Set[str], logger: Logger, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int]) -> Tuple[SymbolCounts, ColumnSymbols]:
   subset_chunks = get_chunks(subset, chunksize)
   method = partial(
-    get_array_v1_mp,
+    process_get_array,
     ssep=ssep,
-    logger=logger,
+    ignore=ignore,
   )
 
   logger.debug(f"# Lines: {len(lines)}")
@@ -94,38 +83,27 @@ def get_array_mp(lines: Lines, subset: Subset, ssep: str, logger: Logger, chunks
   return array, symbols
 
 
-def init_mp(lines: Lines):
+def init_mp(lines: Lines) -> None:
   global process_lines
   process_lines = lines
 
 
-def get_array_v1_mp(i_subset: Tuple[int, Subset], ssep: str, logger: Logger):
+def process_get_array(i_subset: Tuple[int, Subset], ssep: str, ignore: Set[str]) -> Tuple[int, Tuple[SymbolCounts, ColumnSymbols]]:
   global process_lines
   i, subset = i_subset
-  result = get_array_v1(process_lines, subset, ssep, logger)
+  result = get_array(process_lines, subset, ssep, ignore)
   return i, result
 
 
-def merge_arrays(arrays: List[np.ndarray]) -> np.ndarray:
-  result = None
-  for array in arrays:
-    # TODO extract this to upper function and replace results in list instead
-    if result is None:
-      result = array
-    else:
-      result = np.append(result, array, axis=0)
-  return result
-
-
-def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tuple[List[np.ndarray], OrderedSet[str]]:
+def unify_arrays(arrays_symbols: List[Tuple[SymbolCounts, ColumnSymbols]]) -> Tuple[List[SymbolCounts], ColumnSymbols]:
   all_symbols = OrderedSet({
     symbol
     for _, symbols in arrays_symbols
     for symbol in symbols
   })
 
-  array: np.ndarray
-  symbols: OrderedSet[str]
+  array: SymbolCounts
+  symbols: ColumnSymbols
   for i, (array, symbols) in enumerate(tqdm(arrays_symbols, desc="Unifying chunks")):
     missing_symbols = all_symbols - symbols
     if len(missing_symbols) > 0:
@@ -145,102 +123,54 @@ def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tu
   return arrays_symbols, all_symbols
 
 
-def merge_arrays_v1(array_keys: List[Tuple[np.ndarray, OrderedSet[str]]]):
-  result_data: np.ndarray = None
-  result_symbols: Dict = None
-  for current_array, current_symbols in tqdm(array_keys, desc="Merging results"):
-    if result_data is None:
-      result_data = current_array
-      result_symbols = OrderedDict(
-        sorted(current_symbols.items(), key=lambda kv: kv[1], reverse=False))
-      assert list(result_symbols.values()) == list(range(len(current_symbols)))
-    else:
-      current_symbols = OrderedDict(
-        sorted(current_symbols.items(), key=lambda kv: kv[1], reverse=False))
-      new_symbols = current_symbols.keys() - result_symbols.keys()
-      if len(new_symbols) > 0:
-        for new_symbol in new_symbols:
-          result_symbols[new_symbol] = len(result_symbols)
-
-      missing_symbols = result_symbols.keys() - current_symbols.keys()
-      if len(missing_symbols) > 0:
-        for missing_symbol in missing_symbols:
-          current_symbols[missing_symbol] = len(current_symbols)
-      assert len(current_symbols) == len(result_symbols)
-      assert list(current_symbols.values()) == list(result_symbols.values())
-      new_col = np.zeros((len(result_data), len(new_symbols)), dtype=np.uint16)
-      result_data = np.append(result_data, new_col, axis=1)
-      mapping = [
-        result_symbols[symbol]
-        for symbol, index in current_symbols.items()
-      ]
-
-      current_array = current_array[:, mapping]
-      result_data = np.append(result_data, current_array, axis=0)
-
-  return result_data, result_symbols
-
-
-
-def get_array_v1(lines: Lines, subset: Subset, ssep: str, logger: Logger):
+def get_array(lines: Lines, subset: Subset, ssep: str, ignore: Set[str]) -> Tuple[SymbolCounts, ColumnSymbols]:
   counters: List[Counter] = []
   for line_nr in xtqdm(subset, desc="Calculating counts", unit=" line(s)"):
     line_counts = Counter(split_adv(lines[line_nr], ssep))
+    for k in ignore.intersection(line_counts.keys()):
+      line_counts.pop(k)
     counters.append(line_counts)
 
-  # logger.info("Getting symbols")
   symbols = OrderedSet(set(chain(*counters)))
   max_count = max(max(counter.values()) for counter in counters)
+
   dtype = get_dtype_from_count(max_count)
-  logger.debug(f"Chosen dtype \"{dtype}\" for numpy because maximum count is {max_count}.")
-  # logger.info("Done.")
+  # logger.debug(f"Chosen dtype \"{dtype}\" for numpy because maximum count is {max_count}.")
 
-  if "" in symbols:
-    symbols.remove("")
-
+  # symbols.difference_update(ignore)
   symbols_indices = dict((s, i) for i, s in enumerate(symbols))
 
   result = np.zeros((len(counters), len(symbols)), dtype=dtype)
 
-  for line_index, c in enumerate(xtqdm(counters)):
-    for symbol, count in c.items():
-      if symbol in symbols_indices:
-        symbol_index = symbols_indices[symbol]
-        result[line_index, symbol_index] = count
-
+  for line_index, counter in enumerate(xtqdm(counters)):
+    for symbol, count in counter.items():
+      # if symbol in symbols_indices:
+      symbol_index = symbols_indices[symbol]
+      result[line_index, symbol_index] = count
+  del counters
+  del symbols_indices
+  del max_count
   return result, symbols
 
-  # counter += line_counts
-  x = chain(*counters)
-  counter = Counter(x)
-  symbols = get_symbols_from_lines(lines, subset, ssep)
-  if "" in symbols:
-    symbols.remove("")
+# def get_array_v2(lines: Lines, subset: Subset, ssep: str, logger: Logger):
+#   result = None
+#   symbols_indicies = {}
 
-  numerated_symbols = dict((k, i) for i, k in enumerate(symbols))
+#   for line_nr in tqdm(subset, desc="Calculating counts", unit=" line(s)"):
+#     line_counts = Counter(lines[line_nr].split(ssep))
+#     if result is None:
+#       result = np.zeros((len(subset), len(line_counts)), dtype=np.uint16)
+#       symbols_indicies = dict((s, i) for i, s in enumerate(line_counts))
+#     else:
+#       new_symbols = line_counts.keys() - symbols_indicies.keys()
+#       # new_symbols = set(line_counts.keys()).difference(symbols_indicies.keys())
+#       if len(new_symbols) > 0:
+#         new_col = np.zeros((len(subset), len(new_symbols)), dtype=np.uint16)
+#         result = np.append(result, new_col, axis=1)
+#         for new_symbol in new_symbols:
+#           symbols_indicies[new_symbol] = len(symbols_indicies)
 
-  # logger.info(len(numerated_symbols))
-
-
-def get_array_v2(lines: Lines, subset: Subset, ssep: str, logger: Logger):
-  result = None
-  symbols_indicies = {}
-
-  for line_nr in tqdm(subset, desc="Calculating counts", unit=" line(s)"):
-    line_counts = Counter(lines[line_nr].split(ssep))
-    if result is None:
-      result = np.zeros((len(subset), len(line_counts)), dtype=np.uint16)
-      symbols_indicies = dict((s, i) for i, s in enumerate(line_counts))
-    else:
-      new_symbols = line_counts.keys() - symbols_indicies.keys()
-      # new_symbols = set(line_counts.keys()).difference(symbols_indicies.keys())
-      if len(new_symbols) > 0:
-        new_col = np.zeros((len(subset), len(new_symbols)), dtype=np.uint16)
-        result = np.append(result, new_col, axis=1)
-        for new_symbol in new_symbols:
-          symbols_indicies[new_symbol] = len(symbols_indicies)
-
-    for symbol, count in line_counts.items():
-      symbol_index = symbols_indicies[symbol]
-      result[line_nr, symbol_index] = count
-  return result, symbols_indicies
+#     for symbol, count in line_counts.items():
+#       symbol_index = symbols_indicies[symbol]
+#       result[line_nr, symbol_index] = count
+#   return result, symbols_indicies

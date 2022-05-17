@@ -41,7 +41,8 @@ class StoreRecordsHandler():
 class ConsoleFormatter(logging.Formatter):
   """Logging colored formatter, adapted from https://stackoverflow.com/a/56944256/3638629"""
 
-  grey = '\x1b[38;21m'
+  purple = '\x1b[34m'
+  blue = '\x1b[36m'
   # blue = '\x1b[38;5;39m'
   yellow = '\x1b[38;5;226m'
   red = '\x1b[1;49;31m'
@@ -55,8 +56,8 @@ class ConsoleFormatter(logging.Formatter):
     fmt_info = '%(message)s'
 
     self.fmts = {
-        logging.NOTSET: self.grey + fmt + self.reset,
-        logging.DEBUG: self.grey + fmt + self.reset,
+        logging.NOTSET: self.purple + fmt + self.reset,
+        logging.DEBUG: self.blue + fmt + self.reset,
         logging.INFO: fmt_info,
         logging.WARNING: self.yellow + fmt + self.reset,
         logging.ERROR: self.red + fmt + self.reset,

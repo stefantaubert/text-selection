@@ -17,6 +17,13 @@ class ConvertToOrderedSetAction(argparse._StoreAction):
     super().__call__(parser, namespace, values, option_string)
 
 
+class ConvertToSetAction(argparse._StoreAction):
+  def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Optional[List], option_string: Optional[str] = None):
+    if values is not None:
+      values = set(values)
+    super().__call__(parser, namespace, values, option_string)
+
+
 def parse_codec(value: str) -> str:
   value = parse_required(value)
   try:

@@ -12,11 +12,12 @@ def test_stress_test():
   #lines = load_small_test_set()
   lines = load_big_test_set()
   select = 10_000_000
+  select = 5_000_000
   lines = lines[:select]  # 21.90235720493365s
   # lines = lines[:select]  # 21.90235720493365s
   #lines = lines[:160_000]
   start = perf_counter()
-  array, symbols = get_array_mp(lines, range(len(lines)), "",
+  array, symbols = get_array_mp(lines, range(len(lines)), "", {"", "a", "b"},
                                 getLogger(), ceil(select / 16), 16, None)
   duration = perf_counter() - start
   main_logger.info(f"Duration: {duration}s")

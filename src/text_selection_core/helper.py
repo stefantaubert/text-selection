@@ -1,9 +1,30 @@
 
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
 from text_selection_core.types import DataWeights, Percent, Subset, Weight
+
+
+def xtqdm(x, desc=None, unit=None, total=None):
+  yield from x
+
+
+# def merge_arrays(arrays: List[np.ndarray]) -> np.ndarray:
+#   result = None
+#   for array in arrays:
+#     if result is None:
+#       result = array
+#     else:
+#       result = np.append(result, array, axis=0)
+#   return result
+
+def get_chunks(keys: List[str], chunk_size: Optional[int]) -> List[List[str]]:
+  if chunk_size is None:
+    chunk_size = len(keys)
+  chunked_list = list(keys[i: i + chunk_size] for i in range(0, len(keys), chunk_size))
+  return chunked_list
+
 
 dtype_order_uint = [
   np.uint8,

@@ -68,7 +68,7 @@ class NGramExtractor2():
   def predict(self, data: Iterable[Symbols], data_len: int) -> np.ndarray:
     assert self.__fitted
 
-    result = np.zeros(shape=(data_len, len(self.__all_ngram_nrs)), dtype=np.uint32)
+    result = np.zeros(shape=(data_len, len(self.__all_ngram_nrs)), dtype=np.uint16)
     if data_len == 0:
       return result
 
@@ -181,7 +181,7 @@ def get_count_array(ngram_nrs: Iterable[NGramNr], target_symbols_ordered: Ordere
   )
   del ngram_nr_counts
 
-  result = np.array(res_tuple, dtype=np.uint32)
+  result = np.array(res_tuple, dtype=np.uint16)
   del res_tuple
 
   return result

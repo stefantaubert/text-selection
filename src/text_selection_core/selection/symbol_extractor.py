@@ -4,8 +4,7 @@ from itertools import chain
 from logging import Logger, getLogger
 from multiprocessing import Pool
 from time import perf_counter
-from typing import Dict, List, Optional
-from typing import Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 from ordered_set import OrderedSet
@@ -83,7 +82,15 @@ def get_array_mp(lines: Lines, subset: Subset, ssep: str, logger: Logger, chunks
   arrays = sorted(arrays.items(), key=lambda kv: kv[0])
   arrays = list(v for k, v in arrays)
   arrays, symbols = unify_arrays(arrays)
-  return arrays, symbols
+  array = arrays.pop(0)
+  with tqdm(total=len(arrays), desc="merging arrays") as pbar:
+    while len(arrays) > 0:
+      current = arrays.pop(0)
+      array = np.append(array, current, axis=0)
+      pbar.update()
+  # array = merge_arrays(arrays)
+
+  return array, symbols
 
 
 def init_mp(lines: Lines):
@@ -98,20 +105,29 @@ def get_array_v1_mp(i_subset: Tuple[int, Subset], ssep: str, logger: Logger):
   return i, result
 
 
-def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tuple[np.ndarray, OrderedSet[str]]:
+def merge_arrays(arrays: List[np.ndarray]) -> np.ndarray:
+  result = None
+  for array in arrays:
+    # TODO extract this to upper function and replace results in list instead
+    if result is None:
+      result = array
+    else:
+      result = np.append(result, array, axis=0)
+  return result
+
+
+def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tuple[List[np.ndarray], OrderedSet[str]]:
   all_symbols = OrderedSet({
     symbol
     for _, symbols in arrays_symbols
     for symbol in symbols
   })
 
-  result = None
   symbols: OrderedSet[str]
-
-  for array, symbols in tqdm(arrays_symbols, desc="Merging results"):
+  for i, (array, symbols) in enumerate(tqdm(arrays_symbols, desc="Merging results")):
     missing_symbols = all_symbols - symbols
     if len(missing_symbols) > 0:
-      new_cols = np.zeros((len(array), len(missing_symbols)), dtype=np.uint32)
+      new_cols = np.zeros((len(array), len(missing_symbols)), dtype=np.uint16)
       array = np.append(array, new_cols, axis=1)
       symbols.update(missing_symbols)
 
@@ -122,12 +138,9 @@ def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tu
     ]
 
     array = array[:, symbols_mapping]
-    # TODO extract this to upper function and replace results in list instead
-    if result is None:
-      result = array
-    else:
-      result = np.append(result, array, axis=0)
-  return result, all_symbols
+    arrays_symbols[i] = array
+
+  return arrays_symbols, all_symbols
 
 
 def merge_arrays_v1(array_keys: List[Tuple[np.ndarray, OrderedSet[str]]]):
@@ -153,7 +166,7 @@ def merge_arrays_v1(array_keys: List[Tuple[np.ndarray, OrderedSet[str]]]):
           current_symbols[missing_symbol] = len(current_symbols)
       assert len(current_symbols) == len(result_symbols)
       assert list(current_symbols.values()) == list(result_symbols.values())
-      new_col = np.zeros((len(result_data), len(new_symbols)), dtype=np.uint32)
+      new_col = np.zeros((len(result_data), len(new_symbols)), dtype=np.uint16)
       result_data = np.append(result_data, new_col, axis=1)
       mapping = [
         result_symbols[symbol]
@@ -181,7 +194,7 @@ def get_array_v1(lines: Lines, subset: Subset, ssep: str, logger: Logger):
 
   symbols_indices = dict((s, i) for i, s in enumerate(symbols))
 
-  result = np.zeros((len(counters), len(symbols)), dtype=np.uint32)
+  result = np.zeros((len(counters), len(symbols)), dtype=np.uint16)
 
   for line_index, c in enumerate(xtqdm(counters)):
     for symbol, count in c.items():
@@ -210,13 +223,13 @@ def get_array_v2(lines: Lines, subset: Subset, ssep: str, logger: Logger):
   for line_nr in tqdm(subset, desc="Calculating counts", unit=" line(s)"):
     line_counts = Counter(lines[line_nr].split(ssep))
     if result is None:
-      result = np.zeros((len(subset), len(line_counts)), dtype=np.uint32)
+      result = np.zeros((len(subset), len(line_counts)), dtype=np.uint16)
       symbols_indicies = dict((s, i) for i, s in enumerate(line_counts))
     else:
       new_symbols = line_counts.keys() - symbols_indicies.keys()
       # new_symbols = set(line_counts.keys()).difference(symbols_indicies.keys())
       if len(new_symbols) > 0:
-        new_col = np.zeros((len(subset), len(new_symbols)), dtype=np.uint32)
+        new_col = np.zeros((len(subset), len(new_symbols)), dtype=np.uint16)
         result = np.append(result, new_col, axis=1)
         for new_symbol in new_symbols:
           symbols_indicies[new_symbol] = len(symbols_indicies)

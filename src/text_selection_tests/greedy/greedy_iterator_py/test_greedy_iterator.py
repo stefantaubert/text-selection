@@ -32,7 +32,7 @@ def test_8x3_all_combinations__return_correct_order():
 
 
 def test_4x3_all_ones__keys_0_1_3_2__returns_0_1_3_2():
-  data = np.ones(shape=(4, 3), dtype=np.uint32)
+  data = np.ones(shape=(4, 3), dtype=np.uint16)
   data_indices = OrderedSet((0, 1, 3, 2))
   preselection = np.zeros(data.shape[1], data.dtype)
   iterator = GreedyIterator(

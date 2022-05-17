@@ -76,7 +76,7 @@ class NGramExtractor():
     keys_are_subset_of_fitted_keys = keys.issubset(self.__consider_keys)
     assert keys_are_subset_of_fitted_keys
 
-    result = np.zeros(shape=(len(keys), len(self.__all_ngram_nrs)), dtype=np.uint32)
+    result = np.zeros(shape=(len(keys), len(self.__all_ngram_nrs)), dtype=np.uint16)
     if len(keys) == 0:
       return result
 
@@ -180,7 +180,7 @@ def get_count_array(ngram_nrs: Iterable[NGramNr], target_symbols_ordered: Ordere
   )
   del ngram_nr_counts
 
-  result = np.array(res_tuple, dtype=np.uint32)
+  result = np.array(res_tuple, dtype=np.uint16)
   del res_tuple
 
   return result

@@ -1,7 +1,8 @@
+import math
 from collections import Counter
 from dataclasses import dataclass
-from logging import getLogger
-from typing import Generator, Iterable, List, Set, Tuple
+from logging import Logger, getLogger
+from typing import Dict, Generator, Iterable, List, Literal, Optional, Set, Tuple
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
@@ -10,8 +11,8 @@ from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import split_adv, xtqdm
-from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_gen,
-                                       move_lines_to_subset)
+from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs,
+                                       get_subsets_line_nrs_gen, move_lines_to_subset)
 
 
 @dataclass()
@@ -19,93 +20,63 @@ class CountFilterParameters():
   lines: Lines
   ssep: str
   from_count_incl: int
-  to_count_excl: int
+  to_count_excl: Optional[int]
+  count_whole: bool
+  mode: Literal["all", "any"]
 
 
-def filter_lines_with_frequencies(default_params: SelectionDefaultParameters, params: CountFilterParameters) -> ExecutionResult:
+def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameters, params: CountFilterParameters, logger: Logger) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
-  counters: List[Counter] = []
-  for line in tqdm(params.lines, desc="Calculating counts", unit=" line(s)"):
-    line_counts = Counter(split_adv(line, params.ssep))
-    counters.append(line_counts)
+  from_line_nrs = get_subsets_line_nrs(default_params.dataset, default_params.from_subset_names)
 
-  select_from = ((line_nr, params.lines[line_nr])
-                 for line_nr in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
-  counter = get_counter(select_from, params.ssep, params.trim_symbols, params.ignore_case)
+  if params.count_whole:
+    line_nrs_to_count = default_params.dataset.get_line_nrs()
+  else:
+    line_nrs_to_count = from_line_nrs
 
-  select_from = ((line_nr, params.lines[line_nr])
-                 for line_nr in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
-  items = get_matching_items(select_from, params.ssep, params.trim_symbols,
-                             params.ignore_case, params.from_count_incl, params.to_count_excl, counter)
-  result: Subset = OrderedSet(items)
+  # units = (
+  #   unit
+  #   for line_nr in line_nrs_to_count
+  #   for unit in split_adv(params.lines[line_nr], params.ssep)
+  # )
+
+  # counter = Counter(tqdm(units, desc="Calculating counts", unit=" unit(s)"))
+
+  counters: Dict[LineNr, Counter] = {}
+  for line_nr in tqdm(line_nrs_to_count, desc="Calculating counts", unit=" line(s)"):
+    line_counts = Counter(split_adv(params.lines[line_nr], params.ssep))
+    counters[line_nr] = line_counts
+
+  total_counter = Counter()
+  for counter in tqdm(counters.values(), desc="Summing counts", unit=" line(s)"):
+    total_counter.update(counter)
+
+  to_count = params.to_count_excl
+  if to_count is None:
+    to_count = math.inf
+
+  result: Subset = OrderedSet()
+  if params.mode == "all":
+    method = all
+  elif params.mode == "any":
+    method = any
+  else:
+    assert False
+
+  for line_nr in tqdm(from_line_nrs, desc="Filtering", unit=" line(s)"):
+    counts = counters[line_nr]
+    word_counts = list(total_counter[unit] for unit in counts.keys())
+    match = method(params.from_count_incl <= count < to_count for count in word_counts)
+    if match:
+      result.add(line_nr)
+
   changed_anything = False
   if len(result) > 0:
-    logger = getLogger(__name__)
-    logger.debug(f"Filtered {len(result)} lines.")
+    logger.info(f"Filtered {len(result)} out of {len(from_line_nrs)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
+    for line_nr in result:
+      logger.debug(f"Filtered L{line_nr+1}: \"{params.lines[line_nr]}\".")
     changed_anything = True
   return None, changed_anything
-
-
-def get_counter(items: Iterable[Tuple[LineNr, str]], word_sep: str, trim_symbols: Set[str], ignore_case: bool) -> Generator[LineNr, None, None]:
-  assert len(word_sep) > 0
-
-  words = (
-      word
-      for _, sentence in items
-      for word in sentence.split(word_sep)
-      if word != ""
-  )
-
-  if len(trim_symbols) > 0:
-    trim_symbols = ''.join(trim_symbols)
-    words = (word.strip(trim_symbols) for word in words)
-
-  if ignore_case:
-    words = (word.lower() for word in words)
-
-  logger = getLogger(__name__)
-  logger.debug("Counting words...")
-  counter = Counter(tqdm(words))
-
-  return counter
-
-
-def get_matching_items(items: Iterable[Tuple[LineNr, str]], word_sep: str, trim_symbols: Set[str], ignore_case: bool, from_count_incl: int, to_count_excl: int, counter: Counter) -> Generator[LineNr, None, None]:
-  assert len(word_sep) > 0
-
-  items = (
-      (data_id, (word for word in sentence.split(word_sep) if word != ""))
-      for data_id, sentence in items
-  )
-
-  if len(trim_symbols) > 0:
-    trim_symbols = ''.join(trim_symbols)
-    items = (
-      (data_id, (word.strip(trim_symbols) for word in words))
-      for data_id, words in items
-    )
-
-  items = (
-    (data_id, (''.join(word) for word in words))
-    for data_id, words in items
-  )
-
-  if ignore_case:
-    items = (
-      (data_id, (word.lower() for word in words))
-      for data_id, words in items
-    )
-
-  items_in_range = (
-    (data_id, all(
-      from_count_incl <= counter[word] < to_count_excl for word in words
-    ))
-    for data_id, words in items
-  )
-
-  for data_id, all_words_in_range in items_in_range:
-    if all_words_in_range:
-      yield data_id

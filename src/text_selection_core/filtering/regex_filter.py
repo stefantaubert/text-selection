@@ -14,8 +14,8 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
-  select_from = ((data_id, lines[data_id])
-                 for data_id in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
+  select_from = ((line_nr, lines[line_nr])
+                 for line_nr in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
   logger.debug(pattern)
   re_pattern = re.compile(pattern)
   items = get_matching_items(select_from, re_pattern)

@@ -13,7 +13,7 @@ from typing import Callable, Dict, Generator, List, Tuple
 from text_selection_cli.argparse_helper import get_optional, parse_path
 from text_selection_cli.datasets import get_init_parser
 from text_selection_cli.export import get_export_txt_parser
-from text_selection_cli.filtering import get_duplicate_selection_parser
+from text_selection_cli.filtering import get_duplicate_selection_parser, get_regex_match_selection_parser
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                       init_and_return_loggers, try_init_file_logger)
@@ -77,7 +77,8 @@ def get_subsets_parsers() -> Parsers:
   yield "select-greedy-epochs", "select entries greedy-style epoch-based", get_greedy_selection_epoch_parser
   yield "select-kld", "select entries kld-style", get_kld_selection_parser
   yield "filter-duplicates", "filter duplicates", get_duplicate_selection_parser
-  yield "sort-fifo", "sort entries FIFO-style", get_fifo_sorting_parser
+  yield "filter-regex", "filter lines via regex", get_regex_match_selection_parser
+  yield "sort-by-line-nr", "sort entries by line number", get_fifo_sorting_parser
   yield "sort-reverse", "reverse entries", get_reverse_sorting_parser
 
 

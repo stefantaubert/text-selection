@@ -65,7 +65,7 @@ def regex_match_selection(ns: Namespace, logger: Logger, flogger: Logger) -> Exe
     return False, False
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  error, changed_anything = filter_regex_pattern(default_params, lines, ns.pattern)
+  error, changed_anything = filter_regex_pattern(default_params, lines, ns.pattern, flogger)
 
   success = error is None
 

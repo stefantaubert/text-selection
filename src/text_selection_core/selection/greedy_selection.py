@@ -28,7 +28,7 @@ class GreedySelectionParameters():
   id_selection: SelectionMode
 
 
-def select_greedy(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, weight_params: WeightSelectionParameters, ignore: Set[str], chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
+def select_greedy(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, weight_params: WeightSelectionParameters, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
   greedy_logger = getLogger("text_selection.greedy.greedy_iterator")
   greedy_logger.parent = logger
   del greedy_logger
@@ -59,7 +59,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
     calc_line_nrs.update(to_line_nrs)
 
   data, symbols = get_array_mp(params.lines, calc_line_nrs,
-                               params.ssep, ignore, logger, chunksize, n_jobs, maxtasksperchild)
+                               params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
 
   if params.consider_to_subset:
     # if error := NGramsNotExistError.validate(params.lines, from_ids):
@@ -123,7 +123,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
   return None, changed_anything
 
 
-def select_greedy_epochs(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, epochs: int, ignore: Set[str], chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
+def select_greedy_epochs(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, epochs: int, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
   assert epochs > 0
 
   if error := validate_selection_default_parameters(default_params):
@@ -150,7 +150,7 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
     calc_line_nrs.update(to_line_nrs)
 
   data, symbols = get_array_mp(params.lines, calc_line_nrs,
-                               params.ssep, ignore, logger, chunksize, n_jobs, maxtasksperchild)
+                               params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
 
   if params.consider_to_subset:
     # if error := NGramsNotExistError.validate(params.lines, from_ids):

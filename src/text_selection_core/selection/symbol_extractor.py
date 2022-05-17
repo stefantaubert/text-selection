@@ -41,12 +41,11 @@ ColumnSymbols = OrderedSet[str]
 #   return result
 
 
-def get_array_mp(lines: Lines, subset: Subset, ssep: str, ignore: Set[str], logger: Logger, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int]) -> Tuple[SymbolCounts, ColumnSymbols]:
+def get_array_mp(lines: Lines, subset: Subset, ssep: str, logger: Logger, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int]) -> Tuple[SymbolCounts, ColumnSymbols]:
   subset_chunks = get_chunks(subset, chunksize)
   method = partial(
     process_get_array,
     ssep=ssep,
-    ignore=ignore,
   )
 
   logger.debug(f"# Lines: {len(lines)}")
@@ -88,10 +87,10 @@ def init_mp(lines: Lines) -> None:
   process_lines = lines
 
 
-def process_get_array(i_subset: Tuple[int, Subset], ssep: str, ignore: Set[str]) -> Tuple[int, Tuple[SymbolCounts, ColumnSymbols]]:
+def process_get_array(i_subset: Tuple[int, Subset], ssep: str) -> Tuple[int, Tuple[SymbolCounts, ColumnSymbols]]:
   global process_lines
   i, subset = i_subset
-  result = get_array(process_lines, subset, ssep, ignore)
+  result = get_array(process_lines, subset, ssep)
   return i, result
 
 
@@ -123,12 +122,10 @@ def unify_arrays(arrays_symbols: List[Tuple[SymbolCounts, ColumnSymbols]]) -> Tu
   return arrays_symbols, all_symbols
 
 
-def get_array(lines: Lines, subset: Subset, ssep: str, ignore: Set[str]) -> Tuple[SymbolCounts, ColumnSymbols]:
+def get_array(lines: Lines, subset: Subset, ssep: str) -> Tuple[SymbolCounts, ColumnSymbols]:
   counters: List[Counter] = []
   for line_nr in xtqdm(subset, desc="Calculating counts", unit=" line(s)"):
     line_counts = Counter(split_adv(lines[line_nr], ssep))
-    for k in ignore.intersection(line_counts.keys()):
-      line_counts.pop(k)
     counters.append(line_counts)
 
   symbols = OrderedSet(set(chain(*counters)))

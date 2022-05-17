@@ -1,7 +1,7 @@
 from collections import Counter
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Generator, Iterable, Set, Tuple
+from typing import Generator, Iterable, List, Set, Tuple
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
@@ -9,31 +9,35 @@ from tqdm import tqdm
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
+from text_selection_core.helper import split_adv, xtqdm
 from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
 
 
 @dataclass()
-class WordsCountFilterParameters():
+class CountFilterParameters():
   lines: Lines
-  word_sep: str
+  ssep: str
   from_count_incl: int
   to_count_excl: int
-  ignore_case: bool
-  trim_symbols: Set[str]
 
 
-def filter_words_with_frequencies(default_params: SelectionDefaultParameters, params: WordsCountFilterParameters) -> ExecutionResult:
+def filter_lines_with_frequencies(default_params: SelectionDefaultParameters, params: CountFilterParameters) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
-  select_from = ((line_nr, params.lines[line_nr])
-                 for line_nr in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
-  counter = get_counter(select_from, params.word_sep, params.trim_symbols, params.ignore_case)
+  counters: List[Counter] = []
+  for line in tqdm(params.lines, desc="Calculating counts", unit=" line(s)"):
+    line_counts = Counter(split_adv(line, params.ssep))
+    counters.append(line_counts)
 
   select_from = ((line_nr, params.lines[line_nr])
                  for line_nr in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
-  items = get_matching_items(select_from, params.word_sep, params.trim_symbols,
+  counter = get_counter(select_from, params.ssep, params.trim_symbols, params.ignore_case)
+
+  select_from = ((line_nr, params.lines[line_nr])
+                 for line_nr in get_subsets_line_nrs_gen(default_params.dataset, default_params. from_subset_names))
+  items = get_matching_items(select_from, params.ssep, params.trim_symbols,
                              params.ignore_case, params.from_count_incl, params.to_count_excl, counter)
   result: Subset = OrderedSet(items)
   changed_anything = False

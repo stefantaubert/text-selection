@@ -28,7 +28,7 @@ class KldSelectionParameters():
   id_selection: SelectionMode
 
 
-def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionParameters, weight_params: WeightSelectionParameters, ignore: Set[str], chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
+def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionParameters, weight_params: WeightSelectionParameters, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
@@ -56,7 +56,7 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
     calc_line_nrs.update(to_line_nrs)
 
   data, symbols = get_array_mp(params.lines, calc_line_nrs,
-                               params.ssep, ignore, logger, chunksize, n_jobs, maxtasksperchild)
+                               params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
 
   if params.consider_to_subset:
     # if error := NGramsNotExistError.validate(params.lines, from_ids):

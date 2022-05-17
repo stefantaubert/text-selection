@@ -1,10 +1,10 @@
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-from text_selection_cli.argparse_helper import (parse_path, parse_positive_float)
-from text_selection_cli.default_args import (add_file_arguments, add_dataset_argument)
-from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset,
-                                            try_load_file, try_save_data_weights)
+from text_selection_cli.argparse_helper import parse_path, parse_positive_float
+from text_selection_cli.default_args import add_dataset_argument, add_file_arguments
+from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
+                                            try_save_data_weights)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
                                                      get_word_count_weights)
@@ -46,7 +46,7 @@ def create_word_count_weights_ns(ns: Namespace, logger: Logger, flogger: Logger)
     return False, False
 
   logger.info("Calculating weights...")
-  weights = get_word_count_weights(lines, ns.sep)
+  weights = get_word_count_weights(lines, ns.sep, logger)
 
   success = try_save_data_weights(ns.output, weights, logger)
 

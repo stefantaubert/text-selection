@@ -10,7 +10,7 @@ import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
-from text_selection_core.helper import split_adv
+from text_selection_core.helper import get_dtype_from_count, split_adv
 from text_selection_core.types import Lines, Subset
 
 SymbolIndex = int
@@ -78,17 +78,18 @@ def get_array_mp(lines: Lines, subset: Subset, ssep: str, logger: Logger, chunks
   ) as pool:
     arrays = dict(tqdm(pool.imap_unordered(
         method, enumerate(subset_chunks), chunksize=1
-    ), total=len(subset_chunks), desc="Generating data"))
+    ), total=len(subset_chunks), desc="Processing chunks"))
   arrays = sorted(arrays.items(), key=lambda kv: kv[0])
   arrays = list(v for k, v in arrays)
   arrays, symbols = unify_arrays(arrays)
-  array = arrays.pop(0)
-  with tqdm(total=len(arrays), desc="merging arrays") as pbar:
+  with tqdm(total=len(arrays), desc="Merging chunks") as pbar:
+    array = arrays.pop(0)
+    pbar.update()
     while len(arrays) > 0:
       current = arrays.pop(0)
       array = np.append(array, current, axis=0)
+      del current
       pbar.update()
-  # array = merge_arrays(arrays)
 
   return array, symbols
 
@@ -123,11 +124,12 @@ def unify_arrays(arrays_symbols: List[Tuple[np.ndarray, OrderedSet[str]]]) -> Tu
     for symbol in symbols
   })
 
+  array: np.ndarray
   symbols: OrderedSet[str]
-  for i, (array, symbols) in enumerate(tqdm(arrays_symbols, desc="Merging results")):
+  for i, (array, symbols) in enumerate(tqdm(arrays_symbols, desc="Unifying chunks")):
     missing_symbols = all_symbols - symbols
     if len(missing_symbols) > 0:
-      new_cols = np.zeros((len(array), len(missing_symbols)), dtype=np.uint16)
+      new_cols = np.zeros((len(array), len(missing_symbols)), dtype=array.dtype)
       array = np.append(array, new_cols, axis=1)
       symbols.update(missing_symbols)
 
@@ -179,14 +181,18 @@ def merge_arrays_v1(array_keys: List[Tuple[np.ndarray, OrderedSet[str]]]):
   return result_data, result_symbols
 
 
+
 def get_array_v1(lines: Lines, subset: Subset, ssep: str, logger: Logger):
-  counters = []
+  counters: List[Counter] = []
   for line_nr in xtqdm(subset, desc="Calculating counts", unit=" line(s)"):
     line_counts = Counter(split_adv(lines[line_nr], ssep))
     counters.append(line_counts)
 
-  #logger.info("Getting symbols")
+  # logger.info("Getting symbols")
   symbols = OrderedSet(set(chain(*counters)))
+  max_count = max(max(counter.values()) for counter in counters)
+  dtype = get_dtype_from_count(max_count)
+  logger.debug(f"Chosen dtype \"{dtype}\" for numpy because maximum count is {max_count}.")
   # logger.info("Done.")
 
   if "" in symbols:
@@ -194,7 +200,7 @@ def get_array_v1(lines: Lines, subset: Subset, ssep: str, logger: Logger):
 
   symbols_indices = dict((s, i) for i, s in enumerate(symbols))
 
-  result = np.zeros((len(counters), len(symbols)), dtype=np.uint16)
+  result = np.zeros((len(counters), len(symbols)), dtype=dtype)
 
   for line_index, c in enumerate(xtqdm(counters)):
     for symbol, count in c.items():

@@ -1,7 +1,25 @@
 
 from typing import List
 
+import numpy as np
+
 from text_selection_core.types import DataWeights, Percent, Subset, Weight
+
+dtype_order_uint = [
+  np.uint8,
+  np.uint16,
+  np.uint32,
+  np.uint64,
+  # np.uint128,
+  # np.uint256,
+]
+
+
+def get_dtype_from_count(count: int) -> np.dtype:
+  for dtype in dtype_order_uint:
+    if count < np.iinfo(dtype).max:
+      return dtype
+  raise ValueError("Parameter 'count' to big for numpy!")
 
 
 def get_target_weights_from_percent(from_subset: Subset, to_subset: Subset, weights: DataWeights, target: Percent, target_incl_selection: bool) -> Weight:

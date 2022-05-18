@@ -1,4 +1,4 @@
-from logging import getLogger
+from logging import Logger, getLogger
 
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.types import Dataset, LineNrs, Subset, SubsetName, move_lines_to_subset
@@ -22,7 +22,7 @@ class AnyLineAlreadySelectedError(ValidationError):
     return f"Some of the lines ({', '.join(self.nrs.intersection(self.subset))}) were already filtered!"
 
 
-def filter_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs) -> ExecutionResult:
+def filter_line_nrs(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logger: Logger) -> ExecutionResult:
   if error := SubsetNotExistsError.validate(dataset, to_subset_name):
     return error, False
 
@@ -32,7 +32,6 @@ def filter_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs) -> Ex
 
   changed_anything = False
   if len(nrs) > 0:
-    logger = getLogger(__name__)
     logger.debug(f"Filtered {len(nrs)} numbers.")
     move_lines_to_subset(dataset, nrs, to_subset_name, logger)
     changed_anything = True

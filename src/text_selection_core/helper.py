@@ -64,9 +64,9 @@ def get_float_dtype_from_n(n: float) -> np.dtype:
 
 def get_target_weights_from_percent(from_subset: Subset, to_subset: Subset, weights: DataWeights, target: Percent, target_incl_selection: bool) -> Weight:
   if target_incl_selection:
-    target_value = target * sum(weights[k] for k in from_subset | to_subset)
+    target_value = target * sum(weights[k] for k in from_subset | to_subset) / 100
   else:
-    target_value = target * sum(weights[k] for k in from_subset)
+    target_value = target * sum(weights[k] for k in from_subset) / 100
   return target_value
 
 

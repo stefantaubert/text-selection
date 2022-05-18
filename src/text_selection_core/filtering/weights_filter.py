@@ -31,9 +31,9 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
     return error, False
   logger.debug(params)
   select_from_nrs = get_subsets_line_nrs_gen(
-    default_params.dataset, default_params. from_subset_names)
+    default_params.dataset, default_params.from_subset_names)
   select_from_count = get_subsets_line_nrs_count(
-    default_params.dataset, default_params. from_subset_names)
+    default_params.dataset, default_params.from_subset_names)
 
   iterator = get_matching_lines(params.weights, select_from_nrs,
                                 params.from_weight_incl, params.to_weight_excl)

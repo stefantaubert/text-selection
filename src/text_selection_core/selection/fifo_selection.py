@@ -43,6 +43,7 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
   if weight_params.target_percent:
     weight_params.target = get_target_weights_from_percent(
         from_ids, to_subset, weight_params.weights, weight_params.target, weight_params.target_incl_selection)
+    logger.debug(f"Selected target from percent: {weight_params.target}")
 
   if mode == subset_mode:
     iterator = get_fifo_subset_iterator(from_ids)
@@ -65,6 +66,10 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
   if len(result) > 0:
     logger = getLogger(__name__)
     logger.debug(f"Selected {len(result)} lines.")
+    
+    # logger.info(
+    #   f"Filtered {len(result)} out of {select_from_count} lines ({get_percent_str(len(result),select_from_count)}). {select_from_count-len(result)} lines remain.")
+      
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
 

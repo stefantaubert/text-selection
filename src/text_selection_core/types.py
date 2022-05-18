@@ -13,6 +13,7 @@ LineNrs = OrderedSet[LineNr]
 Line = str
 Lines = List[Line]
 
+# 0-100
 Percent = float
 Weight = Union[float, int]
 DataWeights = np.ndarray

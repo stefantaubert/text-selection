@@ -73,7 +73,7 @@ class InvalidPercentualValueError(ValidationError):
 
   @classmethod
   def validate(cls, percent: float):
-    if not 0 <= percent <= 1:
+    if not 0 < percent <= 100:
       return cls(percent)
     return None
 

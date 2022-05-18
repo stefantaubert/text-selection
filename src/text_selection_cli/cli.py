@@ -15,7 +15,9 @@ from text_selection_cli.datasets import get_init_parser
 from text_selection_cli.export import get_export_txt_parser
 from text_selection_cli.filtering import (get_duplicate_selection_parser,
                                           get_regex_match_selection_parser,
-                                          get_unit_frequency_parser, get_weight_filtering_parser)
+                                          get_unit_frequency_parser,
+                                          get_vocabulary_filtering_parser,
+                                          get_weight_filtering_parser)
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                       init_and_return_loggers, try_init_file_logger)
@@ -81,6 +83,7 @@ def get_subsets_parsers() -> Parsers:
   yield "filter-regex", "filter lines via regex", get_regex_match_selection_parser
   yield "filter-count", "filter lines via count of words", get_unit_frequency_parser
   yield "filter-by-weight", "filter lines by weight", get_weight_filtering_parser
+  yield "filter-by-vocabulary", "filter lines by unit vocabulary", get_vocabulary_filtering_parser
   yield "sort-by-line-nr", "sort entries by line number", get_fifo_sorting_parser
   yield "sort-reverse", "reverse entries", get_reverse_sorting_parser
   yield "export", "export subsets lines", get_export_txt_parser
@@ -154,6 +157,9 @@ def parse_args(args: List[str]) -> None:
   except SystemExit:
     # invalid command supplied
     return
+
+  if local_debugging:
+    root_logger.debug(f"Parsed arguments: {str(ns)}")
 
   if hasattr(ns, INVOKE_HANDLER_VAR):
     invoke_handler: Callable[..., ExecutionResult] = getattr(ns, INVOKE_HANDLER_VAR)

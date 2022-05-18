@@ -7,7 +7,8 @@ from ordered_set import OrderedSet
 from text_selection.selection import SelectionMode
 from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, ConvertToSetAction,
                                                 parse_existing_file, parse_non_empty_or_whitespace,
-                                                parse_non_negative_float, parse_positive_integer)
+                                                parse_non_negative_float, parse_positive_float,
+                                                parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_file_arguments,
                                              add_from_and_to_subsets_arguments, add_mp_group,
                                              add_to_subset_argument)
@@ -95,7 +96,7 @@ def add_termination_criteria_arguments(parser: ArgumentParser) -> None:
   group = parser.add_argument_group("termination criteria arguments")
   group.add_argument("weights", type=parse_existing_file, metavar="WEIGHTS-PATH",
                      help="weights path")
-  group.add_argument("--limit", type=parse_non_negative_float, metavar="FLOAT",
+  group.add_argument("--limit", type=parse_positive_float, metavar="FLOAT",
                      help="weights limit", default=math.inf)
   group.add_argument("-i", "--limit-include-already-selected", action="store_true",
                      help="include already selected lines for limit")

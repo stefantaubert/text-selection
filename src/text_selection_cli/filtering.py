@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from logging import Logger
 
 from text_selection_cli.argparse_helper import (get_optional, parse_existing_file,
-                                                parse_integer_greater_one,
+                                                parse_integer_greater_one, parse_non_empty,
                                                 parse_non_empty_or_whitespace,
                                                 parse_non_negative_float,
                                                 parse_non_negative_integer, parse_path,
@@ -16,6 +16,8 @@ from text_selection_cli.io_handling import (try_load_data_weights, try_load_data
 from text_selection_core.common import SelectionDefaultParameters
 from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.regex_filter import filter_regex_pattern
+from text_selection_core.filtering.vocabulary_filtering import (
+  VocabularyFilterParameters, filter_lines_with_vocabulary_frequencies)
 from text_selection_core.filtering.weights_filter import WeightsFilterParameters, filter_weights
 from text_selection_core.filtering.words_frequency_filter import (
   CountFilterParameters, filter_lines_with_unit_frequencies)
@@ -60,7 +62,7 @@ def get_regex_match_selection_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   add_file_arguments(parser)
   add_from_and_to_subsets_arguments(parser)
-  parser.add_argument("pattern", type=parse_non_empty_or_whitespace, metavar="REGEX",
+  parser.add_argument("pattern", type=parse_non_empty, metavar="REGEX",
                       help="to subset")
   return regex_match_selection
 
@@ -159,6 +161,64 @@ def filter_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executi
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   params = WeightsFilterParameters(weights, ns.min_weight, ns.max_weight)
   error, changed_anything = filter_weights(default_params, params, flogger)
+
+  success = error is None
+
+  if not success:
+    logger.error(f"{error.default_message}")
+    return False, False
+
+  if changed_anything:
+    success = try_save_dataset(ns.dataset, dataset, logger)
+    if not success:
+      return False, False
+
+  return True, changed_anything
+
+
+def get_vocabulary_filtering_parser(parser: ArgumentParser):
+  parser.description = "Select entries ..."
+  add_dataset_argument(parser)
+  add_from_and_to_subsets_arguments(parser)
+  add_file_arguments(parser, True)
+  parser.add_argument("vocabulary", type=parse_existing_file, metavar="VOCABULARY-PATH",
+                      help="path to the vocabulary")
+  parser.add_argument("--min-count", type=parse_non_negative_float, metavar="MIN-COUNT",
+                      help="inclusive minimum count", default=0)
+  parser.add_argument("--max-count", type=parse_positive_integer, metavar="MAX-COUNT",
+                      help="exclusive maximum count", default=math.inf)
+  parser.add_argument("--mode", type=str, choices=[
+      "oov", "iv"], help="mode: oov => count of out-of-vocabulary units; iv => count of in-vocabulary units", default="oov")
+  return filter_by_vocabulary_ns
+
+
+def filter_by_vocabulary_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
+  dataset = try_load_dataset(ns.dataset, logger)
+  if dataset is None:
+    return False, False
+
+  lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
+  if lines is None:
+    return False, False
+
+  logger.info(f"Reading \"{ns.vocabulary.absolute()}\"...")
+  try:
+    vocabulary_text = ns.vocabulary.read_text(ns.encoding)
+  except Exception as ex:
+    logger.error("Vocabulary file couldn't be read!")
+    logger.exception(ex)
+    return None
+
+  logger.info("Parsing vocabulary...")
+  vocabulary = set(vocabulary_text.split(ns.lsep))
+  logger.debug(f"Parsed {len(vocabulary)} vocabulary units.")
+
+  logger.info("Filtering...")
+  default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
+  params = VocabularyFilterParameters(
+    lines, ns.sep, ns.min_count, ns.max_count, vocabulary, ns.mode)
+  error, changed_anything = filter_lines_with_vocabulary_frequencies(
+    default_params, params, flogger)
 
   success = error is None
 

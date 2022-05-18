@@ -6,8 +6,8 @@ from text_selection_cli.default_args import add_dataset_argument, add_file_argum
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_data_weights)
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.weights.calculation import (divide_weights_inplace, get_uniform_weights,
-                                                     get_count_weights)
+from text_selection_core.weights.calculation import (divide_weights, get_count_weights,
+                                                     get_uniform_weights)
 
 
 def get_uniform_weights_creation_parser(parser: ArgumentParser):
@@ -69,7 +69,7 @@ def create_weights_division_ns(ns: Namespace, logger: Logger, flogger: Logger) -
     return False, False
 
   logger.info("Dividing weights...")
-  divide_weights_inplace(weights, ns.divisor, logger)
+  weights = divide_weights(weights, ns.divisor, logger)
 
   success = try_save_data_weights(ns.weights, weights, logger)
 

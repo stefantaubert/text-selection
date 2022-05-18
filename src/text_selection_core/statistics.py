@@ -8,6 +8,7 @@ import numpy as np
 from ordered_set import OrderedSet
 from pandas import DataFrame
 
+from text_selection_core.helper import split_adv
 from text_selection_core.types import Dataset, DataWeights, Line, Lines, Subset, SubsetName
 
 SPACE_DISPL = "␣"
@@ -28,18 +29,18 @@ def get_subsets_ordered(dataset: Dataset) -> OrderedSet[str]:
   return OrderedSet(dataset.subsets.keys())
 
 
-def get_all_symbols(items: Iterable[Line], ssep: str) -> Generator[str, None, None]:
+def get_all_symbols(lines: Iterable[Line], ssep: str) -> Generator[str, None, None]:
   result = (
     symbol
-    for item in items
-    for symbol in item.split(ssep)
+    for line in lines
+    for symbol in split_adv(line, ssep)
   )
   return result
 
 
 def get_symbols_statistics(dataset: Dataset, lines: Lines, ssep: str):
   # TODO this as n_gram stats
-  all_symbols = OrderedSet(sorted(get_all_symbols(lines.values(), ssep)))
+  all_symbols = OrderedSet(sorted(set(get_all_symbols(lines, ssep))))
 
   subset_counts: OrderedDictType[SubsetName, Counter] = OrderedDict()
   subset_names = get_subsets_ordered(dataset)

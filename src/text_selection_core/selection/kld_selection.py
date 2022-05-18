@@ -112,7 +112,6 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
     logger.info(f"Final Kullback-Leibler distance: {kld_iterator.previous_kld}")
 
   if len(result) > 0:
-    logger = getLogger(__name__)
     logger.debug(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     for line_nr in result:

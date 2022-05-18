@@ -71,6 +71,9 @@ def get_subsets_line_nrs_gen(dataset: Dataset, subsets: OrderedSet[SubsetName]) 
   lines = (line for subset in from_subsets for line in subset)
   return lines
 
+def get_subsets_line_nrs_count(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> int:
+  result = sum(len(dataset.subsets[from_subset_name]) for from_subset_name in subsets)
+  return result
 
 def get_subsets_line_nrs(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> Subset:
   result = OrderedSet()

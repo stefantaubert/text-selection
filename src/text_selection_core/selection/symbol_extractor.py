@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Set, Tuple
 import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
+from text_selection_core.globals import TQDM_LINE_UNIT
 
 from text_selection_core.helper import get_chunks, get_int_dtype_from_n, split_adv, xtqdm
 from text_selection_core.types import Lines, Subset
@@ -20,7 +21,7 @@ ColumnSymbols = OrderedSet[str]
 # def get_symbols_from_lines(lines: Lines, subset: Subset, ssep: str) -> Set[str]:
 #   symbols = {
 #     symbol
-#     for line_nr in tqdm(subset, desc="Getting unique symbols", unit=" line(s)")
+#     for line_nr in tqdm(subset, desc="Getting unique symbols", unit=TQDM_LINE_UNIT)
 #     for symbol in split_adv(lines[line_nr], ssep)
 #   }
 #   return symbols
@@ -124,7 +125,7 @@ def unify_arrays(arrays_symbols: List[Tuple[SymbolCounts, ColumnSymbols]]) -> Tu
 
 def get_array(lines: Lines, subset: Subset, ssep: str) -> Tuple[SymbolCounts, ColumnSymbols]:
   counters: List[Counter] = []
-  for line_nr in xtqdm(subset, desc="Calculating counts", unit=" line(s)"):
+  for line_nr in xtqdm(subset, desc="Calculating counts", unit=TQDM_LINE_UNIT):
     line_counts = Counter(split_adv(lines[line_nr], ssep))
     counters.append(line_counts)
 
@@ -153,7 +154,7 @@ def get_array(lines: Lines, subset: Subset, ssep: str) -> Tuple[SymbolCounts, Co
 #   result = None
 #   symbols_indicies = {}
 
-#   for line_nr in tqdm(subset, desc="Calculating counts", unit=" line(s)"):
+#   for line_nr in tqdm(subset, desc="Calculating counts", unit=TQDM_LINE_UNIT):
 #     line_counts = Counter(lines[line_nr].split(ssep))
 #     if result is None:
 #       result = np.zeros((len(subset), len(line_counts)), dtype=np.uint16)

@@ -9,10 +9,11 @@ from tqdm import tqdm
 
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
-from text_selection_core.globals import ExecutionResult
-from text_selection_core.helper import split_adv, xtqdm
+from text_selection_core.globals import TQDM_LINE_UNIT, ExecutionResult
+from text_selection_core.helper import get_percent_str, split_adv, xtqdm
 from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs,
-                                       get_subsets_line_nrs_gen, move_lines_to_subset)
+                                       get_subsets_line_nrs_count, get_subsets_line_nrs_gen,
+                                       move_lines_to_subset)
 
 
 @dataclass()
@@ -29,12 +30,14 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
-  from_line_nrs = get_subsets_line_nrs(default_params.dataset, default_params.from_subset_names)
+  select_from_nrs = list(get_subsets_line_nrs_gen(
+    default_params.dataset, default_params. from_subset_names))
 
   if params.count_whole:
     line_nrs_to_count = default_params.dataset.get_line_nrs()
+    line_nrs_to_count_total = len(line_nrs_to_count)
   else:
-    line_nrs_to_count = from_line_nrs
+    line_nrs_to_count = select_from_nrs
 
   # units = (
   #   unit
@@ -45,12 +48,12 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
   # counter = Counter(tqdm(units, desc="Calculating counts", unit=" unit(s)"))
 
   counters: Dict[LineNr, Counter] = {}
-  for line_nr in tqdm(line_nrs_to_count, desc="Calculating counts", unit=" line(s)"):
+  for line_nr in tqdm(line_nrs_to_count, desc="Calculating counts", unit=TQDM_LINE_UNIT, total=line_nrs_to_count_total):
     line_counts = Counter(split_adv(params.lines[line_nr], params.ssep))
     counters[line_nr] = line_counts
 
   total_counter = Counter()
-  for counter in tqdm(counters.values(), desc="Summing counts", unit=" line(s)"):
+  for counter in tqdm(counters.values(), desc="Summing counts", unit=TQDM_LINE_UNIT):
     total_counter.update(counter)
 
   to_count = params.to_count_excl
@@ -65,7 +68,7 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
   else:
     assert False
 
-  for line_nr in tqdm(from_line_nrs, desc="Filtering", unit=" line(s)"):
+  for line_nr in tqdm(select_from_nrs, desc="Filtering", unit=TQDM_LINE_UNIT):
     counts = counters[line_nr]
     word_counts = list(total_counter[unit] for unit in counts.keys())
     match = method(params.from_count_incl <= count < to_count for count in word_counts)
@@ -74,7 +77,8 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
 
   changed_anything = False
   if len(result) > 0:
-    logger.info(f"Filtered {len(result)} out of {len(from_line_nrs)} lines.")
+    logger.info(
+      f"Filtered {len(result)} out of {len(select_from_nrs)} lines ({get_percent_str(len(result),len(select_from_nrs))}). {len(select_from_nrs)-len(result)} lines remain.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     for line_nr in result:
       logger.debug(f"Filtered L{line_nr+1}: \"{params.lines[line_nr]}\".")

@@ -7,7 +7,7 @@ from text_selection.selection import FirstKeySelector, SelectionMode
 from text_selection_core.types import Dataset, DataWeights, SubsetName, Weight
 from text_selection_core.validation import (InvalidPercentualValueError, NonDivergentSubsetsError,
                                             SubsetNotExistsError, ValidationError,
-                                            WeightsDoNotContainAllKeysError)
+                                            WeightsLinesCountNotMatchingError)
 
 
 @dataclass()
@@ -43,7 +43,7 @@ def validate_selection_default_parameters(params: SelectionDefaultParameters) ->
 
 
 def validate_weights_parameters(params: WeightSelectionParameters, dataset: Dataset) -> Optional[ValidationError]:
-  if error := WeightsDoNotContainAllKeysError.validate(dataset, params.weights):
+  if error := WeightsLinesCountNotMatchingError.validate(dataset, params.weights):
     return error
 
   if params.target_percent:
@@ -77,5 +77,4 @@ def get_selector(mode: SelectionMode):
   if mode == SelectionMode.FIRST:
     selector = FirstKeySelector()
     return selector
-  else:
-    assert False
+  assert False

@@ -42,6 +42,12 @@ dtype_order_float = [
 ]
 
 
+def get_percent_str(current: int, total: int) -> str:
+  if total == 0:
+    return "N/A %"
+  return f"{current /total*100:.2f}%"
+
+
 def get_int_dtype_from_n(n: int) -> np.dtype:
   for dtype in dtype_order_uint:
     if n < np.iinfo(dtype).max:

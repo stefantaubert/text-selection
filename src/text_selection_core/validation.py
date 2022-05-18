@@ -105,7 +105,7 @@ class NonDivergentSubsetsError(ValidationError):
     return "Subsets need to be distinct!"
 
 
-class WeightsDoNotContainAllKeysError(ValidationError):
+class WeightsLinesCountNotMatchingError(ValidationError):
   def __init__(self, dataset: Dataset, weights: DataWeights) -> None:
     super().__init__()
     self.dataset = dataset

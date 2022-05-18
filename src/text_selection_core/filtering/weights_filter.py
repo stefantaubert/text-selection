@@ -9,7 +9,7 @@ from text_selection_core.common import (SelectionDefaultParameters,
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.types import (DataWeights, LineNr, Subset, Weight, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
-from text_selection_core.validation import WeightsDoNotContainAllKeysError
+from text_selection_core.validation import WeightsLinesCountNotMatchingError
 
 
 @dataclass()
@@ -25,7 +25,7 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
   if error := validate_selection_default_parameters(default_params):
     return error, False
 
-  if error := WeightsDoNotContainAllKeysError.validate(default_params.dataset, params.weights):
+  if error := WeightsLinesCountNotMatchingError.validate(default_params.dataset, params.weights):
     return error, False
 
   select_from = ((data_id, params[data_id])

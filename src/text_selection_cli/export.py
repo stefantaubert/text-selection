@@ -1,18 +1,19 @@
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-from text_selection_cli.argparse_helper import parse_non_empty_or_whitespace, parse_path
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction,
+                                                parse_non_empty_or_whitespace, parse_path)
 from text_selection_cli.default_args import add_dataset_argument, add_file_arguments
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import try_load_dataset, try_load_file
-from text_selection_core.exporting.symbols_exporting import export_symbols
+from text_selection_core.exporting.symbols_exporting import export_subset
 
 
 def get_export_txt_parser(parser: ArgumentParser):
   parser.description = "This command exports a subset of the file."
   add_dataset_argument(parser)
-  parser.add_argument("subset", type=parse_non_empty_or_whitespace, metavar="SUBSET",
-                      help="subset which should be exported")
+  parser.add_argument("subsets", type=parse_non_empty_or_whitespace, metavar="SUBSET-NAME", nargs="+",
+                      help="subsets which should be exported", action=ConvertToOrderedSetAction)
   add_file_arguments(parser)
   parser.add_argument("path", type=parse_path, metavar="OUTPUT-PATH",
                       help="path to the exported text-file")
@@ -29,7 +30,7 @@ def export_txt_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionRe
     return False, None
 
   logger.debug("Exporting...")
-  error, text = export_symbols(dataset, ns.subset, lines, ns.lsep)
+  error, text = export_subset(dataset, ns.subsets, lines, ns.lsep, logger)
 
   success = error is None
 

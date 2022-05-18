@@ -2,6 +2,7 @@ from logging import Logger
 
 import numpy as np
 from tqdm import tqdm
+from text_selection_core.globals import TQDM_LINE_UNIT
 
 from text_selection_core.helper import get_float_dtype_from_n, get_int_dtype_from_n
 from text_selection_core.types import DataWeights, Lines
@@ -22,7 +23,7 @@ def get_count_weights(lines: Lines, sep: str, logger: Logger) -> DataWeights:
       for line in lines
     )
 
-  result = list(tqdm(words_counts, desc="Getting counts", unit=" line(s)", total=len(lines)))
+  result = list(tqdm(words_counts, desc="Getting counts", unit=TQDM_LINE_UNIT, total=len(lines)))
   max_count = max(result)
   dtype = get_int_dtype_from_n(max_count)
   logger.debug(f"Chosen dtype \"{dtype}\" for numpy because maximum count is {max_count}.")

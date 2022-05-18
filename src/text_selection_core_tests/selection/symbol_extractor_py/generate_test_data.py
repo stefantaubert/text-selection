@@ -89,17 +89,17 @@ def get_random_sentences_mp2(lines_count_per_job: int, jobs: int, min_words_coun
 #   lines = get_random_sentences_mp(1920000, 3, 10, 3, 7, "|")
 #   count_per_job = 20_000
 #   jobs = cpu_count() * 6
-#   #line_nrs = OrderedSet(tqdm(list(range(count)), desc="Building index", unit=" line(s)"))
+#   #line_nrs = OrderedSet(tqdm(list(range(count)), desc="Building index", unit=TQDM_LINE_UNIT))
 #   line_nrs = range(count_per_job)
 #   logger.info(f"Generating {count_per_job * jobs} lines.")
 #   lines = get_random_sentences_mp2(count_per_job, jobs, 3, 10, 3, 7, "|")
 
 #   logger.info(f"Generated {len(lines)} lines.")
 #   # lines = list(tqdm(get_random_sentences(count, 3, 10, 3, 7, "|"),
-#   #              total=count, desc="Generating data", unit=" line(s)"))
+#   #              total=count, desc="Generating data", unit=TQDM_LINE_UNIT))
 #   # lines = [
 #   #   f"{i}|a|b|c|{i}"
-#   #   for i in tqdm(range(count), desc="Generating data", unit=" line(s)")
+#   #   for i in tqdm(range(count), desc="Generating data", unit=TQDM_LINE_UNIT)
 #   # ]
 
 #   #line_nrs = range(0, count, 2)
@@ -144,7 +144,7 @@ if __name__ == "__main__":
   main_logger = getLogger()
   main_logger.setLevel(logging.DEBUG)
   main_logger.manager.disable = logging.NOTSET
-  #generate_small_set()
-  #load_small_test_set()
+  # generate_small_set()
+  # load_small_test_set()
   generate_big_set()
   load_big_test_set()

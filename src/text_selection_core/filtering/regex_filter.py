@@ -17,9 +17,9 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
     return error, False
 
   select_from_nrs = get_subsets_line_nrs_gen(
-    default_params.dataset, default_params. from_subset_names)
+    default_params.dataset, default_params.from_subset_names)
   select_from_count = get_subsets_line_nrs_count(
-    default_params.dataset, default_params. from_subset_names)
+    default_params.dataset, default_params.from_subset_names)
   logger.debug(f"Pattern: {pattern}")
   re_pattern = re.compile(pattern)
   items = get_matching_lines(lines, select_from_nrs, re_pattern)

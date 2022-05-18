@@ -29,7 +29,7 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
 
   if error := WeightsLinesCountNotMatchingError.validate(default_params.dataset, params.weights):
     return error, False
-
+  logger.debug(params)
   select_from_nrs = get_subsets_line_nrs_gen(
     default_params.dataset, default_params. from_subset_names)
   select_from_count = get_subsets_line_nrs_count(

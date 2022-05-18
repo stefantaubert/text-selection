@@ -36,7 +36,7 @@ def get_word_count_weights_creation_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   add_file_arguments(parser, True)
   parser.add_argument("output", type=parse_path, metavar="OUTPUT-PATH",
-                      help="output path to save the weights")
+                      help="output path to save the weights (.npy)")
   return create_word_count_weights_ns
 
 

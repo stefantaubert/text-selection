@@ -46,7 +46,7 @@ def add_file_arguments(parser: ArgumentParser, include_sep: bool = False) -> Non
 
 def add_sep_argument(parser: ArgumentParser) -> None:
   parser.add_argument("--sep", type=str, metavar="STRING",
-                      help="separator for symbols/words", default=" ")
+                      help="separator for units", default="")
 
 
 def add_mp_group(parser: ArgumentParser):

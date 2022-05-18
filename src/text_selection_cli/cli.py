@@ -15,7 +15,7 @@ from text_selection_cli.datasets import get_init_parser
 from text_selection_cli.export import get_export_txt_parser
 from text_selection_cli.filtering import (get_duplicate_selection_parser,
                                           get_regex_match_selection_parser,
-                                          get_unit_frequency_parser)
+                                          get_unit_frequency_parser, get_weight_filtering_parser)
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                       init_and_return_loggers, try_init_file_logger)
@@ -61,13 +61,12 @@ def get_dataset_parsers() -> Parsers:
 
 def get_weights_parsers() -> Parsers:
   yield "create-uniform", "create uniform weights", get_uniform_weights_creation_parser
-  yield "create-count", "create weights from word/symbol count", get_word_count_weights_creation_parser
+  yield "create-count", "create weights from unit count", get_word_count_weights_creation_parser
   yield "divide", "divide weights", get_weights_division_parser
 
 
 def get_subset_parsers() -> Parsers:
   yield "rename", "rename subset", get_subset_renaming_parser
-  yield "export", "export subset as text file", get_export_txt_parser
 
 
 def get_subsets_parsers() -> Parsers:
@@ -81,8 +80,10 @@ def get_subsets_parsers() -> Parsers:
   yield "filter-duplicates", "filter duplicates", get_duplicate_selection_parser
   yield "filter-regex", "filter lines via regex", get_regex_match_selection_parser
   yield "filter-count", "filter lines via count of words", get_unit_frequency_parser
+  yield "filter-by-weight", "filter lines by weight", get_weight_filtering_parser
   yield "sort-by-line-nr", "sort entries by line number", get_fifo_sorting_parser
   yield "sort-reverse", "reverse entries", get_reverse_sorting_parser
+  yield "export", "export subsets lines", get_export_txt_parser
 
 
 # def get_ngrams_parsers() -> Parsers:
@@ -205,6 +206,7 @@ def parse_args(args: List[str]) -> None:
     flogger.debug(f"Total duration (s): {duration}")
 
     if log_to_file:
+      # path not encapsulated in "" because it is only console out
       root_logger.info(f"Written log to: {ns.log.absolute()}")
   else:
     parser.print_help()

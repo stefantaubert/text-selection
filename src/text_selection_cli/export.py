@@ -12,7 +12,7 @@ from text_selection_core.exporting.symbols_exporting import export_subset
 def get_export_txt_parser(parser: ArgumentParser):
   parser.description = "This command exports a subset of the file."
   add_dataset_argument(parser)
-  parser.add_argument("subsets", type=parse_non_empty_or_whitespace, metavar="SUBSET-NAME", nargs="+",
+  parser.add_argument("subsets", type=parse_non_empty_or_whitespace, metavar="SUBSET", nargs="+",
                       help="subsets which should be exported", action=ConvertToOrderedSetAction)
   add_file_arguments(parser)
   parser.add_argument("path", type=parse_path, metavar="OUTPUT-PATH",
@@ -39,6 +39,8 @@ def export_txt_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionRe
     return False, None
 
   assert text is not None
+  #logger.debug(f"Export line count: {text.count(ns.lsep) + 1}")
+
   logger.info(f"Saving output to \"{ns.path.absolute()}\"...")
   try:
     ns.path.write_text(text, ns.encoding)

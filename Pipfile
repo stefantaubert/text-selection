@@ -18,7 +18,6 @@ twine = "*"
 ordered-set = ">=4.1.0"
 tqdm = "*"
 numpy = "*"
-sklearn = "*"
 pandas = "*"
 
 [requires]

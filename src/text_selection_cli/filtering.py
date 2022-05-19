@@ -2,9 +2,9 @@ import math
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-from text_selection_cli.argparse_helper import (get_optional, parse_existing_file,
-                                                parse_integer_greater_one, parse_non_empty,
-                                                parse_non_empty_or_whitespace,
+from text_selection_cli.argparse_helper import (ConvertToSetAction, get_optional,
+                                                parse_existing_file, parse_integer_greater_one,
+                                                parse_non_empty, parse_non_empty_or_whitespace,
                                                 parse_non_negative_float,
                                                 parse_non_negative_integer, parse_path,
                                                 parse_positive_float, parse_positive_integer)
@@ -18,6 +18,7 @@ from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.line_unit_frequency_filter import (
   LineUnitFrequencyFilterParameters, filter_lines_with_line_unit_frequencies)
 from text_selection_core.filtering.regex_filter import filter_regex_pattern
+from text_selection_core.filtering.string_filter import filter_by_string
 from text_selection_core.filtering.unit_frequency_filter import (CountFilterParameters,
                                                                  filter_lines_with_unit_frequencies)
 from text_selection_core.filtering.vocabulary_filtering import (
@@ -82,6 +83,52 @@ def regex_match_selection(ns: Namespace, logger: Logger, flogger: Logger) -> Exe
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   error, changed_anything = filter_regex_pattern(default_params, lines, ns.pattern, flogger)
+
+  success = error is None
+
+  if not success:
+    logger.error(f"{error.default_message}")
+    return False, False
+
+  if changed_anything and not ns.dry:
+    success = try_save_dataset(ns.dataset, dataset, logger)
+    if not success:
+      return False, False
+
+  return True, changed_anything
+
+
+def get_string_filter_parser(parser: ArgumentParser):
+  parser.description = "Select entries matching regex pattern."
+  add_dataset_argument(parser)
+  add_from_and_to_subsets_arguments(parser)
+  add_file_arguments(parser)
+  parser.add_argument("--starts-with", type=parse_non_empty, metavar="STRING",
+                      nargs="*", help="lines that starts with these strings", default={}, action=ConvertToSetAction)
+  parser.add_argument("--ends-with", type=parse_non_empty, metavar="STRING",
+                      nargs="*", help="lines that ends with these strings", default={}, action=ConvertToSetAction)
+  parser.add_argument("--contains", type=parse_non_empty, metavar="STRING",
+                      nargs="*", help="lines that contains these strings", default={}, action=ConvertToSetAction)
+  parser.add_argument("--equals", type=str, metavar="STRING", nargs="*",
+                      help="lines that are equal with these strings", default={}, action=ConvertToSetAction)
+  parser.add_argument("--mode", type=str, choices=[
+                      "all", "any"], help="mode to evaluate: all => all arguments need to match; any => any arguments needs to match", default="any")
+  add_dry_argument(parser)
+  return filter_by_string_ns
+
+
+def filter_by_string_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
+  dataset = try_load_dataset(ns.dataset, logger)
+  if dataset is None:
+    return False, False
+
+  lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
+  if lines is None:
+    return False, False
+
+  default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
+  error, changed_anything = filter_by_string(
+    default_params, lines, ns.starts_with, ns.ends_with, ns.contains, ns.equals, ns.mode, flogger)
 
   success = error is None
 

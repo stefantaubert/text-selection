@@ -30,7 +30,7 @@ def add_to_subset_argument(parser: ArgumentParser) -> None:
 
 
 def add_dry_argument(parser: ArgumentParser) -> None:
-  parser.add_argument("--dry", action="store_true",
+  parser.add_argument("-d", "--dry", action="store_true",
                       help="dry run (i.e., don't save change anything)")
 
 

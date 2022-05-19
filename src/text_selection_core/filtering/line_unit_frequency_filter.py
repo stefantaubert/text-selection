@@ -15,6 +15,7 @@ from text_selection_core.helper import get_percent_str, split_adv, xtqdm
 from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs,
                                        get_subsets_line_nrs_count, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
+from text_selection_core.validation import LinesCountNotMatchingError
 
 
 @dataclass()
@@ -28,6 +29,9 @@ class LineUnitFrequencyFilterParameters():
 
 def filter_lines_with_line_unit_frequencies(default_params: SelectionDefaultParameters, params: LineUnitFrequencyFilterParameters, logger: Logger) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
+    return error, False
+
+  if error := LinesCountNotMatchingError.validate(default_params.dataset, params.lines):
     return error, False
 
   select_from_nrs = get_subsets_line_nrs_gen(

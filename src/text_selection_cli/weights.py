@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-from text_selection_cli.argparse_helper import parse_path, parse_positive_float
+from text_selection_cli.argparse_helper import parse_existing_file, parse_path, parse_positive_float
 from text_selection_cli.default_args import add_dataset_argument, add_file_arguments
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_data_weights)
@@ -56,8 +56,8 @@ def create_word_count_weights_ns(ns: Namespace, logger: Logger, flogger: Logger)
 def get_weights_division_parser(parser: ArgumentParser):
   parser.description = "This command creates weights containing the ..."
   add_dataset_argument(parser)
-  parser.add_argument("weights", type=parse_path, metavar="WEIGHTS-PATH",
-                      help="output path to save the weights")
+  parser.add_argument("weights", type=parse_existing_file, metavar="WEIGHTS-PATH",
+                      help="path to the weights")
   parser.add_argument("divisor", type=parse_positive_float, metavar="DIVISOR",
                       help="divisor")
   return create_weights_division_ns

@@ -10,10 +10,14 @@ from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_percent_str
 from text_selection_core.types import (LineNr, LineNrs, Lines, Subset, get_subsets_line_nrs_count,
                                        get_subsets_line_nrs_gen, move_lines_to_subset)
+from text_selection_core.validation import LinesCountNotMatchingError
 
 
 def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Lines, pattern: str, logger: Logger) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
+    return error, False
+
+  if error := LinesCountNotMatchingError.validate(default_params.dataset, lines):
     return error, False
 
   select_from_nrs = get_subsets_line_nrs_gen(

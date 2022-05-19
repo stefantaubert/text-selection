@@ -29,6 +29,11 @@ def add_to_subset_argument(parser: ArgumentParser) -> None:
                       metavar="TO-SUBSET", help="to subset")
 
 
+def add_dry_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("--dry", action="store_true",
+                      help="dry run (i.e., don't save change anything)")
+
+
 def add_dataset_argument(parser: ArgumentParser) -> None:
   parser.add_argument("dataset", type=parse_existing_file, metavar="DATASET-PATH",
                       help="dataset file")

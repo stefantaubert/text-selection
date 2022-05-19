@@ -9,9 +9,9 @@ from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, Conve
                                                 parse_existing_file, parse_non_empty_or_whitespace,
                                                 parse_non_negative_float, parse_positive_float,
                                                 parse_positive_integer)
-from text_selection_cli.default_args import (add_dataset_argument, add_file_arguments,
-                                             add_from_and_to_subsets_arguments, add_mp_group,
-                                             add_to_subset_argument)
+from text_selection_cli.default_args import (add_dataset_argument, add_dry_argument,
+                                             add_file_arguments, add_from_and_to_subsets_arguments,
+                                             add_mp_group, add_to_subset_argument)
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_dataset)
@@ -29,6 +29,7 @@ def get_id_selection_parser(parser: ArgumentParser):
   add_to_subset_argument(parser)
   parser.add_argument("lines", type=parse_positive_integer, nargs="+", metavar="LINE-NUMBER",
                       help="lines to select", action=ConvertToOrderedSetAction)
+  add_dry_argument(parser)
   return select_ids_from_ns
 
 
@@ -46,7 +47,7 @@ def select_ids_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execut
     logger.error(f"{error.default_message}")
     return False, False
 
-  if changed_anything:
+  if changed_anything and not ns.dry:
     success = try_save_dataset(ns.dataset, dataset, logger)
     if not success:
       return False, False
@@ -61,6 +62,7 @@ def get_fifo_selection_parser(parser: ArgumentParser):
   parser.add_argument("--mode", type=parse_non_empty_or_whitespace, metavar="MODE",
                       help="mode", default="subset", choices=[subset_mode, original_mode])
   add_termination_criteria_arguments(parser)
+  add_dry_argument(parser)
   return select_fifo_from_ns
 
 
@@ -84,7 +86,7 @@ def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
     logger.error(error.default_message)
     return False, False
 
-  if changed_anything:
+  if changed_anything and not ns.dry:
     success = try_save_dataset(ns.dataset, dataset, logger)
     if not success:
       return False, False
@@ -113,6 +115,7 @@ def get_greedy_selection_parser(parser: ArgumentParser):
                       help="consider already selected for the selection")
   add_termination_criteria_arguments(parser)
   add_mp_group(parser)
+  add_dry_argument(parser)
   return greedy_selection_ns
 
 
@@ -143,7 +146,7 @@ def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
     logger.error(f"{error.default_message}")
     return False, False
 
-  if changed_anything:
+  if changed_anything and not ns.dry:
     success = try_save_dataset(ns.dataset, dataset, logger)
     if not success:
       return False, False
@@ -162,6 +165,7 @@ def get_greedy_selection_epoch_parser(parser: ArgumentParser):
                       help="consider already selected for the selection")
   add_mp_group(parser)
   # add_termination_criteria_arguments(parser)
+  add_dry_argument(parser)
   return greedy_selection_epoch_ns
 
 
@@ -191,7 +195,7 @@ def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) ->
     logger.error(f"{error.default_message}")
     return False, False
 
-  if changed_anything:
+  if changed_anything and not ns.dry:
     success = try_save_dataset(ns.dataset, dataset, logger)
     if not success:
       return False, False
@@ -208,6 +212,7 @@ def get_kld_selection_parser(parser: ArgumentParser):
                       help="consider already selected for the selection")
   add_termination_criteria_arguments(parser)
   add_mp_group(parser)
+  add_dry_argument(parser)
   return kld_selection_ns
 
 
@@ -238,7 +243,7 @@ def kld_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executio
     logger.error(f"{error.default_message}")
     return False, False
 
-  if changed_anything:
+  if changed_anything and not ns.dry:
     success = try_save_dataset(ns.dataset, dataset, logger)
     if not success:
       return False, False

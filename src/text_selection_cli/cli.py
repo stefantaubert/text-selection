@@ -14,6 +14,7 @@ from text_selection_cli.argparse_helper import get_optional, parse_path
 from text_selection_cli.datasets import get_init_parser
 from text_selection_cli.export import get_export_txt_parser
 from text_selection_cli.filtering import (get_duplicate_selection_parser,
+                                          get_line_unit_frequency_parser,
                                           get_regex_match_selection_parser,
                                           get_unit_frequency_parser,
                                           get_vocabulary_filtering_parser,
@@ -81,9 +82,10 @@ def get_subsets_parsers() -> Parsers:
   yield "select-kld", "select entries kld-style", get_kld_selection_parser
   yield "filter-duplicates", "filter duplicates", get_duplicate_selection_parser
   yield "filter-regex", "filter lines via regex", get_regex_match_selection_parser
-  yield "filter-count", "filter lines via count of words", get_unit_frequency_parser
+  yield "filter-count", "filter lines via count of units", get_unit_frequency_parser
   yield "filter-by-weight", "filter lines by weight", get_weight_filtering_parser
   yield "filter-by-vocabulary", "filter lines by unit vocabulary", get_vocabulary_filtering_parser
+  yield "filter-by-unit-freq", "filter lines by unit frequencies per line", get_line_unit_frequency_parser
   yield "sort-by-line-nr", "sort entries by line number", get_fifo_sorting_parser
   yield "sort-reverse", "reverse entries", get_reverse_sorting_parser
   yield "export", "export subsets lines", get_export_txt_parser

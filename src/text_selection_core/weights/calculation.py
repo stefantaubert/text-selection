@@ -8,7 +8,7 @@ from text_selection_core.helper import get_float_dtype_from_n, get_int_dtype_fro
 from text_selection_core.types import DataWeights, Lines
 
 
-def get_uniform_weights(line_nrs: range) -> DataWeights:
+def get_uniform_weights(line_nrs: range, logger: Logger) -> DataWeights:
   result = np.full(len(line_nrs), fill_value=1, dtype=np.uint8)
   #result = dict.fromkeys(line_nrs, 1)
   return result

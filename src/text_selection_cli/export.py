@@ -30,7 +30,7 @@ def export_txt_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionRe
     return False, None
 
   logger.debug("Exporting...")
-  error, text = export_subset(dataset, ns.subsets, lines, ns.lsep, logger)
+  error, text = export_subset(dataset, ns.subsets, lines, ns.lsep, flogger)
 
   success = error is None
 

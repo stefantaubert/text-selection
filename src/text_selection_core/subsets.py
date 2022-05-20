@@ -1,3 +1,4 @@
+from logging import Logger
 from typing import Optional
 
 from ordered_set import OrderedSet
@@ -25,7 +26,7 @@ class IsLastSubsetError(ValidationError):
     return f"The last subset could not be removed!"
 
 
-def add_subsets(dataset: Dataset, names: OrderedSet[SubsetName]) -> ExecutionResult:
+def add_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logger) -> ExecutionResult:
   if error := SubsetAlreadyExistsError.validate_names(dataset, names):
     return error, False
 
@@ -35,7 +36,7 @@ def add_subsets(dataset: Dataset, names: OrderedSet[SubsetName]) -> ExecutionRes
   return None, True
 
 
-def remove_subsets(dataset: Dataset, names: OrderedSet[SubsetName]) -> Optional[ValidationError]:
+def remove_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logger) -> Optional[ValidationError]:
   if error := SubsetNotExistsError.validate_names(dataset, names):
     return error, False
 
@@ -48,7 +49,7 @@ def remove_subsets(dataset: Dataset, names: OrderedSet[SubsetName]) -> Optional[
   return None, True
 
 
-def rename_subset(dataset: Dataset, name: SubsetName, new_name: SubsetName) -> Optional[ValidationError]:
+def rename_subset(dataset: Dataset, name: SubsetName, new_name: SubsetName, logger: Logger) -> Optional[ValidationError]:
   if error := SubsetNotExistsError.validate(dataset, name):
     return error, False
 

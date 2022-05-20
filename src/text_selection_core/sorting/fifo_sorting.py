@@ -1,3 +1,4 @@
+from logging import Logger
 from ordered_set import OrderedSet
 
 from text_selection_core.algorithms.fifo import get_fifo_original_positions_iterator
@@ -5,7 +6,7 @@ from text_selection_core.common import SortingDefaultParameters, validate_sortin
 from text_selection_core.globals import ExecutionResult
 
 
-def sort_fifo(default_params: SortingDefaultParameters) -> ExecutionResult:
+def sort_fifo(default_params: SortingDefaultParameters, logger: Logger) -> ExecutionResult:
   if error := validate_sorting_default_parameters(default_params):
     return error, False
 

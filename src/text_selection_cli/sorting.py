@@ -26,7 +26,7 @@ def sort_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executi
     return False, False
 
   default_params = SortingDefaultParameters(dataset, ns.subsets)
-  error, changed_anything = sort_fifo(default_params)
+  error, changed_anything = sort_fifo(default_params, flogger)
 
   success = error is None
 
@@ -56,7 +56,7 @@ def sort_reverse_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Exec
     return False, False
 
   default_params = SortingDefaultParameters(dataset, ns.subsets)
-  error, changed_anything = sort_reverse(default_params)
+  error, changed_anything = sort_reverse(default_params, flogger)
 
   success = error is None
 
@@ -92,7 +92,7 @@ def sort_after_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Exe
     return False, False
 
   default_params = SortingDefaultParameters(dataset, ns.subsets)
-  error, changed_anything = sort_after_weights(default_params, weights, logger)
+  error, changed_anything = sort_after_weights(default_params, weights, flogger)
 
   success = error is None
 

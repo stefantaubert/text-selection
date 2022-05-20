@@ -24,7 +24,7 @@ def create_uniform_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) ->
     return False, False
 
   logger.info("Creating weights...")
-  weights = get_uniform_weights(dataset.get_line_nrs())
+  weights = get_uniform_weights(dataset.get_line_nrs(), flogger)
 
   success = try_save_data_weights(ns.output, weights, logger)
 
@@ -46,7 +46,7 @@ def create_word_count_weights_ns(ns: Namespace, logger: Logger, flogger: Logger)
     return False, False
 
   logger.info("Calculating weights...")
-  weights = get_count_weights(lines, ns.sep, logger)
+  weights = get_count_weights(lines, ns.sep, flogger)
 
   success = try_save_data_weights(ns.output, weights, logger)
 
@@ -69,7 +69,7 @@ def create_weights_division_ns(ns: Namespace, logger: Logger, flogger: Logger) -
     return False, False
 
   logger.info("Dividing weights...")
-  weights = divide_weights(weights, ns.divisor, logger)
+  weights = divide_weights(weights, ns.divisor, flogger)
 
   success = try_save_data_weights(ns.weights, weights, logger)
 

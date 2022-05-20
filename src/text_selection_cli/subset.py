@@ -24,7 +24,7 @@ def rename_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executi
     return False, False
 
   logger.info("Renaming subset...")
-  error, changed_anything = rename_subset(dataset, ns.name, ns.new_name)
+  error, changed_anything = rename_subset(dataset, ns.name, ns.new_name, flogger)
 
   success = error is None
 

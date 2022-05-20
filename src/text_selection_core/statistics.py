@@ -1,4 +1,5 @@
 from collections import Counter
+from logging import Logger
 from typing import Any, Generator, Iterable, List, Optional
 from typing import OrderedDict
 from typing import OrderedDict as OrderedDictType
@@ -15,7 +16,7 @@ SPACE_DISPL = "␣"
 NOT_AVAIL_VAL = "N/A"
 
 
-def generate_statistics(dataset: Dataset, lines: Optional[Lines], ssep: str, weights: List[Tuple[str, DataWeights]]) -> Generator[Tuple[str, DataFrame], None, None]:
+def generate_statistics(dataset: Dataset, lines: Optional[Lines], ssep: str, weights: List[Tuple[str, DataWeights]], logger: Logger) -> Generator[Tuple[str, DataFrame], None, None]:
   yield "Selection", get_selection_statistics(dataset)
   if len(weights) > 0:
     yield "Weights", get_weights_statistics(weights)

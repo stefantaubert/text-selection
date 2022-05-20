@@ -1,8 +1,8 @@
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-from text_selection_cli.argparse_helper import (
-  ConvertToOrderedSetAction, parse_non_empty_or_whitespace)
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction,
+                                                parse_non_empty_or_whitespace)
 from text_selection_cli.default_args import add_dataset_argument
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import try_load_dataset, try_save_dataset
@@ -23,7 +23,7 @@ def add_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionR
     return False, False
 
   logger.info("Adding subset(s)...")
-  error, changed_anything = add_subsets(dataset, ns.names)
+  error, changed_anything = add_subsets(dataset, ns.names, flogger)
 
   success = error is None
 
@@ -53,7 +53,7 @@ def remove_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executi
     return False, False
 
   logger.info("Removing subset(s)...")
-  error, changed_anything = remove_subsets(dataset, ns.names)
+  error, changed_anything = remove_subsets(dataset, ns.names, logger)
 
   success = error is None
 

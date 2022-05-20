@@ -39,7 +39,7 @@ def select_ids_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execut
     return False, False
 
   line_numbers_zero_based = OrderedSet(nr - 1 for nr in ns.ids)
-  error, changed_anything = select_ids(dataset, ns.to_subset, line_numbers_zero_based)
+  error, changed_anything = select_ids(dataset, ns.to_subset, line_numbers_zero_based, flogger)
 
   success = error is None
 
@@ -78,7 +78,7 @@ def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
-  error, changed_anything = select_fifo(default_params, weights_params, ns.mode, logger)
+  error, changed_anything = select_fifo(default_params, weights_params, ns.mode, flogger)
 
   success = error is None
 
@@ -138,7 +138,7 @@ def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
   error, changed_anything = select_greedy(
-    default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
+    default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, flogger)
 
   success = error is None
 
@@ -187,7 +187,7 @@ def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) ->
 
   logger.info("Selecting...")
   error, changed_anything = select_greedy_epochs(
-    default_params, params, ns.epochs, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
+    default_params, params, ns.epochs, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, flogger)
 
   success = error is None
 
@@ -235,7 +235,7 @@ def kld_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executio
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
   error, changed_anything = select_kld(
-    default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, logger)
+    default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, flogger)
 
   success = error is None
 

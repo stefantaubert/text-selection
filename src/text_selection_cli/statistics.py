@@ -43,7 +43,7 @@ def statistics_generation_ns(ns: Namespace, logger: Logger, flogger: Logger) -> 
     return False, False
 
   logger.debug("Generating statistics...")
-  dfs = generate_statistics(dataset, lines, ns.sep, weights)
+  dfs = generate_statistics(dataset, lines, ns.sep, weights, flogger)
 
   stats_path = cast(Path, ns.path)
   header_indicator = "###"

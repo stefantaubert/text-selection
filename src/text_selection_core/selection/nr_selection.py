@@ -1,4 +1,4 @@
-from logging import getLogger
+from logging import Logger, getLogger
 
 from ordered_set import OrderedSet
 
@@ -24,7 +24,7 @@ class NrsNotExistError(ValidationError):
     return f"Line number(s) {', '.join(self.ids.difference(self.dataset.get_line_nrs()))} do(es) not exist in the dataset!"
 
 
-def select_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs) -> ExecutionResult:
+def select_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logger: Logger) -> ExecutionResult:
   if error := SubsetNotExistsError.validate(dataset, to_subset_name):
     return error, False
 
@@ -36,8 +36,6 @@ def select_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs) -> Ex
   new_ids = (entry_id for entry_id in nrs if entry_id not in to_subset)
   result: Subset = OrderedSet(new_ids)
   changed_anything = False
-
-  logger = getLogger(__name__)
 
   if len(result) > 0:
     logger.debug(f"Selected {len(result)} lines.")

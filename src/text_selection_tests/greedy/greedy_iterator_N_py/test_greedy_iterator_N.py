@@ -1,7 +1,7 @@
 import numpy as np
 from ordered_set import OrderedSet
 
-from text_selection.greedy.greedy_iterator import GreedyIterator
+from text_selection.greedy.greedy_iterator_N import GreedyIterator
 from text_selection.selection import FirstKeySelector
 
 

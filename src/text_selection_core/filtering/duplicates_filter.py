@@ -8,7 +8,7 @@ from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import TQDM_LINE_UNIT, ExecutionResult
 from text_selection_core.helper import get_percent_str
-from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_count,
+from text_selection_core.types import (Lines, Subset, get_subsets_line_nrs_count,
                                        get_subsets_line_nrs_gen, move_lines_to_subset)
 from text_selection_core.validation import ensure_lines_count_matches_dataset
 

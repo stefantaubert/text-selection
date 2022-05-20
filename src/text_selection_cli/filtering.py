@@ -28,8 +28,8 @@ from text_selection_core.validation import ValidationErrBase
 def get_duplicate_selection_parser(parser: ArgumentParser):
   parser.description = "Select duplicate entries."
   add_dataset_argument(parser)
-  add_file_arguments(parser)
   add_from_and_to_subsets_arguments(parser)
+  add_file_arguments(parser)
   add_dry_argument(parser)
   return select_duplicates_ns
 
@@ -58,8 +58,8 @@ def select_duplicates_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Exec
 def get_regex_match_selection_parser(parser: ArgumentParser):
   parser.description = "Select entries matching regex pattern."
   add_dataset_argument(parser)
-  add_file_arguments(parser)
   add_from_and_to_subsets_arguments(parser)
+  add_file_arguments(parser)
   parser.add_argument("pattern", type=parse_non_empty, metavar="REGEX",
                       help="to subset")
   add_dry_argument(parser)
@@ -131,8 +131,8 @@ def filter_by_string_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
 def get_unit_frequency_parser(parser: ArgumentParser):
   parser.description = "Select entries ..."
   add_dataset_argument(parser)
-  add_file_arguments(parser, True)
   add_from_and_to_subsets_arguments(parser)
+  add_file_arguments(parser, True)
   parser.add_argument("min_count", type=parse_positive_integer, metavar="MIN-COUNT",
                       help="inclusive minimum count how often all units of a sentence should occur")
   parser.add_argument("--max-count", type=get_optional(parse_integer_greater_one), metavar="MAX-COUNT",
@@ -207,9 +207,9 @@ def filter_line_unit_counts_ns(ns: Namespace, logger: Logger, flogger: Logger) -
 def get_weight_filtering_parser(parser: ArgumentParser):
   parser.description = "Select entries ..."
   add_dataset_argument(parser)
+  add_from_and_to_subsets_arguments(parser)
   parser.add_argument("weights", type=parse_existing_file, metavar="WEIGHTS-PATH",
                       help="path to the weights")
-  add_from_and_to_subsets_arguments(parser)
   parser.add_argument("min_weight", type=parse_non_negative_float, metavar="MIN-WEIGHT",
                       help="inclusive minimum weight")
   parser.add_argument("--max-weight", type=parse_positive_float, metavar="MAX-WEIGHT",

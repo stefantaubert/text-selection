@@ -63,8 +63,8 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
     to_ids_mapping = dict(enumerate(to_line_nrs, start=len(calc_line_nrs)))
     calc_line_nrs.update(to_line_nrs)
 
-  data, symbols = get_array_mp(params.lines, calc_line_nrs,
-                               params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
+  data, units = get_array_mp(params.lines, calc_line_nrs,
+                             params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
 
   if params.consider_to_subset:
     # if error := NGramsNotExistError.validate(params.lines, from_ids):
@@ -104,9 +104,9 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
       for line_nr in weights_iterator:
         result.add(line_nr)
         logger.info(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
-        uncovered_symbols = sorted(symbols[index] for index in greedy_iterator.currently_uncovered)
+        uncovered_units = sorted(units[index] for index in greedy_iterator.currently_uncovered)
         logger.debug(
-          f"Currently uncovered symbols: {' '.join(uncovered_symbols)} (#{len(uncovered_symbols)})")
+          f"Currently not completely covered units: {' '.join(uncovered_units)} (#{len(uncovered_units)})")
         pbar.update(weights_iterator.tqdm_update)
         greedy_pbar.update()
 
@@ -157,8 +157,8 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
     to_ids_mapping = dict(enumerate(to_line_nrs, start=len(calc_line_nrs)))
     calc_line_nrs.update(to_line_nrs)
 
-  data, symbols = get_array_mp(params.lines, calc_line_nrs,
-                               params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
+  data, units = get_array_mp(params.lines, calc_line_nrs,
+                             params.ssep, logger, chunksize, n_jobs, maxtasksperchild)
 
   if params.consider_to_subset:
     # if error := NGramsNotExistError.validate(params.lines, from_ids):
@@ -189,9 +189,9 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
       for line_nr in mapping_iter:
         result.add(line_nr)
         logger.info(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
-        uncovered_symbols = sorted(symbols[index] for index in greedy_iterator.currently_uncovered)
+        uncovered_units = sorted(units[index] for index in greedy_iterator.currently_uncovered)
         logger.debug(
-          f"Currently uncovered symbols: {' '.join(uncovered_symbols)} (#{len(uncovered_symbols)})")
+          f"Currently not completely covered units: {' '.join(uncovered_units)} (#{len(uncovered_units)})")
         pbar.update(epoch_iter.tqdm_update)
         greedy_pbar.update()
 

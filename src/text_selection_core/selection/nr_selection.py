@@ -4,7 +4,7 @@ from ordered_set import OrderedSet
 
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.types import Dataset, LineNrs, Subset, SubsetName, move_lines_to_subset
-from text_selection_core.validation import ensure_line_nrs_exist, ensure_subset_exists
+from text_selection_core.validation import ensure_line_nrs_exist
 
 
 def select_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logger: Logger) -> ExecutionResult:

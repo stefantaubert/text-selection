@@ -19,7 +19,7 @@ from text_selection_cli.filtering import (get_duplicate_selection_parser,
                                           get_string_filter_parser, get_unit_frequency_parser,
                                           get_vocabulary_filtering_parser,
                                           get_weight_filtering_parser)
-from text_selection_cli.globals import ExecutionResult, ExecutionResult2
+from text_selection_cli.globals import ExecutionResult, ExecutionResult
 from text_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                       init_and_return_loggers, try_init_file_logger)
 #from text_selection_app.n_grams import get_n_grams_extraction_parser
@@ -171,7 +171,7 @@ def parse_args(args: List[str]) -> None:
     parser.print_help()
     return
 
-  invoke_handler: Callable[..., ExecutionResult2] = getattr(ns, INVOKE_HANDLER_VAR)
+  invoke_handler: Callable[..., ExecutionResult] = getattr(ns, INVOKE_HANDLER_VAR)
   delattr(ns, INVOKE_HANDLER_VAR)
   log_to_file = ns.log is not None
   if log_to_file:

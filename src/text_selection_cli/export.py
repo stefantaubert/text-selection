@@ -6,9 +6,8 @@ from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction,
 from text_selection_cli.default_args import add_dataset_argument, add_file_arguments
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import try_load_dataset, try_load_file, try_save_text
-from text_selection_cli.validation import CliErrorType, CliValidationErr
 from text_selection_core.exporting.symbols_exporting import export_subset
-from text_selection_core.validation import ValidationErr, ValidationErrBase
+from text_selection_core.validation import ValidationErrBase
 
 
 def get_export_txt_parser(parser: ArgumentParser):

@@ -154,7 +154,7 @@ def get_selection_statistics(dataset: Dataset):
 def get_subset_weights_statistics(subset: Subset, weights: List[Tuple[str, DataWeights]]):
   data = []
   for weights_name, data_weights in weights:
-    data_weights_total = sum(data_weights.values())
+    data_weights_total = np.sum(data_weights)
     subset_weights = list(data_weights[k] for k in subset)
     weights_sum = sum(subset_weights)
     values = [weights_name]
@@ -202,14 +202,13 @@ def get_weights_statistics(dataset: Dataset, weights: List[Tuple[str, DataWeight
   for weights_name, data_weights in weights:
     if error := ensure_weight_line_count_matches_dataset(dataset, data_weights):
       return error
-    subset_weights = list(data_weights.values())
     data.append((
       weights_name,
-      min(subset_weights),
-      np.mean(subset_weights),
-      np.median(subset_weights),
-      max(subset_weights),
-      sum(subset_weights),
+      np.min(data_weights),
+      np.mean(data_weights),
+      np.median(data_weights),
+      np.max(data_weights),
+      np.sum(data_weights),
     ))
 
   df = DataFrame(

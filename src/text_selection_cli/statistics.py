@@ -9,9 +9,8 @@ from ordered_set import OrderedSet
 from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_file,
                                                 parse_path)
 from text_selection_cli.default_args import add_dataset_argument, add_file_arguments
-from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset,
-                                            try_load_dataset, try_load_file)
-from text_selection_core.globals import ExecutionResult, ExecutionResult
+from text_selection_cli.io_handling import try_load_data_weights, try_load_dataset, try_load_file
+from text_selection_core.globals import ExecutionResult
 from text_selection_core.statistics import generate_statistics
 from text_selection_core.validation import ValidationErrBase
 
@@ -41,7 +40,7 @@ def statistics_generation_ns(ns: Namespace, logger: Logger, flogger: Logger) -> 
 
   weights = []
   for weights_path in cast(OrderedSet[Path], ns.weights):
-    current_weights = try_load_data_weights(ns.weights, logger)
+    current_weights = try_load_data_weights(weights_path, logger)
     if isinstance(current_weights, ValidationErrBase):
       return weights
 

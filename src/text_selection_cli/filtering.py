@@ -210,8 +210,8 @@ def get_weight_filtering_parser(parser: ArgumentParser):
   add_from_and_to_subsets_arguments(parser)
   parser.add_argument("weights", type=parse_existing_file, metavar="WEIGHTS-PATH",
                       help="path to the weights")
-  parser.add_argument("min_weight", type=parse_non_negative_float, metavar="MIN-WEIGHT",
-                      help="inclusive minimum weight")
+  parser.add_argument("--min-weight", type=parse_non_negative_float, metavar="MIN-WEIGHT",
+                      help="inclusive minimum weight", default=0)
   parser.add_argument("--max-weight", type=parse_positive_float, metavar="MAX-WEIGHT",
                       help="exclusive maximum weight", default=math.inf)
   add_dry_argument(parser)

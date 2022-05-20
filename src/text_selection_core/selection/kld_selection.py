@@ -93,7 +93,7 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
 
   mapping_iterator = map_indices(kld_iterator, from_ids_mapping)
   weights_iterator = WeightsIterator(
-    mapping_iterator, weight_params.weights, weight_params.target, initial_weights)
+    mapping_iterator, weight_params.weights, weight_params.target, initial_weights, logger)
 
   result: Subset = OrderedSet()
   with tqdm(desc="KLD iterations", unit="it") as greedy_pbar:

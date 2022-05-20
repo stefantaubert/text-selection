@@ -15,7 +15,7 @@ from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_dataset)
 from text_selection_core.common import SelectionDefaultParameters, WeightSelectionParameters
-from text_selection_core.selection.fifo_selection import original_mode, select_fifo, subset_mode
+from text_selection_core.selection.fifo_selection import line_nr_mode, select_fifo, subset_mode
 from text_selection_core.selection.greedy_selection import (GreedySelectionParameters,
                                                             select_greedy, select_greedy_epochs)
 from text_selection_core.selection.kld_selection import KldSelectionParameters, select_kld
@@ -55,7 +55,7 @@ def get_fifo_selection_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   parser.add_argument("--mode", type=parse_non_empty_or_whitespace, metavar="MODE",
-                      help="mode", default="subset", choices=[subset_mode, original_mode])
+                      help="mode", default="subset", choices=[subset_mode, line_nr_mode])
   add_termination_criteria_arguments(parser)
   add_dry_argument(parser)
   return select_fifo_from_ns

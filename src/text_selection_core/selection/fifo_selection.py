@@ -15,14 +15,11 @@ from text_selection_core.types import (Subset, create_subset_if_it_not_exists,
                                        get_subsets_line_nrs_gen, move_lines_to_subset)
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
-original_mode = "original"
+line_nr_mode = "line-nr"
 subset_mode = "subset"
 
 
-def select_fifo(default_params: SelectionDefaultParameters, weight_params: WeightSelectionParameters, mode: Literal["original", "subset"], logger: Optional[Logger]) -> ExecutionResult:
-  if logger is None:
-    logger = getLogger(__name__)
-
+def select_fifo(default_params: SelectionDefaultParameters, weight_params: WeightSelectionParameters, mode: Literal["line-nr", "subset"], logger: Logger) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error
 
@@ -47,14 +44,14 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
 
   if mode == subset_mode:
     iterator = get_fifo_subset_iterator(from_ids)
-  elif mode == original_mode:
+  elif mode == line_nr_mode:
     original_line_nrs = OrderedSet(default_params.dataset.get_line_nrs())
     iterator = get_fifo_original_positions_iterator(from_ids, original_line_nrs)
   else:
     assert False
 
   weights_iterator = WeightsIterator(
-    iterator, weight_params.weights, weight_params.target, initial_weights)
+    iterator, weight_params.weights, weight_params.target, initial_weights, logger)
 
   result: Subset = OrderedSet()
   with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:

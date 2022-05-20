@@ -10,6 +10,7 @@ from text_selection_core.common import SortingDefaultParameters
 from text_selection_core.sorting.fifo_sorting import sort_fifo
 from text_selection_core.sorting.reverse_sorting import sort_reverse
 from text_selection_core.sorting.weights_sorting import sort_after_weights
+from text_selection_core.validation import ValidationErrBase
 
 
 def get_fifo_sorting_parser(parser: ArgumentParser):
@@ -22,24 +23,19 @@ def get_fifo_sorting_parser(parser: ArgumentParser):
 
 def sort_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   default_params = SortingDefaultParameters(dataset, ns.subsets)
-  error, changed_anything = sort_fifo(default_params, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = sort_fifo(default_params, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_reverse_sorting_parser(parser: ArgumentParser):
@@ -52,24 +48,19 @@ def get_reverse_sorting_parser(parser: ArgumentParser):
 
 def sort_reverse_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   default_params = SortingDefaultParameters(dataset, ns.subsets)
-  error, changed_anything = sort_reverse(default_params, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = sort_reverse(default_params, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_weight_sorting_parser(parser: ArgumentParser):
@@ -84,25 +75,20 @@ def get_weight_sorting_parser(parser: ArgumentParser):
 
 def sort_after_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   weights = try_load_data_weights(ns.weights, logger)
-  if weights is None:
-    return False, False
+  if isinstance(weights, ValidationErrBase):
+    return weights
 
   default_params = SortingDefaultParameters(dataset, ns.subsets)
-  error, changed_anything = sort_after_weights(default_params, weights, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = sort_after_weights(default_params, weights, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything

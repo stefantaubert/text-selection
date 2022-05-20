@@ -42,14 +42,14 @@ def statistics_generation_ns(ns: Namespace, logger: Logger, flogger: Logger) -> 
   weights = []
   for weights_path in cast(OrderedSet[Path], ns.weights):
     current_weights = try_load_data_weights(ns.weights, logger)
-    if current_weights is None:
-      return False, False
+    if isinstance(current_weights, ValidationErrBase):
+      return weights
 
     weights.append((weights_path.stem, current_weights))
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   logger.debug("Generating statistics...")
   # try:

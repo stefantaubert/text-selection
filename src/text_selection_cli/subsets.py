@@ -7,6 +7,7 @@ from text_selection_cli.default_args import add_dataset_argument
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import try_load_dataset, try_save_dataset
 from text_selection_core.subsets import add_subsets, remove_subsets
+from text_selection_core.validation import ValidationErrBase
 
 
 def get_subsets_creation_parser(parser: ArgumentParser):
@@ -19,24 +20,19 @@ def get_subsets_creation_parser(parser: ArgumentParser):
 
 def add_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   logger.info("Adding subset(s)...")
-  error, changed_anything = add_subsets(dataset, ns.names, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = add_subsets(dataset, ns.names, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_subsets_removal_parser(parser: ArgumentParser):
@@ -49,21 +45,16 @@ def get_subsets_removal_parser(parser: ArgumentParser):
 
 def remove_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   logger.info("Removing subset(s)...")
-  error, changed_anything = remove_subsets(dataset, ns.names, logger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = remove_subsets(dataset, ns.names, logger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything

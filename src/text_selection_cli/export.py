@@ -5,9 +5,10 @@ from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction,
                                                 parse_non_empty_or_whitespace, parse_path)
 from text_selection_cli.default_args import add_dataset_argument, add_file_arguments
 from text_selection_cli.globals import ExecutionResult
-from text_selection_cli.io_handling import try_load_dataset, try_load_file
+from text_selection_cli.io_handling import try_load_dataset, try_load_file, try_save_text
+from text_selection_cli.validation import CliErrorType, CliValidationErr
 from text_selection_core.exporting.symbols_exporting import export_subset
-from text_selection_core.validation import ValidationErrBase
+from text_selection_core.validation import ValidationErr, ValidationErrBase
 
 
 def get_export_txt_parser(parser: ArgumentParser):
@@ -27,27 +28,16 @@ def export_txt_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionRe
     return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, None
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   logger.debug("Exporting...")
-  error, text = export_subset(dataset, ns.subsets, lines, ns.lsep, flogger)
+  text = export_subset(dataset, ns.subsets, lines, ns.lsep, flogger)
+  if isinstance(text, ValidationErrBase):
+    return text
 
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, None
-
-  assert text is not None
   #logger.debug(f"Export line count: {text.count(ns.lsep) + 1}")
+  if error := try_save_text(ns.path, text, ns.encoding, logger):
+    return error
 
-  logger.info(f"Saving output to \"{ns.path.absolute()}\"...")
-  try:
-    ns.path.write_text(text, ns.encoding)
-  except Exception as ex:
-    logger.error("Output couldn't be saved!")
-    logger.exception(ex)
-    return False, None
-
-  return True, None
+  return None

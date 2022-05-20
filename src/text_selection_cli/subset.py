@@ -6,6 +6,7 @@ from text_selection_cli.default_args import add_dataset_argument
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import try_load_dataset, try_save_dataset
 from text_selection_core.subsets import rename_subset
+from text_selection_core.validation import ValidationErrBase
 
 
 def get_subset_renaming_parser(parser: ArgumentParser):
@@ -20,21 +21,16 @@ def get_subset_renaming_parser(parser: ArgumentParser):
 
 def rename_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   logger.info("Renaming subset...")
-  error, changed_anything = rename_subset(dataset, ns.name, ns.new_name, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(error.default_message)
-    return False, False
+  changed_anything = rename_subset(dataset, ns.name, ns.new_name, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything

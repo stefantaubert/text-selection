@@ -5,8 +5,7 @@ from logging import Logger
 from text_selection_cli.argparse_helper import (ConvertToSetAction, get_optional,
                                                 parse_existing_file, parse_integer_greater_one,
                                                 parse_non_empty, parse_non_negative_float,
-                                                parse_positive_float,
-                                                parse_positive_integer)
+                                                parse_positive_float, parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_dry_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments)
 from text_selection_cli.globals import ExecutionResult
@@ -23,6 +22,7 @@ from text_selection_core.filtering.unit_frequency_filter import (CountFilterPara
 from text_selection_core.filtering.vocabulary_filtering import (
   VocabularyFilterParameters, filter_lines_with_vocabulary_frequencies)
 from text_selection_core.filtering.weights_filter import WeightsFilterParameters, filter_weights
+from text_selection_core.validation import ValidationErrBase
 
 
 def get_duplicate_selection_parser(parser: ArgumentParser):
@@ -36,28 +36,23 @@ def get_duplicate_selection_parser(parser: ArgumentParser):
 
 def select_duplicates_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  error, changed_anything = filter_duplicates(default_params, lines, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = filter_duplicates(default_params, lines, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_regex_match_selection_parser(parser: ArgumentParser):
@@ -73,28 +68,23 @@ def get_regex_match_selection_parser(parser: ArgumentParser):
 
 def regex_match_selection(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  error, changed_anything = filter_regex_pattern(default_params, lines, ns.pattern, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = filter_regex_pattern(default_params, lines, ns.pattern, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_string_filter_parser(parser: ArgumentParser):
@@ -118,29 +108,24 @@ def get_string_filter_parser(parser: ArgumentParser):
 
 def filter_by_string_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  error, changed_anything = filter_by_string(
+  changed_anything = filter_by_string(
     default_params, lines, ns.starts_with, ns.ends_with, ns.contains, ns.equals, ns.mode, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_unit_frequency_parser(parser: ArgumentParser):
@@ -162,29 +147,24 @@ def get_unit_frequency_parser(parser: ArgumentParser):
 
 def filter_unit_counts_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   params = CountFilterParameters(lines, ns.sep, ns.min_count, ns.max_count, ns.all, ns.mode)
-  error, changed_anything = filter_lines_with_unit_frequencies(default_params, params, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = filter_lines_with_unit_frequencies(default_params, params, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_line_unit_frequency_parser(parser: ArgumentParser):
@@ -204,29 +184,24 @@ def get_line_unit_frequency_parser(parser: ArgumentParser):
 
 def filter_line_unit_counts_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   params = LineUnitFrequencyFilterParameters(lines, ns.sep, ns.min_count, ns.max_count, ns.mode)
-  error, changed_anything = filter_lines_with_line_unit_frequencies(default_params, params, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = filter_lines_with_line_unit_frequencies(default_params, params, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_weight_filtering_parser(parser: ArgumentParser):
@@ -245,29 +220,24 @@ def get_weight_filtering_parser(parser: ArgumentParser):
 
 def filter_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   weights = try_load_data_weights(ns.weights, logger)
-  if weights is None:
-    return False, False
+  if isinstance(weights, ValidationErrBase):
+    return weights
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   params = WeightsFilterParameters(weights, ns.min_weight, ns.max_weight)
-  error, changed_anything = filter_weights(default_params, params, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = filter_weights(default_params, params, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_vocabulary_filtering_parser(parser: ArgumentParser):
@@ -289,12 +259,12 @@ def get_vocabulary_filtering_parser(parser: ArgumentParser):
 
 def filter_by_vocabulary_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   logger.info(f"Reading \"{ns.vocabulary.absolute()}\"...")
   try:
@@ -312,18 +282,13 @@ def filter_by_vocabulary_ns(ns: Namespace, logger: Logger, flogger: Logger) -> E
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   params = VocabularyFilterParameters(
     lines, ns.sep, ns.min_count, ns.max_count, vocabulary, ns.mode)
-  error, changed_anything = filter_lines_with_vocabulary_frequencies(
+  changed_anything = filter_lines_with_vocabulary_frequencies(
     default_params, params, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything

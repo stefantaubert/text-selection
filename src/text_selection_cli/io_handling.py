@@ -37,6 +37,16 @@ def try_load_file(path: Path, encoding: str, lsep: str, logger: Logger) -> Union
   del text
   return lines
 
+def try_save_text(path: Path, text: str, encoding: str, logger: Logger) -> Optional[CliValidationErr]:
+  logger.info(f"Saving text to \"{path.absolute()}\"...")
+  try:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding)
+  except Exception as ex:
+    logger.exception(ex)
+    return CliValidationErr(CliErrorType.FILE_NOT_WRITEABLE, "Text", path.absolute())
+  return None
+
 
 def try_load_dataset(path: Path, logger: Logger) -> Union[CliValidationErr, Dataset]:
   logger.info(f"Reading dataset from \"{path.absolute()}\"...")

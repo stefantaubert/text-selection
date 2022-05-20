@@ -20,6 +20,7 @@ from text_selection_core.selection.greedy_selection import (GreedySelectionParam
                                                             select_greedy, select_greedy_epochs)
 from text_selection_core.selection.kld_selection import KldSelectionParameters, select_kld
 from text_selection_core.selection.nr_selection import select_ids
+from text_selection_core.validation import ValidationErrBase
 
 
 def get_id_selection_parser(parser: ArgumentParser):
@@ -34,24 +35,19 @@ def get_id_selection_parser(parser: ArgumentParser):
 
 def select_ids_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   line_numbers_zero_based = OrderedSet(nr - 1 for nr in ns.ids)
-  error, changed_anything = select_ids(dataset, ns.to_subset, line_numbers_zero_based, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  changed_anything = select_ids(dataset, ns.to_subset, line_numbers_zero_based, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_fifo_selection_parser(parser: ArgumentParser):
@@ -67,30 +63,25 @@ def get_fifo_selection_parser(parser: ArgumentParser):
 
 def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   weights = try_load_data_weights(ns.weights, logger)
-  if weights is None:
-    return False, False
+  if isinstance(weights, ValidationErrBase):
+    return weights
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
-  error, changed_anything = select_fifo(default_params, weights_params, ns.mode, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(error.default_message)
-    return False, False
+  changed_anything = select_fifo(default_params, weights_params, ns.mode, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def add_termination_criteria_arguments(parser: ArgumentParser) -> None:
@@ -120,37 +111,32 @@ def get_greedy_selection_parser(parser: ArgumentParser):
 
 def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   weights = try_load_data_weights(ns.weights, logger)
-  if weights is None:
-    return False, False
+  if isinstance(weights, ValidationErrBase):
+    return weights
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   params = GreedySelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
-  error, changed_anything = select_greedy(
+  changed_anything = select_greedy(
     default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_greedy_selection_epoch_parser(parser: ArgumentParser):
@@ -170,12 +156,12 @@ def get_greedy_selection_epoch_parser(parser: ArgumentParser):
 
 def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   # weights = try_load_data_weights(ns.weights, logger)
   # if weights is None:
@@ -185,21 +171,16 @@ def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) ->
   params = GreedySelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
 
   logger.info("Selecting...")
-  error, changed_anything = select_greedy_epochs(
+  changed_anything = select_greedy_epochs(
     default_params, params, ns.epochs, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything
 
 
 def get_kld_selection_parser(parser: ArgumentParser):
@@ -217,34 +198,29 @@ def get_kld_selection_parser(parser: ArgumentParser):
 
 def kld_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, False
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
-  if lines is None:
-    return False, False
+  if isinstance(lines, ValidationErrBase):
+    return lines
 
   weights = try_load_data_weights(ns.weights, logger)
-  if weights is None:
-    return False, False
+  if isinstance(weights, ValidationErrBase):
+    return weights
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   params = KldSelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
-  error, changed_anything = select_kld(
+  changed_anything = select_kld(
     default_params, params, weights_params, ns.chunksize, ns.n_jobs, ns.maxtasksperchild, flogger)
-
-  success = error is None
-
-  if not success:
-    logger.error(f"{error.default_message}")
-    return False, False
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
 
   if changed_anything and not ns.dry:
-    success = try_save_dataset(ns.dataset, dataset, logger)
-    if not success:
-      return False, False
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
 
-  return True, changed_anything
+  return changed_anything

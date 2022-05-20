@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from logging import Logger, getLogger
-from typing import Optional, Set
+from typing import Optional
 
 import numpy as np
 from ordered_set import OrderedSet
@@ -17,7 +17,7 @@ from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_initial_weights, get_target_weights_from_percent
 from text_selection_core.selection.symbol_extractor import get_array_mp
 from text_selection_core.types import Lines, Subset, get_subsets_line_nrs_gen, move_lines_to_subset
-from text_selection_core.validation import LinesCountNotMatchingError
+from text_selection_core.validation import ensure_lines_count_matches_dataset
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
 
@@ -35,13 +35,13 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
   del greedy_logger
 
   if error := validate_selection_default_parameters(default_params):
-    return error, False
+    return error
 
   if error := validate_weights_parameters(weight_params, default_params.dataset):
-    return error, False
+    return error
 
-  if error := LinesCountNotMatchingError.validate(default_params.dataset, params.lines):
-    return error, False
+  if error := ensure_lines_count_matches_dataset(default_params.dataset, params.lines):
+    return error
 
   from_line_nrs = OrderedSet(get_subsets_line_nrs_gen(default_params.dataset,
                                                       default_params.from_subset_names))
@@ -124,16 +124,16 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
   else:
     logger.info("Didn't selected anything!")
 
-  return None, changed_anything
+  return changed_anything
 
 
 def select_greedy_epochs(default_params: SelectionDefaultParameters, params: GreedySelectionParameters, epochs: int, chunksize: int, n_jobs: int, maxtasksperchild: Optional[int], logger: Logger) -> ExecutionResult:
   assert epochs > 0
   if error := validate_selection_default_parameters(default_params):
-    return error, False
+    return error
 
-  if error := LinesCountNotMatchingError.validate(default_params.dataset, params.lines):
-    return error, False
+  if error := ensure_lines_count_matches_dataset(default_params.dataset, params.lines):
+    return error
 
   from_line_nrs = OrderedSet(get_subsets_line_nrs_gen(default_params.dataset,
                                                       default_params.from_subset_names))
@@ -208,4 +208,4 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
   else:
     logger.info("Didn't selected anything!")
 
-  return None, changed_anything
+  return changed_anything

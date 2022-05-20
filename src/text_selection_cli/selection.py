@@ -5,9 +5,8 @@ from logging import Logger
 from ordered_set import OrderedSet
 
 from text_selection.selection import SelectionMode
-from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, ConvertToSetAction,
-                                                parse_existing_file, parse_non_empty_or_whitespace,
-                                                parse_non_negative_float, parse_positive_float,
+from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_file,
+                                                parse_non_empty_or_whitespace, parse_positive_float,
                                                 parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_dry_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments,

@@ -19,7 +19,7 @@ from text_selection_cli.filtering import (get_duplicate_selection_parser,
                                           get_string_filter_parser, get_unit_frequency_parser,
                                           get_vocabulary_filtering_parser,
                                           get_weight_filtering_parser)
-from text_selection_cli.globals import ExecutionResult
+from text_selection_cli.globals import ExecutionResult, ExecutionResult2
 from text_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                       init_and_return_loggers, try_init_file_logger)
 #from text_selection_app.n_grams import get_n_grams_extraction_parser
@@ -35,6 +35,7 @@ from text_selection_cli.subsets import get_subsets_creation_parser, get_subsets_
 from text_selection_cli.weights import (get_uniform_weights_creation_parser,
                                         get_weights_division_parser,
                                         get_word_count_weights_creation_parser)
+from text_selection_core.validation import ValidationErrBase
 
 prog_name = "text-selection"
 
@@ -166,61 +167,62 @@ def parse_args(args: List[str]) -> None:
   if local_debugging:
     root_logger.debug(f"Parsed arguments: {str(ns)}")
 
-  if hasattr(ns, INVOKE_HANDLER_VAR):
-    invoke_handler: Callable[..., ExecutionResult] = getattr(ns, INVOKE_HANDLER_VAR)
-    delattr(ns, INVOKE_HANDLER_VAR)
-    log_to_file = ns.log is not None
+  if not hasattr(ns, INVOKE_HANDLER_VAR):
+    parser.print_help()
+    return
+
+  invoke_handler: Callable[..., ExecutionResult2] = getattr(ns, INVOKE_HANDLER_VAR)
+  delattr(ns, INVOKE_HANDLER_VAR)
+  log_to_file = ns.log is not None
+  if log_to_file:
+    log_to_file = try_init_file_logger(ns.log, local_debugging or ns.debug)
+    if not log_to_file:
+      root_logger.warning("Logging to file is not possible.")
+
+  flogger = get_file_logger()
+  if not local_debugging:
+    sys_version = sys.version.replace('\n', '')
+    flogger.debug(f"CLI version: {__version__}")
+    flogger.debug(f"Python version: {sys_version}")
+    flogger.debug("Modules: %s", ', '.join(sorted(p.name for p in iter_modules())))
+
+    my_system = platform.uname()
+    flogger.debug(f"System: {my_system.system}")
+    flogger.debug(f"Node Name: {my_system.node}")
+    flogger.debug(f"Release: {my_system.release}")
+    flogger.debug(f"Version: {my_system.version}")
+    flogger.debug(f"Machine: {my_system.machine}")
+    flogger.debug(f"Processor: {my_system.processor}")
+
+  flogger.debug(f"Received arguments: {str(args)}")
+  flogger.debug(f"Parsed arguments: {str(ns)}")
+
+  start = perf_counter()
+  cmd_flogger, cmd_logger = init_and_return_loggers(__name__)
+
+  #success, changed_anything = invoke_handler(ns, cmd_logger, cmd_flogger)
+  result = invoke_handler(ns, cmd_logger, cmd_flogger)
+  if isinstance(result, ValidationErrBase):
+    cmd_logger.error(f"Validation error: {result.default_message}")
     if log_to_file:
-      log_to_file = try_init_file_logger(ns.log, local_debugging or ns.debug)
-      if not log_to_file:
-        root_logger.warning("Logging to file is not possible.")
-
-    flogger = get_file_logger()
-    if not local_debugging:
-      sys_version = sys.version.replace('\n', '')
-      flogger.debug(f"CLI version: {__version__}")
-      flogger.debug(f"Python version: {sys_version}")
-      flogger.debug("Modules: %s", ', '.join(sorted(p.name for p in iter_modules())))
-
-      my_system = platform.uname()
-      flogger.debug(f"System: {my_system.system}")
-      flogger.debug(f"Node Name: {my_system.node}")
-      flogger.debug(f"Release: {my_system.release}")
-      flogger.debug(f"Version: {my_system.version}")
-      flogger.debug(f"Machine: {my_system.machine}")
-      flogger.debug(f"Processor: {my_system.processor}")
-
-    flogger.debug(f"Received arguments: {str(args)}")
-    flogger.debug(f"Parsed arguments: {str(ns)}")
-
-    start = perf_counter()
-    cmd_flogger, cmd_logger = init_and_return_loggers(__name__)
-    success, changed_anything = invoke_handler(ns, cmd_logger, cmd_flogger)
-
-    if success:
-      root_logger.info(f"{CONSOLE_PNT_GREEN}Everything was successfull!{CONSOLE_PNT_RST}")
-      flogger.info("Everything was successfull!")
+      root_logger.error("Not everything was successful! See log for details.")
     else:
-      if log_to_file:
-        root_logger.error(
-          "Not everything was successfull! See log for details.")
-      else:
-        root_logger.error(
-          "Not everything was successfull!")
-      flogger.error("Not everything was successfull!")
-
-    if changed_anything is not None and not changed_anything:
+      root_logger.error("Not everything was successful!")
+    flogger.error("Not everything was successful!")
+  else:
+    root_logger.info(f"{CONSOLE_PNT_GREEN}Everything was successful!{CONSOLE_PNT_RST}")
+    flogger.info("Everything was successful!")
+    assert result is None or isinstance(result, bool)
+    if result is not None and not result:
       root_logger.info("Didn't changed anything.")
       flogger.info("Didn't changed anything.")
 
-    duration = perf_counter() - start
-    flogger.debug(f"Total duration (s): {duration}")
+  duration = perf_counter() - start
+  flogger.debug(f"Total duration (s): {duration}")
 
-    if log_to_file:
-      # path not encapsulated in "" because it is only console out
-      root_logger.info(f"Written log to: {ns.log.absolute()}")
-  else:
-    parser.print_help()
+  if log_to_file:
+    # path not encapsulated in "" because it is only console out
+    root_logger.info(f"Written log to: {ns.log.absolute()}")
 
 
 def run():

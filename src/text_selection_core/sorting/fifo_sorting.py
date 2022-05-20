@@ -8,7 +8,7 @@ from text_selection_core.globals import ExecutionResult
 
 def sort_fifo(default_params: SortingDefaultParameters, logger: Logger) -> ExecutionResult:
   if error := validate_sorting_default_parameters(default_params):
-    return error, False
+    return error
 
   changed_anything = False
   for subset_name in default_params.subset_names:
@@ -21,4 +21,4 @@ def sort_fifo(default_params: SortingDefaultParameters, logger: Logger) -> Execu
     if ordered_subset != subset:
       default_params.dataset.subsets[subset_name] = ordered_subset
       changed_anything = True
-  return None, changed_anything
+  return changed_anything

@@ -1,10 +1,9 @@
-from collections import Counter, OrderedDict
+from collections import Counter
 from functools import partial
 from itertools import chain
 from logging import Logger
 from multiprocessing import Pool
-from time import perf_counter
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 from ordered_set import OrderedSet

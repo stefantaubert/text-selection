@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from logging import Logger, getLogger
-from typing import Generator, Iterable, Iterator, Tuple
+from logging import Logger
+from typing import Generator, Iterator
 
 from ordered_set import OrderedSet
 
@@ -11,7 +11,7 @@ from text_selection_core.helper import get_percent_str
 from text_selection_core.types import (DataWeights, LineNr, Subset, Weight,
                                        get_subsets_line_nrs_count, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
-from text_selection_core.validation import WeightsLinesCountNotMatchingError
+from text_selection_core.validation import ensure_weight_line_count_matches_dataset
 
 
 @dataclass()
@@ -25,10 +25,10 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
   assert 0 <= params.from_weight_incl < params.to_weight_excl
 
   if error := validate_selection_default_parameters(default_params):
-    return error, False
+    return error
 
-  if error := WeightsLinesCountNotMatchingError.validate(default_params.dataset, params.weights):
-    return error, False
+  if error := ensure_weight_line_count_matches_dataset(default_params.dataset, params.weights):
+    return error
 
   logger.debug(params)
   select_from_nrs = get_subsets_line_nrs_gen(
@@ -47,7 +47,7 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
     for line_nr in result:
       logger.debug(f"Filtered L{line_nr+1} with weight: {params.weights[line_nr]}.")
     changed_anything = True
-  return None, changed_anything
+  return changed_anything
 
 
 def get_matching_lines(weights: Weight, line_nrs: Iterator[LineNr], from_weight_incl: Weight, to_weight_excl: Weight) -> Generator[LineNr, None, None]:

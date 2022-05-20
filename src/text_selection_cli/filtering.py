@@ -4,10 +4,9 @@ from logging import Logger
 
 from text_selection_cli.argparse_helper import (ConvertToSetAction, get_optional,
                                                 parse_existing_file, parse_integer_greater_one,
-                                                parse_non_empty, parse_non_empty_or_whitespace,
-                                                parse_non_negative_float,
-                                                parse_non_negative_integer, parse_path,
-                                                parse_positive_float, parse_positive_integer)
+                                                parse_non_empty, parse_non_negative_float,
+                                                parse_positive_float,
+                                                parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_dry_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments)
 from text_selection_cli.globals import ExecutionResult

@@ -1,139 +1,130 @@
+from abc import abstractmethod
+from enum import IntEnum
+from typing import Optional
+
 from ordered_set import OrderedSet
 
-from text_selection_core.types import Dataset, DataWeights, Lines, SubsetName
+from text_selection_core.types import Dataset, DataWeights, LineNrs, Lines, SubsetName
 
 
-class ValidationError():
-  # pylint: disable=no-self-use
+class ErrorType(IntEnum):
+  LINES_MISMATCH = 0
+  WEIGHTS_LINES_MISMATCH = 1
+  SUBSET_ALREADY_EXISTS = 2
+  IS_LAST_SUBSET = 3
+  SUBSET_NOT_EXIST = 4
+  INVALID_PERCENT = 5
+  NON_DISTINCT_SUBSETS = 6
+  LINE_NRS_NOT_EXIST = 7
+
+
+_DEFAULT_ERROR_PATTERNS = {
+  ErrorType.LINES_MISMATCH:
+    "Line count does not match with dataset lines count ({0} vs. {1})!",
+  ErrorType.WEIGHTS_LINES_MISMATCH:
+    "Weights dimension does not match with dataset lines count ({0} vs. {1})!",
+  ErrorType.SUBSET_ALREADY_EXISTS:
+    "The subset \"{0}\" already exists!",
+  ErrorType.IS_LAST_SUBSET:
+    "The last subset could not be removed!",
+  ErrorType.SUBSET_NOT_EXIST:
+    "The subset \"{0}\" does not exist!",
+  ErrorType.INVALID_PERCENT:
+    "The percentual value \"{0}\" is invalid, it needs to be between in interval (0, 100]!",
+  ErrorType.NON_DISTINCT_SUBSETS:
+    "The subsets need to be distinct!",
+  ErrorType.LINE_NRS_NOT_EXIST:
+    "The line number(s) {0} do(es) not exist in the dataset!",
+}
+
+
+class ValidationErrBase():
   @property
+  @abstractmethod
   def default_message(self) -> str:
-    return ""
+    ...
 
 
-class InternalError(ValidationError):
-  @property
-  def default_message(self) -> str:
-    return "Internal error!"
-
-
-class SubsetAlreadyExistsError(ValidationError):
-  def __init__(self, dataset: Dataset, name: SubsetName) -> None:
+class ValidationErr(ValidationErrBase):
+  def __init__(self, error_type: ErrorType, *msg_args: object) -> None:
     super().__init__()
-    self.dataset = dataset
-    self.name = name
-
-  @classmethod
-  def validate(cls, dataset: Dataset, name: SubsetName):
-    if name in dataset.subsets:
-      return cls(dataset, name)
-    return None
-
-  @classmethod
-  def validate_names(cls, dataset: Dataset, names: OrderedSet[SubsetName]):
-    for name in names:
-      if error := cls.validate(dataset, name):
-        return error
-    return None
+    self.__error_type = error_type
+    self.__args = msg_args
 
   @property
   def default_message(self) -> str:
-    return f"Subset \"{self.name}\" already exists!"
-
-
-class SubsetNotExistsError(ValidationError):
-  def __init__(self, dataset: Dataset, name: SubsetName) -> None:
-    super().__init__()
-    self.dataset = dataset
-    self.name = name
-
-  @classmethod
-  def validate(cls, dataset: Dataset, name: SubsetName):
-    if name not in dataset.subsets:
-      return cls(dataset, name)
-    return None
-
-  @classmethod
-  def validate_names(cls, dataset: Dataset, names: OrderedSet[SubsetName]):
-    for name in names:
-      if error := cls.validate(dataset, name):
-        return error
-    return None
+    result = str.format(_DEFAULT_ERROR_PATTERNS[self.__error_type], *self.__args)
+    return result
 
   @property
-  def default_message(self) -> str:
-    choose_from = iter(self.dataset.subsets)
-    choose_from = (f"\"{x}\"" for x in choose_from)
-    return f"Subset \"{self.name}\" does not exist! Choose from: {', '.join(choose_from)}."
-
-
-class InvalidPercentualValueError(ValidationError):
-  def __init__(self, percent: float) -> None:
-    super().__init__()
-    self.percent = percent
-
-  @classmethod
-  def validate(cls, percent: float):
-    if not 0 < percent <= 100:
-      return cls(percent)
-    return None
+  def error_type(self) -> ErrorType:
+    return self.__error_type
 
   @property
-  def default_message(self) -> str:
-    return f"Invalid percent!"
+  def msg_args(self) -> object:
+    return self.__args
 
 
-class NonDivergentSubsetsError(ValidationError):
-  def __init__(self, name: SubsetName) -> None:
-    super().__init__()
-    self.name = name
+def ensure_weight_line_count_matches_dataset(dataset: Dataset, weights: DataWeights) -> Optional[ValidationErr]:
+  if len(weights) != dataset.line_count:
+    return ValidationErr(ErrorType.WEIGHTS_LINES_MISMATCH, len(weights), dataset.line_count)
+  return None
 
-  @classmethod
-  def validate(cls, from_subset_name: SubsetName, to_subset_name: SubsetName):
+
+def ensure_lines_count_matches_dataset(dataset: Dataset, lines: Lines) -> Optional[ValidationErr]:
+  if len(lines) != dataset.line_count:
+    return ValidationErr(ErrorType.LINES_MISMATCH, len(lines), dataset.line_count)
+  return None
+
+
+def ensure_subset_not_already_exists(dataset: Dataset, subset: SubsetName) -> Optional[ValidationErr]:
+  if subset in dataset.subsets:
+    return ValidationErr(ErrorType.SUBSET_ALREADY_EXISTS, subset)
+  return None
+
+
+def ensure_subsets_not_already_exist(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> Optional[ValidationErr]:
+  for subset in subsets:
+    if error := ensure_subset_not_already_exists(dataset, subset):
+      return error
+  return None
+
+
+def ensure_subset_exists(dataset: Dataset, subset: SubsetName) -> Optional[ValidationErr]:
+  if subset not in dataset.subsets:
+    return ValidationErr(ErrorType.SUBSET_NOT_EXIST, subset)
+  return None
+
+
+def ensure_subsets_exist(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> Optional[ValidationErr]:
+  for subset in subsets:
+    if error := ensure_subset_exists(dataset, subset):
+      return error
+  return None
+
+
+def ensure_not_only_one_subset_exists(dataset: Dataset) -> Optional[ValidationErr]:
+  if len(dataset) == 1:
+    return ValidationErr(ErrorType.IS_LAST_SUBSET)
+  return None
+
+
+def ensure_percentual_value_is_valid(percent: float) -> Optional[ValidationErr]:
+  if not 0 < percent <= 100:
+    return ValidationErr(ErrorType.INVALID_PERCENT, percent)
+  return None
+
+
+def ensure_subsets_are_distinct(from_subset_names: OrderedSet[SubsetName], to_subset_name: SubsetName) -> Optional[ValidationErr]:
+  for from_subset_name in from_subset_names:
     if from_subset_name == to_subset_name:
-      return cls(from_subset_name)
-    return None
-
-  @classmethod
-  def validate_names(cls, from_subset_names: OrderedSet[SubsetName], to_subset_name: SubsetName):
-    for from_subset_name in from_subset_names:
-      if error := cls.validate(from_subset_name, to_subset_name):
-        return error
-    return None
-
-  @property
-  def default_message(self) -> str:
-    return "Subsets need to be distinct!"
+      return ValidationErr(ErrorType.NON_DISTINCT_SUBSETS)
+  return None
 
 
-class WeightsLinesCountNotMatchingError(ValidationError):
-  def __init__(self, dataset: Dataset, weights: DataWeights) -> None:
-    super().__init__()
-    self.dataset = dataset
-    self.weights = weights
-
-  @classmethod
-  def validate(cls, dataset: Dataset, weights: DataWeights):
-    if len(weights) != dataset.line_count:
-      return cls(dataset, weights)
-    return None
-
-  @property
-  def default_message(self) -> str:
-    return "Weights line count does not match with dataset lines count!"
-
-
-class LinesCountNotMatchingError(ValidationError):
-  def __init__(self, dataset: Dataset, symbols: Lines) -> None:
-    super().__init__()
-    self.dataset = dataset
-    self.symbols = symbols
-
-  @classmethod
-  def validate(cls, dataset: Dataset, lines: Lines):
-    if dataset.line_count != len(lines):
-      return cls(dataset, lines)
-    return None
-
-  @property
-  def default_message(self) -> str:
-    return "Lines count does not match with count from dataset!"
+def ensure_line_nrs_exist(dataset: Dataset, line_nrs: LineNrs) -> Optional[ValidationErr]:
+  missing_line_nrs = line_nrs.difference(dataset.get_line_nrs())
+  if len(missing_line_nrs) > 0:
+    missing_line_nrs_str = ', '.join(missing_line_nrs)
+    return ValidationErr(ErrorType.LINE_NRS_NOT_EXIST, missing_line_nrs_str)
+  return None

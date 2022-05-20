@@ -5,9 +5,9 @@ from ordered_set import OrderedSet
 
 from text_selection.selection import FirstKeySelector, SelectionMode
 from text_selection_core.types import Dataset, DataWeights, SubsetName, Weight
-from text_selection_core.validation import (InvalidPercentualValueError, NonDivergentSubsetsError,
-                                            SubsetNotExistsError, ValidationError,
-                                            WeightsLinesCountNotMatchingError)
+from text_selection_core.validation import (ValidationErr, ensure_percentual_value_is_valid,
+                                            ensure_subsets_are_distinct, ensure_subsets_exist,
+                                            ensure_weight_line_count_matches_dataset)
 
 
 @dataclass()
@@ -31,29 +31,35 @@ class SortingDefaultParameters():
   subset_names: OrderedSet[SubsetName]
 
 
-def validate_selection_default_parameters(params: SelectionDefaultParameters) -> Optional[ValidationError]:
-  if error := SubsetNotExistsError.validate_names(params.dataset, params.from_subset_names):
-    return error
+def validate_selection_default_parameters(params: SelectionDefaultParameters) -> Optional[ValidationErr]:
+  # if error := ensure_subsets_exist(params.dataset, params.from_subset_names):
+  #   return error
 
   # if error := SubsetNotExistsError.validate(params.dataset, params.to_subset_name):
   #   return error
 
-  if error := NonDivergentSubsetsError.validate_names(params.from_subset_names, params.to_subset_name):
+  if error := ensure_subsets_are_distinct(params.from_subset_names, params.to_subset_name):
     return error
 
+  return None
 
-def validate_weights_parameters(params: WeightSelectionParameters, dataset: Dataset) -> Optional[ValidationError]:
-  if error := WeightsLinesCountNotMatchingError.validate(dataset, params.weights):
+
+def validate_weights_parameters(params: WeightSelectionParameters, dataset: Dataset) -> Optional[ValidationErr]:
+  if error := ensure_weight_line_count_matches_dataset(dataset, params.weights):
     return error
 
   if params.target_percent:
-    if error := InvalidPercentualValueError.validate(params.target):
+    if error := ensure_percentual_value_is_valid(params.target):
       return error
 
+  return None
 
-def validate_sorting_default_parameters(params: SortingDefaultParameters) -> Optional[ValidationError]:
-  if error := SubsetNotExistsError.validate_names(params.dataset, params.subset_names):
+
+def validate_sorting_default_parameters(params: SortingDefaultParameters) -> Optional[ValidationErr]:
+  if error := ensure_subsets_exist(params.dataset, params.subset_names):
     return error
+
+  return None
 
 
 # class NGramsNotExistError(ValidationError):

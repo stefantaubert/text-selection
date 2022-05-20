@@ -33,4 +33,4 @@ def create_dataset_from_text_ns(ns: Namespace, logger: Logger, flogger: Logger) 
 
   success = try_save_dataset(ns.dataset, dataset, logger)
 
-  return success, None
+  return None

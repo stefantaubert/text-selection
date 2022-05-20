@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Optional, Tuple
+from typing import Optional, Union
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
@@ -8,16 +8,16 @@ from text_selection_core.globals import TQDM_LINE_UNIT
 from text_selection_core.helper import get_percent_str
 from text_selection_core.types import (Dataset, Lines, SubsetName, get_subsets_line_nrs_count,
                                        get_subsets_line_nrs_gen)
-from text_selection_core.validation import (LinesCountNotMatchingError, SubsetNotExistsError,
-                                            ValidationError)
+from text_selection_core.validation import (ValidationErr, ensure_lines_count_matches_dataset,
+                                            ensure_subsets_exist)
 
 
-def export_subset(dataset: Dataset, subset_names: OrderedSet[SubsetName], lines: Lines, lsep: str, logger: Logger) -> Tuple[Optional[ValidationError], str]:
-  if error := SubsetNotExistsError.validate_names(dataset, subset_names):
-    return error, None
+def export_subset(dataset: Dataset, subset_names: OrderedSet[SubsetName], lines: Lines, lsep: str, logger: Logger) -> Union[Optional[ValidationErr], str]:
+  if error := ensure_subsets_exist(dataset, subset_names):
+    return error
 
-  if error := LinesCountNotMatchingError.validate(dataset, lines):
-    return error, None
+  if error := ensure_lines_count_matches_dataset(dataset, lines):
+    return error
 
   select_from_nrs = get_subsets_line_nrs_gen(
     dataset, subset_names)
@@ -34,4 +34,4 @@ def export_subset(dataset: Dataset, subset_names: OrderedSet[SubsetName], lines:
   result = lsep.join(selected_lines)
   logger.info(f"Exported {select_from_count} out of all {dataset.line_count} lines ({get_percent_str(select_from_count, dataset.line_count)}). {dataset.line_count-select_from_count} lines were not exported.")
 
-  return None, result
+  return result

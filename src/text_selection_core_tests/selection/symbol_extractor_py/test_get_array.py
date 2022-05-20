@@ -1,9 +1,7 @@
 import logging
-import random
 from logging import getLogger
 from time import perf_counter
 
-import numpy as np
 
 from text_selection_core.selection.symbol_extractor import get_array
 from text_selection_core_tests.selection.symbol_extractor_py.generate_test_data import \

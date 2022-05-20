@@ -46,7 +46,7 @@ class Dataset():
     return get_line_nrs(self.__line_count)
 
 
-def ensure_subset_exists(dataset: Dataset, name: SubsetName, logger: Logger) -> bool:
+def create_subset_if_it_not_exists(dataset: Dataset, name: SubsetName, logger: Logger) -> bool:
   if name not in dataset.subsets:
     dataset.subsets[name] = OrderedSet()
     logger.debug(f"Created subset \"{name}\".")
@@ -56,7 +56,7 @@ def ensure_subset_exists(dataset: Dataset, name: SubsetName, logger: Logger) -> 
 
 def move_lines_to_subset(dataset: Dataset, nrs: LineNrs, target: SubsetName, logger: Logger) -> None:
   logger.debug("Adjusting selection...")
-  ensure_subset_exists(dataset, target, logger)
+  create_subset_if_it_not_exists(dataset, target, logger)
   target_subset = dataset.subsets[target]
   logger.debug("Update target...")
   target_subset.update(nrs)
@@ -72,9 +72,11 @@ def get_subsets_line_nrs_gen(dataset: Dataset, subsets: OrderedSet[SubsetName]) 
   lines = (line for subset in from_subsets for line in subset)
   return lines
 
+
 def get_subsets_line_nrs_count(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> int:
   result = sum(len(dataset.subsets[from_subset_name]) for from_subset_name in subsets)
   return result
+
 
 def get_subsets_line_nrs(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> Subset:
   result = OrderedSet()

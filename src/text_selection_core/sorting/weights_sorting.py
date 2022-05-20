@@ -11,7 +11,7 @@ from text_selection_core.types import DataWeights
 
 def sort_after_weights(default_params: SortingDefaultParameters, weights: DataWeights, logger: Logger) -> ExecutionResult:
   if error := validate_sorting_default_parameters(default_params):
-    return error, False
+    return error
 
   changed_anything = False
   for subset_name in default_params.subset_names:
@@ -30,4 +30,4 @@ def sort_after_weights(default_params: SortingDefaultParameters, weights: DataWe
     if ordered_subset != subset:
       default_params.dataset.subsets[subset_name] = ordered_subset
       changed_anything = True
-  return None, changed_anything
+  return changed_anything

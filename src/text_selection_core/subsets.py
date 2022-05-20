@@ -1,61 +1,45 @@
 from logging import Logger
-from typing import Optional
 
 from ordered_set import OrderedSet
 
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.types import Dataset, SubsetName
-from text_selection_core.validation import (SubsetAlreadyExistsError,
-                                            SubsetNotExistsError,
-                                            ValidationError)
-
-
-class IsLastSubsetError(ValidationError):
-  def __init__(self, dataset: Dataset) -> None:
-    super().__init__()
-    self.dataset = dataset
-
-  @classmethod
-  def validate(cls, dataset: Dataset):
-    if len(dataset) == 1:
-      return cls(dataset)
-    return None
-
-  @property
-  def default_message(self) -> str:
-    return f"The last subset could not be removed!"
+from text_selection_core.validation import (ensure_not_only_one_subset_exists, ensure_subset_exists,
+                                            ensure_subset_not_already_exists,
+                                            ensure_subsets_exist,
+                                            ensure_subsets_not_already_exist)
 
 
 def add_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logger) -> ExecutionResult:
-  if error := SubsetAlreadyExistsError.validate_names(dataset, names):
-    return error, False
+  if error := ensure_subsets_not_already_exist(dataset, names):
+    return error
 
   for name in names:
     dataset.subsets[name] = OrderedSet()
 
-  return None, True
+  return True
 
 
-def remove_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logger) -> Optional[ValidationError]:
-  if error := SubsetNotExistsError.validate_names(dataset, names):
-    return error, False
+def remove_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logger) -> ExecutionResult:
+  if error := ensure_subsets_exist(dataset, names):
+    return error
 
-  if error := IsLastSubsetError.validate(dataset):
-    return error, False
+  if error := ensure_not_only_one_subset_exists(dataset):
+    return error
 
   for name in names:
-    dataset.pop(name)
+    dataset.subsets.pop(name)
 
-  return None, True
+  return True
 
 
-def rename_subset(dataset: Dataset, name: SubsetName, new_name: SubsetName, logger: Logger) -> Optional[ValidationError]:
-  if error := SubsetNotExistsError.validate(dataset, name):
-    return error, False
+def rename_subset(dataset: Dataset, name: SubsetName, new_name: SubsetName, logger: Logger) -> ExecutionResult:
+  if error := ensure_subset_exists(dataset, name):
+    return error
 
-  if error := SubsetAlreadyExistsError.validate(dataset, new_name):
-    return error, False
+  if error := ensure_subset_not_already_exists(dataset, new_name):
+    return error
 
-  dataset.subsets[new_name] = dataset.pop(name)
+  dataset.subsets[new_name] = dataset.subsets.pop(name)
 
-  return None, True
+  return True

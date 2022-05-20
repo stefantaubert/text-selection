@@ -3,7 +3,7 @@ from logging import Logger
 from typing import Any, Generator, Iterable, List, Optional
 from typing import OrderedDict
 from typing import OrderedDict as OrderedDictType
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 from ordered_set import OrderedSet
@@ -11,15 +11,17 @@ from pandas import DataFrame
 
 from text_selection_core.helper import split_adv
 from text_selection_core.types import Dataset, DataWeights, Line, Lines, Subset, SubsetName
+from text_selection_core.validation import (ValidationErr, ensure_lines_count_matches_dataset,
+                                            ensure_weight_line_count_matches_dataset)
 
 SPACE_DISPL = "␣"
 NOT_AVAIL_VAL = "N/A"
 
 
-def generate_statistics(dataset: Dataset, lines: Optional[Lines], ssep: str, weights: List[Tuple[str, DataWeights]], logger: Logger) -> Generator[Tuple[str, DataFrame], None, None]:
+def generate_statistics(dataset: Dataset, lines: Optional[Lines], ssep: str, weights: List[Tuple[str, DataWeights]], logger: Logger) -> Generator[Union[ValidationErr, Tuple[str, DataFrame]], None, None]:
   yield "Selection", get_selection_statistics(dataset)
   if len(weights) > 0:
-    yield "Weights", get_weights_statistics(weights)
+    yield "Weights", get_weights_statistics(dataset, weights)
     for subset in get_subsets_ordered(dataset):
       yield f"Weights {subset}", get_subset_weights_statistics(dataset.subsets[subset], weights)
   if lines is not None:
@@ -39,7 +41,9 @@ def get_all_symbols(lines: Iterable[Line], ssep: str) -> Generator[str, None, No
   return result
 
 
-def get_symbols_statistics(dataset: Dataset, lines: Lines, ssep: str):
+def get_symbols_statistics(dataset: Dataset, lines: Lines, ssep: str) -> Union[ValidationErr, DataFrame]:
+  if error := ensure_lines_count_matches_dataset(dataset, lines):
+    return error
   # TODO this as n_gram stats
   all_symbols = OrderedSet(sorted(set(get_all_symbols(lines, ssep))))
 
@@ -91,8 +95,7 @@ def get_symbols_statistics(dataset: Dataset, lines: Lines, ssep: str):
     rows = (list(row.values()) for row in result)
     df = DataFrame(rows, columns=cols)
     return df
-  else:
-    return DataFrame()
+  return DataFrame()
 
   # for symbol in all_symbols:
   #   symbol_repr = repr(symbol)[1:-1] if symbol != " " else SPACE_DISPL
@@ -194,9 +197,11 @@ def get_subset_weights_statistics(subset: Subset, weights: List[Tuple[str, DataW
   return df
 
 
-def get_weights_statistics(weights: List[Tuple[str, DataWeights]]):
+def get_weights_statistics(dataset: Dataset, weights: List[Tuple[str, DataWeights]]) -> Union[ValidationErr, DataFrame]:
   data = []
   for weights_name, data_weights in weights:
+    if error := ensure_weight_line_count_matches_dataset(dataset, data_weights):
+      return error
     subset_weights = list(data_weights.values())
     data.append((
       weights_name,

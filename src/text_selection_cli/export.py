@@ -7,6 +7,7 @@ from text_selection_cli.default_args import add_dataset_argument, add_file_argum
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import try_load_dataset, try_load_file
 from text_selection_core.exporting.symbols_exporting import export_subset
+from text_selection_core.validation import ValidationErrBase
 
 
 def get_export_txt_parser(parser: ArgumentParser):
@@ -22,8 +23,8 @@ def get_export_txt_parser(parser: ArgumentParser):
 
 def export_txt_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
-  if dataset is None:
-    return False, None
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
 
   lines = try_load_file(ns.file, ns.encoding, ns.lsep, logger)
   if lines is None:

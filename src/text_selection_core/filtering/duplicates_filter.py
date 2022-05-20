@@ -1,5 +1,5 @@
 from logging import Logger, getLogger
-from typing import Generator, Iterator, Optional, TypeVar
+from typing import Generator, Iterator, Optional
 
 from ordered_set import OrderedSet
 
@@ -9,7 +9,7 @@ from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_percent_str
 from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_count,
                                        get_subsets_line_nrs_gen, move_lines_to_subset)
-from text_selection_core.validation import LinesCountNotMatchingError
+from text_selection_core.validation import ensure_lines_count_matches_dataset
 
 
 def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, logger: Optional[Logger]) -> ExecutionResult:
@@ -17,10 +17,10 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
     logger = getLogger(__name__)
 
   if error := validate_selection_default_parameters(default_params):
-    return error, False
+    return error
 
-  if error := LinesCountNotMatchingError.validate(default_params.dataset, lines):
-    return error, False
+  if error := ensure_lines_count_matches_dataset(default_params.dataset, lines):
+    return error
 
   select_from_line_nrs = get_subsets_line_nrs_gen(
     default_params.dataset, default_params.from_subset_names)
@@ -39,7 +39,7 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
   else:
     logger.info("No duplicate lines exist!")
 
-  return None, changed_anything
+  return changed_anything
 
 
 def get_matching_lines(lines: Lines, line_nrs: Iterator[LineNr]) -> Generator[LineNr, None, None]:

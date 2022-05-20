@@ -7,8 +7,8 @@ from ordered_set import OrderedSet
 from text_selection.selection import KeySelector
 
 
-class GreedyIterator(Iterator[int]):
-  def __init__(self, data: np.ndarray, data_indices: OrderedSet[int], preselection: np.ndarray, key_selector: KeySelector, cover_per_epoch: int = 1) -> None:
+class GreedyNIterator(Iterator[int]):
+  def __init__(self, data: np.ndarray, data_indices: OrderedSet[int], preselection: np.ndarray, key_selector: KeySelector, cover_per_epoch: int) -> None:
     super().__init__()
     assert cover_per_epoch > 0
     self.__data = data
@@ -89,34 +89,40 @@ def get_keys_with_most_new(data: np.ndarray, keys: OrderedSet[int], covered_coun
 
 
 def get_indices_with_most_new(data: np.ndarray, covered_counts: np.ndarray, cover_per_epoch: int) -> np.ndarray:
-  data_subset_uncovered = select_uncovered_columns(data, covered_counts, cover_per_epoch)
-  uncovered_amounts = get_uncovered_amounts(data_subset_uncovered, cover_per_epoch)
-  del data_subset_uncovered
-  _, max_indices = get_maximum_indices(uncovered_amounts)
+  uncovered_columns = get_uncovered_columns(data, covered_counts, cover_per_epoch)
+
+  data_uncovered = data[:, uncovered_columns]
+  covered_uncovered = covered_counts[uncovered_columns]
+
+  remaining_covers = get_covered_amounts(data_uncovered, covered_uncovered, cover_per_epoch)
+  _, min_indices = get_minimum_indices(remaining_covers)
   del _
-  del uncovered_amounts
-  return max_indices
+  del remaining_covers
+  return min_indices
 
 
-def select_uncovered_columns(data: np.ndarray, covered_counts: np.ndarray, cover_per_epoch: int) -> np.ndarray:
+def get_uncovered_columns(data: np.ndarray, covered_counts: np.ndarray, cover_per_epoch: int) -> np.ndarray:
   assert len(data.shape) == 2
   assert len(covered_counts.shape) == 1
   assert data.shape[1] == covered_counts.shape[0]
   uncovered_indices = np.flatnonzero(covered_counts < cover_per_epoch)
-  data_subset_uncovered_total_counts = data[:, uncovered_indices]
-  del uncovered_indices
-  return data_subset_uncovered_total_counts
+  return uncovered_indices
 
 
-def get_uncovered_amounts(data: np.ndarray, cover_per_epoch: int) -> np.ndarray:
-  data_subset_amounts = data >= cover_per_epoch
-  uncovered_amounts = np.sum(data_subset_amounts, axis=1)
-  del data_subset_amounts
-  return uncovered_amounts
+def get_covered_amounts(data: np.ndarray, covered_counts: np.ndarray, cover_per_epoch: int) -> np.ndarray:
+  assert len(data.shape) == 2
+  assert len(covered_counts.shape) == 1
+  assert data.shape[1] == covered_counts.shape[0]
+  covered_counts_array = np.tile(covered_counts, (data.shape[0], 1))
+  new_coverage = data + covered_counts_array
+  new_coverage = np.clip(new_coverage, 0, cover_per_epoch)
+  sum_if_all_covered = covered_counts.shape[0] * cover_per_epoch
+  remaining_covers = sum_if_all_covered - np.sum(new_coverage, axis=1)
+  return remaining_covers
 
 
-def get_maximum_indices(array: np.ndarray) -> Tuple[float, np.ndarray]:
+def get_minimum_indices(array: np.ndarray) -> Tuple[float, np.ndarray]:
   assert len(array) > 0
-  max_value = array.max()
-  max_indices = np.flatnonzero(array == max_value)
-  return max_value, max_indices
+  min_value = array.min()
+  min_indices = np.flatnonzero(array == min_value)
+  return min_value, min_indices

@@ -101,6 +101,8 @@ def get_greedy_selection_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser, True)
+  parser.add_argument("--cover-per-epoch", type=parse_positive_integer,
+                      help="cover each unit with this count in each epoch", default=1)
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
   add_termination_criteria_arguments(parser)
@@ -123,7 +125,8 @@ def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
     return weights
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  params = GreedySelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
+  params = GreedySelectionParameters(
+    lines, ns.sep, ns.include_selected, ns.cover_per_epoch, SelectionMode.FIRST)
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
 
@@ -146,6 +149,8 @@ def get_greedy_selection_epoch_parser(parser: ArgumentParser):
   add_file_arguments(parser, True)
   parser.add_argument("epochs", type=parse_positive_integer,
                       metavar="N-EPOCHS", help="number of epochs")
+  parser.add_argument("--cover-per-epoch", type=parse_positive_integer,
+                      help="cover each unit with this count in each epoch", default=1)
   parser.add_argument("--include-selected", action="store_true",
                       help="consider already selected for the selection")
   add_mp_group(parser)
@@ -168,7 +173,8 @@ def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) ->
   #   return False, False
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  params = GreedySelectionParameters(lines, ns.sep, ns.include_selected, SelectionMode.FIRST)
+  params = GreedySelectionParameters(
+    lines, ns.sep, ns.include_selected, ns.cover_per_epoch, SelectionMode.FIRST)
 
   logger.info("Selecting...")
   changed_anything = select_greedy_epochs(

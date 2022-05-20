@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from text_selection.common.mapping_iterator import map_indices
 from text_selection.greedy.greedy_epoch_iterator import EpochProxyIterator
-from text_selection.greedy.optimized_greedy_iterator import OptimizedGreedyIterator
+from text_selection.greedy.optimized_greedy_N_iterator import OptimizedGreedyNIterator
 from text_selection.selection import SelectionMode
 from text_selection_core.common import (SelectionDefaultParameters, WeightSelectionParameters,
                                         get_selector, validate_selection_default_parameters,
@@ -26,6 +26,7 @@ class GreedySelectionParameters():
   lines: Lines
   ssep: str
   consider_to_subset: bool
+  cover_per_epoch: int
   id_selection: SelectionMode
 
 
@@ -77,11 +78,12 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
   data_indices = OrderedSet(from_ids_mapping.keys())
   selector = get_selector(params.id_selection)
 
-  greedy_iterator = OptimizedGreedyIterator(
+  greedy_iterator = OptimizedGreedyNIterator(
     data=data,
     data_indices=data_indices,
     preselection=summed_preselection_counts,
     key_selector=selector,
+    cover_per_epoch=params.cover_per_epoch,
   )
 
   initial_weights = get_initial_weights(
@@ -170,11 +172,12 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
   data_indices = OrderedSet(from_ids_mapping.keys())
   selector = get_selector(params.id_selection)
 
-  greedy_iterator = OptimizedGreedyIterator(
+  greedy_iterator = OptimizedGreedyNIterator(
     data=data,
     data_indices=data_indices,
     preselection=summed_preselection_counts,
     key_selector=selector,
+    cover_per_epoch=params.cover_per_epoch,
   )
 
   epoch_iter = EpochProxyIterator(greedy_iterator, epochs)

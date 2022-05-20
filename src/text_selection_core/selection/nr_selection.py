@@ -7,7 +7,7 @@ from text_selection_core.types import Dataset, LineNrs, Subset, SubsetName, move
 from text_selection_core.validation import ensure_line_nrs_exist
 
 
-def select_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logger: Logger) -> ExecutionResult:
+def select_nrs(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logger: Logger) -> ExecutionResult:
   if error := ensure_line_nrs_exist(dataset, nrs):
     return error
 
@@ -21,11 +21,11 @@ def select_ids(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logge
   changed_anything = False
 
   if len(result) > 0:
-    logger.debug(f"Selected {len(result)} lines.")
+    logger.info(f"Selected {len(result)} lines.")
     move_lines_to_subset(dataset, result, to_subset_name, logger)
     changed_anything = True
 
   if len(result) < len(nrs):
-    logger.debug(f"{len(nrs) - len(result)} were already selected.")
+    logger.info(f"{len(nrs) - len(result)} were already selected.")
 
   return changed_anything

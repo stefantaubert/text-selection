@@ -19,27 +19,27 @@ from text_selection_core.selection.fifo_selection import original_mode, select_f
 from text_selection_core.selection.greedy_selection import (GreedySelectionParameters,
                                                             select_greedy, select_greedy_epochs)
 from text_selection_core.selection.kld_selection import KldSelectionParameters, select_kld
-from text_selection_core.selection.nr_selection import select_ids
+from text_selection_core.selection.nr_selection import select_nrs
 from text_selection_core.validation import ValidationErrBase
 
 
-def get_id_selection_parser(parser: ArgumentParser):
+def get_nr_selection_parser(parser: ArgumentParser):
   parser.description = "Select lines."
   add_dataset_argument(parser)
   add_to_subset_argument(parser)
   parser.add_argument("lines", type=parse_positive_integer, nargs="+", metavar="LINE-NUMBER",
                       help="lines to select", action=ConvertToOrderedSetAction)
   add_dry_argument(parser)
-  return select_ids_from_ns
+  return select_nrs_from_ns
 
 
-def select_ids_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
+def select_nrs_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
   if isinstance(dataset, ValidationErrBase):
     return dataset
 
   line_numbers_zero_based = OrderedSet(nr - 1 for nr in ns.ids)
-  changed_anything = select_ids(dataset, ns.to_subset, line_numbers_zero_based, flogger)
+  changed_anything = select_nrs(dataset, ns.to_subset, line_numbers_zero_based, flogger)
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 

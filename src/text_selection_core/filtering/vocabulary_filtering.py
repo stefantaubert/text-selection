@@ -52,7 +52,7 @@ def filter_lines_with_vocabulary_frequencies(default_params: SelectionDefaultPar
       assert False
 
     if params.from_count_incl <= count < params.to_count_excl:
-      logger.debug(
+      logger.info(
         f"Filtered L{line_nr+1} containing {count} {params.mode}: \"{params.lines[line_nr]}\".")
       result.add(line_nr)
 

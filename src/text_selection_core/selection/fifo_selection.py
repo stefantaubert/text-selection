@@ -11,8 +11,8 @@ from text_selection_core.common import (SelectionDefaultParameters, WeightSelect
                                         validate_weights_parameters)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_initial_weights, get_target_weights_from_percent
-from text_selection_core.types import (Subset, create_subset_if_it_not_exists, get_subsets_line_nrs_gen,
-                                       move_lines_to_subset)
+from text_selection_core.types import (Subset, create_subset_if_it_not_exists,
+                                       get_subsets_line_nrs_gen, move_lines_to_subset)
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
 original_mode = "original"
@@ -60,16 +60,16 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
   with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
     for line_nr in weights_iterator:
       result.add(line_nr)
-      logger.debug(f"Selected L{line_nr+1}.")
+      logger.info(f"Selected L{line_nr+1}.")
       pbar.update(weights_iterator.tqdm_update)
 
   if len(result) > 0:
     logger = getLogger(__name__)
-    logger.debug(f"Selected {len(result)} lines.")
-    
+    logger.info(f"Selected {len(result)} lines.")
+
     # logger.info(
     #   f"Filtered {len(result)} out of {select_from_count} lines ({get_percent_str(len(result),select_from_count)}). {select_from_count-len(result)} lines remain.")
-      
+
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
 

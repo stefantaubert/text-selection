@@ -77,13 +77,12 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
     match = method(params.from_count_incl <= count < to_count for count in word_counts)
     if match:
       result.add(line_nr)
+      logger.info(f"Filtered L{line_nr+1}: \"{params.lines[line_nr]}\".")
 
   changed_anything = False
   if len(result) > 0:
     logger.info(
       f"Filtered {len(result)} out of {len(select_from_nrs)} lines ({get_percent_str(len(result),len(select_from_nrs))}). {len(select_from_nrs)-len(result)} lines remain.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
-    for line_nr in result:
-      logger.debug(f"Filtered L{line_nr+1}: \"{params.lines[line_nr]}\".")
     changed_anything = True
   return changed_anything

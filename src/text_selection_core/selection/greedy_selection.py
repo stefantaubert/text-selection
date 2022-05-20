@@ -101,7 +101,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
     with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
       for line_nr in weights_iterator:
         result.add(line_nr)
-        logger.debug(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
+        logger.info(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
         uncovered_symbols = sorted(symbols[index] for index in greedy_iterator.currently_uncovered)
         logger.debug(
           f"Currently uncovered symbols: {' '.join(uncovered_symbols)} (#{len(uncovered_symbols)})")
@@ -118,7 +118,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
 
   changed_anything = False
   if len(result) > 0:
-    logger.debug(f"Selected {len(result)} lines.")
+    logger.info(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
   else:
@@ -185,7 +185,7 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
     with tqdm(desc="Processing epochs", unit="ep", total=epoch_iter.target_epochs, initial=greedy_iterator.current_epoch) as pbar:
       for line_nr in mapping_iter:
         result.add(line_nr)
-        logger.debug(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
+        logger.info(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
         uncovered_symbols = sorted(symbols[index] for index in greedy_iterator.currently_uncovered)
         logger.debug(
           f"Currently uncovered symbols: {' '.join(uncovered_symbols)} (#{len(uncovered_symbols)})")
@@ -202,7 +202,7 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
 
   changed_anything = False
   if len(result) > 0:
-    logger.debug(f"Selected {len(result)} lines.")
+    logger.info(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
   else:

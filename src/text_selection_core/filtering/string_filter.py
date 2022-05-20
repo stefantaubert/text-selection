@@ -51,10 +51,12 @@ def filter_by_string(default_params: SelectionDefaultParameters, lines: Lines, s
     methods=methods,
   )
 
+  select_from_nrs = tqdm(select_from_nrs, desc="Filtering",
+                         unit=TQDM_LINE_UNIT, total=select_from_count)
   for line_nr in select_from_nrs:
     if query(lines[line_nr]):
-      logger.debug(f"Filtered L{line_nr+1}: \"{lines[line_nr]}\".")
       result.add(line_nr)
+      logger.info(f"Filtered L{line_nr+1}: \"{lines[line_nr]}\".")
 
   changed_anything = False
   if len(result) > 0:

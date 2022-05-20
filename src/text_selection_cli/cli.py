@@ -19,13 +19,13 @@ from text_selection_cli.filtering import (get_duplicate_selection_parser,
                                           get_string_filter_parser, get_unit_frequency_parser,
                                           get_vocabulary_filtering_parser,
                                           get_weight_filtering_parser)
-from text_selection_cli.globals import ExecutionResult, ExecutionResult
+from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                       init_and_return_loggers, try_init_file_logger)
 #from text_selection_app.n_grams import get_n_grams_extraction_parser
 from text_selection_cli.selection import (get_fifo_selection_parser,
                                           get_greedy_selection_epoch_parser,
-                                          get_greedy_selection_parser, get_id_selection_parser,
+                                          get_greedy_selection_parser, get_nr_selection_parser,
                                           get_kld_selection_parser)
 from text_selection_cli.sorting import (get_fifo_sorting_parser, get_reverse_sorting_parser,
                                         get_weight_sorting_parser)
@@ -77,7 +77,7 @@ def get_subset_parsers() -> Parsers:
 def get_subsets_parsers() -> Parsers:
   yield "add", "add subsets", get_subsets_creation_parser
   yield "remove", "remove subsets", get_subsets_removal_parser
-  yield "select-lines", "select entries by line number", get_id_selection_parser
+  yield "select-lines", "select entries by line number", get_nr_selection_parser
   yield "select-fifo", "select entries FIFO-style", get_fifo_selection_parser
   yield "select-greedy", "select entries greedy-style", get_greedy_selection_parser
   yield "select-greedy-epochs", "select entries greedy-style epoch-based", get_greedy_selection_epoch_parser

@@ -100,6 +100,7 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
     with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
       for line_nr in weights_iterator:
         result.add(line_nr)
+        logger.info(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
         pbar.update(weights_iterator.tqdm_update)
         greedy_pbar.update()
 
@@ -112,10 +113,8 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
     logger.info(f"Final Kullback-Leibler distance: {kld_iterator.previous_kld}")
 
   if len(result) > 0:
-    logger.debug(f"Selected {len(result)} lines.")
+    logger.info(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
-    for line_nr in result:
-      logger.debug(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
     changed_anything = True
   else:
     logger.info("Didn't selected anything!")

@@ -10,8 +10,8 @@ from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import TQDM_LINE_UNIT, ExecutionResult
 from text_selection_core.helper import get_percent_str, split_adv
-from text_selection_core.types import (Lines, Subset, get_subsets_line_nrs_count, get_subsets_line_nrs_gen,
-                                       move_lines_to_subset)
+from text_selection_core.types import (Lines, Subset, get_subsets_line_nrs_count,
+                                       get_subsets_line_nrs_gen, move_lines_to_subset)
 from text_selection_core.validation import ensure_lines_count_matches_dataset
 
 
@@ -40,9 +40,6 @@ def filter_lines_with_line_unit_frequencies(default_params: SelectionDefaultPara
     logger.info("Nothing to select from.")
     return False
 
-  select_from_nrs = tqdm(select_from_nrs, desc="Filtering",
-                         unit=TQDM_LINE_UNIT, total=select_from_count)
-
   result: Subset = OrderedSet()
   if params.mode == "all":
     method = all
@@ -52,14 +49,17 @@ def filter_lines_with_line_unit_frequencies(default_params: SelectionDefaultPara
     assert False
 
   result = OrderedSet()
+  select_from_nrs = tqdm(select_from_nrs, desc="Filtering",
+                         unit=TQDM_LINE_UNIT, total=select_from_count)
   for line_nr in select_from_nrs:
     words = split_adv(params.lines[line_nr], params.ssep)
     word_counts = Counter(words)
 
-    match = method(params.from_count_incl <= count < params.to_count_excl for count in word_counts.values())
+    match = method(params.from_count_incl <= count <
+                   params.to_count_excl for count in word_counts.values())
     if match:
       result.add(line_nr)
-      logger.debug(
+      logger.info(
         f"Filtered L{line_nr+1}: \"{params.lines[line_nr]}\".")
       result.add(line_nr)
 

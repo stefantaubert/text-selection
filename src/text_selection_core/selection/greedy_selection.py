@@ -103,7 +103,7 @@ def select_greedy(default_params: SelectionDefaultParameters, params: GreedySele
     with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
       for line_nr in weights_iterator:
         result.add(line_nr)
-        logger.info(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
+        logger.info(f"Selected L-{line_nr+1}: \"{params.lines[line_nr]}\".")
         uncovered_units = sorted(units[index] for index in greedy_iterator.currently_uncovered)
         logger.debug(
           f"Currently not completely covered units: {' '.join(uncovered_units)} (#{len(uncovered_units)})")
@@ -188,7 +188,7 @@ def select_greedy_epochs(default_params: SelectionDefaultParameters, params: Gre
     with tqdm(desc="Processing epochs", unit="ep", total=epoch_iter.target_epochs, initial=greedy_iterator.current_epoch) as pbar:
       for line_nr in mapping_iter:
         result.add(line_nr)
-        logger.info(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
+        logger.info(f"Selected L-{line_nr+1}: \"{params.lines[line_nr]}\".")
         uncovered_units = sorted(units[index] for index in greedy_iterator.currently_uncovered)
         logger.debug(
           f"Currently not completely covered units: {' '.join(uncovered_units)} (#{len(uncovered_units)})")

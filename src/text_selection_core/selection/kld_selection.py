@@ -100,7 +100,7 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
     with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
       for line_nr in weights_iterator:
         result.add(line_nr)
-        logger.info(f"Selected L{line_nr+1}: \"{params.lines[line_nr]}\".")
+        logger.info(f"Selected L-{line_nr+1}: \"{params.lines[line_nr]}\".")
         pbar.update(weights_iterator.tqdm_update)
         greedy_pbar.update()
 

@@ -33,7 +33,7 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
                          unit=TQDM_LINE_UNIT, total=select_from_count)
   for line_nr in get_matching_lines(lines, select_from_nrs, re_pattern):
     result.add(line_nr)
-    logger.info(f"Filtered L{line_nr+1}: \"{lines[line_nr]}\".")
+    logger.info(f"Filtered L-{line_nr+1}: \"{lines[line_nr]}\".")
 
   changed_anything = False
   if len(result) > 0:

@@ -20,7 +20,7 @@ def filter_line_nrs(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, 
   changed_anything = False
   if len(nrs) > 0:
     for line_nr in result:
-      logger.info(f"Filtered L{line_nr+1}.")
+      logger.info(f"Filtered L-{line_nr+1}.")
     logger.info(f"Filtered {len(nrs)} numbers.")
     move_lines_to_subset(dataset, nrs, to_subset_name, logger)
     changed_anything = True

@@ -57,7 +57,7 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
   with tqdm(desc="Selecting weight", unit="it", total=weights_iterator.target_weight, initial=weights_iterator.current_weight) as pbar:
     for line_nr in weights_iterator:
       result.add(line_nr)
-      logger.info(f"Selected L{line_nr+1}.")
+      logger.info(f"Selected L-{line_nr+1}.")
       pbar.update(weights_iterator.tqdm_update)
 
   if len(result) > 0:

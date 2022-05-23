@@ -56,7 +56,7 @@ def filter_by_string(default_params: SelectionDefaultParameters, lines: Lines, s
   for line_nr in select_from_nrs:
     if query(lines[line_nr]):
       result.add(line_nr)
-      logger.info(f"Filtered L{line_nr+1}: \"{lines[line_nr]}\".")
+      logger.info(f"Filtered L-{line_nr+1}: \"{lines[line_nr]}\".")
 
   changed_anything = False
   if len(result) > 0:

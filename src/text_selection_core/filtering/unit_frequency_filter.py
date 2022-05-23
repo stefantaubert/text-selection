@@ -77,7 +77,7 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
     match = method(params.from_count_incl <= count < to_count for count in word_counts)
     if match:
       result.add(line_nr)
-      logger.info(f"Filtered L{line_nr+1}: \"{params.lines[line_nr]}\".")
+      logger.info(f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")
 
   changed_anything = False
   if len(result) > 0:

@@ -23,6 +23,7 @@ class WeightsFilterParameters():
 
 
 def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFilterParameters, logger: Logger) -> ExecutionResult:
+  # TODO use numpy for filtering!
   assert 0 <= params.from_weight_incl < params.to_weight_excl
 
   if error := validate_selection_default_parameters(default_params):
@@ -43,7 +44,7 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
   for line_nr in get_matching_lines(params.weights, select_from_nrs,
                                     params.from_weight_incl, params.to_weight_excl):
     result.add(line_nr)
-    logger.info(f"Filtered L{line_nr+1} with weight: {params.weights[line_nr]}.")
+    logger.info(f"Filtered L-{line_nr+1} with weight: {params.weights[line_nr]}.")
 
   changed_anything = False
   if len(result) > 0:

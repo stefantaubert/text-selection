@@ -36,7 +36,7 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
     item = lines[line_nr]
     if item in collected:
       result.add(line_nr)
-      logger.info(f"Filtered L{line_nr+1}: \"{lines[line_nr]}\".")
+      logger.info(f"Filtered L-{line_nr+1}: \"{lines[line_nr]}\".")
     else:
       collected.add(item)
   del collected

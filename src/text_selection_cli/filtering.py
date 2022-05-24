@@ -3,9 +3,10 @@ from argparse import ArgumentParser, Namespace
 from logging import Logger
 
 from text_selection_cli.argparse_helper import (ConvertToSetAction, get_optional,
-                                                parse_existing_file, parse_integer_greater_one,
-                                                parse_non_empty, parse_non_negative_float,
-                                                parse_positive_float, parse_positive_integer)
+                                                parse_existing_file, parse_float_greater_one,
+                                                parse_integer_greater_one, parse_non_empty,
+                                                parse_non_negative_float, parse_positive_float,
+                                                parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_dry_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments)
 from text_selection_cli.globals import ExecutionResult
@@ -133,19 +134,22 @@ def get_unit_frequency_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser, True)
-  parser.add_argument("min_count", type=parse_positive_integer, metavar="MIN-COUNT",
-                      help="inclusive minimum count how often all units of a sentence should occur")
-  parser.add_argument("--max-count", type=get_optional(parse_integer_greater_one), metavar="MAX-COUNT",
-                      help="exclusive maximum count how often all units of a sentence should occur", nargs="?", const=None, default=None)
+  parser.add_argument("--lower-bound", type=parse_non_negative_float, metavar="LOWER-BOUND",
+                      help="inclusive minimum boundary how often all units of a sentence should occur", default=0)
+  parser.add_argument("--upper-bound", type=parse_non_negative_float, metavar="UPPER-BOUND",
+                      help="exclusive maximum boundary how often all units of a sentence should occur", default=math.inf)
   parser.add_argument("--mode", type=str, choices=[
                       "all", "any"], help="mode to evaluate count boundaries: all => all units need to match; any => any unit needs to match", default="all")
   parser.add_argument("--all", action="store_true",
                       help="calculate occurrences in the total dataset; otherwise only the occurrences from the FROM-SUBSETs are counted")
+  parser.add_argument("--percent", action="store_true",
+                      help="calculate min/max as quantile boundaries in % (0-100)")
   add_dry_argument(parser)
   return filter_unit_counts_ns
 
 
 def filter_unit_counts_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
+  # TODO evaluation percent boundaries
   dataset = try_load_dataset(ns.dataset, logger)
   if isinstance(dataset, ValidationErrBase):
     return dataset
@@ -155,7 +159,8 @@ def filter_unit_counts_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Exe
     return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  params = CountFilterParameters(lines, ns.sep, ns.min_count, ns.max_count, ns.all, ns.mode)
+  params = CountFilterParameters(lines, ns.sep, ns.lower_bound,
+                                 ns.upper_bound, ns.all, ns.percent, ns.mode)
   changed_anything = filter_lines_with_unit_frequencies(default_params, params, flogger)
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything

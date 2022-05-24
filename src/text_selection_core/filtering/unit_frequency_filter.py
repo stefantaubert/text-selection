@@ -2,15 +2,16 @@ import math
 from collections import Counter
 from dataclasses import dataclass
 from logging import Logger
-from typing import Dict, Literal, Optional
+from typing import Dict, Literal, Optional, Union
 
+import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import TQDM_LINE_UNIT, ExecutionResult
-from text_selection_core.helper import get_percent_str, split_adv
+from text_selection_core.helper import get_int_dtype_from_n, get_percent_str, split_adv
 from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_gen,
                                        move_lines_to_subset)
 from text_selection_core.validation import ensure_lines_count_matches_dataset
@@ -20,9 +21,10 @@ from text_selection_core.validation import ensure_lines_count_matches_dataset
 class CountFilterParameters():
   lines: Lines
   ssep: str
-  from_count_incl: int
-  to_count_excl: Optional[int]
+  from_incl: Union[int, float]
+  to_excl: Union[int, float]
   count_whole: bool
+  boundary_percent: bool
   mode: Literal["all", "any"]
 
 
@@ -59,9 +61,44 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
   for counter in tqdm(counters.values(), desc="Summing counts", unit=TQDM_LINE_UNIT):
     total_counter.update(counter)
 
-  to_count = params.to_count_excl
-  if to_count is None:
-    to_count = math.inf
+  most_common_word, most_common_occ = total_counter.most_common(1)[0]
+  logger.debug(f"Most common word: {most_common_word} (#{most_common_occ})")
+
+  to_count_excl = params.to_excl
+  from_count_incl = params.from_incl
+
+  if params.boundary_percent:
+    if params.from_incl > 0 or params.to_excl < 100:
+      logger.debug("Creating array from counts...")
+      occurrences = np.array(tuple(total_counter.values()),
+                             dtype=get_int_dtype_from_n(most_common_occ))
+
+    if params.from_incl > 0:
+      from_count_incl = np.percentile(occurrences, params.from_incl, axis=0)
+      #to_count = params.to_count_excl / 100 * most_common_occ
+      from_count_incl = math.floor(from_count_incl)
+      logger.info(f"Chosen {from_count_incl} as inclusive lower bound.")
+    else:
+      from_count_incl = 0
+
+    if params.to_excl < 100:
+      to_count_excl = np.percentile(occurrences, params.to_excl, axis=0)
+      #to_count = params.to_count_excl / 100 * most_common_occ
+      to_count_excl = math.ceil(to_count_excl)
+      logger.info(f"Chosen {to_count_excl} as exclusive upper bound.")
+    else:
+      to_count_excl = math.inf
+  else:
+    from_count_incl = params.from_incl
+    to_count_excl = params.to_excl
+
+  if from_count_incl == to_count_excl - 1 and from_count_incl == 0:
+    logger.info("Zero occurrences is not possible therefore nothing can be selected!")
+    return False
+
+  if from_count_incl == to_count_excl:
+    logger.info("Upper and lower bound are equal therefore nothing can be selected!")
+    return False
 
   result: Subset = OrderedSet()
   if params.mode == "all":
@@ -74,7 +111,7 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
   for line_nr in tqdm(select_from_nrs, desc="Filtering", unit=TQDM_LINE_UNIT):
     counts = counters[line_nr]
     word_counts = list(total_counter[unit] for unit in counts.keys())
-    match = method(params.from_count_incl <= count < to_count for count in word_counts)
+    match = method(from_count_incl <= count < to_count_excl for count in word_counts)
     if match:
       result.add(line_nr)
       logger.info(f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")

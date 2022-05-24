@@ -135,6 +135,13 @@ def parse_integer_greater_one(value: str) -> int:
   return value
 
 
+def parse_float_greater_one(value: str) -> int:
+  value = parse_float(value)
+  if not value > 1:
+    raise ArgumentTypeError("Value needs to be greater than one!")
+  return value
+
+
 def parse_non_negative_integer(value: str) -> int:
   value = parse_integer(value)
   if not value >= 0:

@@ -25,10 +25,10 @@ from text_selection_cli.logging_configuration import (configure_root_logger, get
 #from text_selection_app.n_grams import get_n_grams_extraction_parser
 from text_selection_cli.selection import (get_fifo_selection_parser,
                                           get_greedy_selection_epoch_parser,
-                                          get_greedy_selection_parser, get_nr_selection_parser,
-                                          get_kld_selection_parser)
+                                          get_greedy_selection_parser, get_kld_selection_parser,
+                                          get_nr_selection_parser)
 from text_selection_cli.sorting import (get_fifo_sorting_parser, get_reverse_sorting_parser,
-                                        get_weight_sorting_parser)
+                                        get_text_sorting_parser, get_weight_sorting_parser)
 from text_selection_cli.statistics import get_statistics_generation_parser
 from text_selection_cli.subset import get_subset_renaming_parser
 from text_selection_cli.subsets import get_subsets_creation_parser, get_subsets_removal_parser
@@ -90,6 +90,7 @@ def get_subsets_parsers() -> Parsers:
   yield "filter-by-text", "filter lines by line text", get_string_filter_parser
   yield "filter-by-unit-freq", "filter lines by unit frequencies per line", get_line_unit_frequency_parser
   yield "sort-by-line-nr", "sort entries by line number", get_fifo_sorting_parser
+  yield "sort-by-text", "sort entries by text", get_text_sorting_parser
   yield "sort-reverse", "reverse entries", get_reverse_sorting_parser
   yield "sort-after-weights", "sort subsets after weights", get_weight_sorting_parser
   yield "export", "export subsets lines", get_export_txt_parser

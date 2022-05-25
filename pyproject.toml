@@ -14,8 +14,7 @@ maintainers = [
 keywords = [
   "Text-to-speech",
   "Speech synthesis",
-  "praat",
-  "TextGrid",
+  "Corpus",
   "Utils",
   "Language",
   "Linguistics"

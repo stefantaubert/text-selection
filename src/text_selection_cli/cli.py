@@ -245,6 +245,6 @@ def create_debug_file():
 
 
 if __name__ == "__main__":
-  # print_features()
+  print_features()
   create_debug_file()
   run()

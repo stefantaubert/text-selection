@@ -16,7 +16,6 @@ from text_selection.greedy_kld_methods import (
     sort_greedy_kld_iterations, sort_greedy_kld_until,
     sort_greedy_kld_until_with_preselection, sort_kld_parts,
     split_into_equal_parts, sync_dict_keys_to_keys_inplace)
-from text_selection.selection import SelectionMode
 
 ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
             'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']

@@ -1,10 +1,9 @@
 from collections import OrderedDict
-from typing import Dict, List, Optional
+from typing import Dict, List
 from typing import OrderedDict as OrderedDictType
-from typing import Tuple, TypeVar
+from typing import TypeVar
 
 from ordered_set import OrderedSet
-from tqdm import tqdm
 
 from text_selection.random_method import sort_random, sort_random_set_cover
 from text_selection.utils import (get_first_percent, get_n_divergent_seconds,

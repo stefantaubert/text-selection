@@ -1,0 +1,3 @@
+prune src/text_selection_tests/
+prune src/text_selection_core_tests/
+prune src/text_selection_cli_tests/

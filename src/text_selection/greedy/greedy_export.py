@@ -5,14 +5,11 @@ from typing import Set
 
 from ordered_set import OrderedSet
 
-from text_selection.greedy.greedy_applied import (greedy_count, greedy_cover,
-                                           greedy_default,
-                                           greedy_duration_advanced,
-                                           greedy_epochs, greedy_iterations,
-                                           greedy_seconds)
+from text_selection.greedy.greedy_applied import (greedy_count, greedy_cover, greedy_default,
+                                                  greedy_duration_advanced, greedy_epochs,
+                                                  greedy_iterations, greedy_seconds)
 from text_selection.selection import SelectionMode
-from text_selection.utils import (get_filtered_list, get_filtered_ngrams,
-                                  get_top_n)
+from text_selection.utils import get_filtered_list, get_filtered_ngrams, get_top_n
 
 
 def greedy_ngrams_cover(data: OrderedDictType[int, List[str]], already_covered: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], top_percent: Optional[float]) -> OrderedSet[int]:

@@ -1,7 +1,6 @@
 from collections import OrderedDict
-from typing import Dict
 from typing import OrderedDict as OrderedDictType
-from typing import Set, TypeVar, Union
+from typing import Set, TypeVar
 
 from ordered_set import OrderedSet
 from tqdm import tqdm

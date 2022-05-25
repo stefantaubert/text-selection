@@ -1,3 +1,113 @@
+[project]
+name = "text-selection"
+version = "0.0.1"
+description = "CLI to select lines of a text file."
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+authors = [
+  {name = "Stefan Taubert", email = "stefan.taubert@posteo.me"}
+]
+maintainers = [
+  {name = "Stefan Taubert", email = "stefan.taubert@posteo.me"},
+]
+keywords = [
+  "Text-to-speech",
+  "Speech synthesis",
+  "Corpus",
+  "Utils",
+  "Language",
+  "Linguistics"
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Operating System :: OS Independent",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX",
+  "Operating System :: POSIX :: BSD",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Unix",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+  "tqdm",
+  "numpy",
+  "scipy",
+  "pandas",
+  "ordered_set>=4.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/stefantaubert/text-selection"
+Issues = "https://github.com/stefantaubert/text-selection/issues"
+
+[project.scripts]
+text-selection-cli = "text_selection_cli.cli:run_prod"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+  "text_selection",
+  "text_selection.*",
+  "text_selection_core",
+  "text_selection_core.*",
+  "text_selection_cli",
+]
+exclude = [
+  "text_selection_tests",
+  "text_selection_debug",
+  "text_selection_core_tests",
+  "text_selection_core_debug",
+  "text_selection_cli_debug",
+  "text_selection_cli_tests",
+]
+namespaces = true
+
+[tool.pytest.ini_options]
+log_cli = true
+log_level = "DEBUG"
+testpaths = [
+  "src/text_selection_tests",
+  "src/text_selection_core_tests",
+  "src/text_selection_cli_tests"
+]
+console_output_style = "count"
+
+[tool.autopep8]
+indent-size = 2
+ignore = ["E121"]
+max_line_length = 100
+
+[tool.isort]
+line_length = 100
+indent = 2
+
+[tool.pyright]
+root = ["src"]
+include = ["src"]
+pythonPlatform = "All"
+typeCheckingMode = "off"
+stubPath = ""
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  ".git",
+  "**/*.egg-info",
+  "**/*_debug",
+]
+useLibraryCodeForTypes = true
+
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = [
+  "setuptools >= 40.9.0",
+  "wheel",
+]
 build-backend = "setuptools.build_meta"

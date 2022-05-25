@@ -1,4 +1,5 @@
 import numpy as np
+
 from text_selection.greedy.greedy_iterator import get_indices_with_most_new
 
 

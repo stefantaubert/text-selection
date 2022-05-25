@@ -4,6 +4,7 @@ from typing import Iterator, Optional, Tuple, Union
 import numpy as np
 from ordered_set import OrderedSet
 from scipy import special
+
 from text_selection.selection import KeySelector
 
 
@@ -46,6 +47,10 @@ class KldIterator(Iterator[int]):
   @property
   def current_kld(self) -> float:
     return self.__current_kld
+
+  @property
+  def target_distributions(self) -> float:
+    return self.__target_dists
 
   def __next__(self) -> int:
     if len(self.__available_data_keys_ordered) == 0:
@@ -97,12 +102,12 @@ def get_minimum_kld(counts: np.ndarray, target_distribution: np.ndarray) -> Tupl
     new_counts_distributions, target_distribution, axis=1)
   del new_counts_distributions
   assert np.all(divergences >= 0.0)
-  min_divergence, min_indices = get_minimun_indices(divergences)
+  min_divergence, min_indices = get_minimum_indices(divergences)
   del divergences
   return min_divergence, min_indices
 
 
-def get_minimun_indices(array: np.ndarray) -> Tuple[float, np.ndarray]:
+def get_minimum_indices(array: np.ndarray) -> Tuple[float, np.ndarray]:
   assert len(array) > 0
   min_value = array.min()
   min_indices = np.flatnonzero(array == min_value)

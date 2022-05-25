@@ -8,7 +8,6 @@ from text_selection.greedy_kld_methods import (
     get_uniform_distribution, sort_greedy_kld, sort_greedy_kld_iterations,
     sort_greedy_kld_until, sort_greedy_kld_until_with_preselection,
     sort_kld_parts)
-from text_selection.selection import SelectionMode
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")

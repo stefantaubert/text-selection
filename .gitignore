@@ -133,3 +133,4 @@ dmypy.json
 data/
 debug.sh
 deploy-PyPI.sh
+deploy.sh

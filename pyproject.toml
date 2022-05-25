@@ -55,7 +55,9 @@ text-selection-cli = "text_selection_cli.cli:run_prod"
 where = ["src"]
 include = [
   "text_selection",
+  "text_selection.*",
   "text_selection_core",
+  "text_selection_core.*",
   "text_selection_cli",
 ]
 exclude = [
@@ -65,7 +67,6 @@ exclude = [
   "text_selection_core_debug",
   "text_selection_cli_debug",
   "text_selection_cli_tests",
-  "text_selection_api",
 ]
 namespaces = true
 

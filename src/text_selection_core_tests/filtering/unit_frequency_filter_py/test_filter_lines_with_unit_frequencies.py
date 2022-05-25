@@ -8,7 +8,7 @@ from text_selection_core.common import SelectionDefaultParameters
 from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.unit_frequency_filter import (CountFilterParameters,
                                                                  filter_lines_with_unit_frequencies)
-from text_selection_core.types import Dataset
+from text_selection_core.types import Dataset, move_lines_to_subset
 
 
 def test_component():
@@ -22,16 +22,18 @@ def test_component():
     "a b c d e f g",  # 1x
   ]
   ds = Dataset(len(lines), "base")
+  move_lines_to_subset(ds, OrderedSet((0, 1)), "test", getLogger())
 
   params = CountFilterParameters(lines, " ", 1, 3, True, False, "any")
 
   changed_anything = filter_lines_with_unit_frequencies(
-    SelectionDefaultParameters(ds, OrderedSet(("base",)), "test"), params, getLogger())
+    SelectionDefaultParameters(ds, OrderedSet(("base",)), "selected"), params, getLogger())
 
   assert changed_anything
   assert ds.subsets == OrderedDict((
-    ("base", OrderedSet((0, 1, 2, 3, 4))),
-    ("test", OrderedSet((5, 6))),
+    ("base", OrderedSet((2, 3, 4))),
+    ("test", OrderedSet((0, 1))),
+    ("selected", OrderedSet((5, 6))),
   ))
 
 

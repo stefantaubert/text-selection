@@ -12,8 +12,8 @@ from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import TQDM_LINE_UNIT, ExecutionResult
 from text_selection_core.helper import get_int_dtype_from_n, get_percent_str, split_adv
-from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_gen,
-                                       move_lines_to_subset)
+from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_nrs_count,
+                                       get_subsets_line_nrs_gen, move_lines_to_subset)
 from text_selection_core.validation import ensure_lines_count_matches_dataset
 
 
@@ -36,7 +36,10 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
     return error
 
   select_from_nrs = list(get_subsets_line_nrs_gen(
-    default_params.dataset, default_params. from_subset_names))
+    default_params.dataset, default_params.from_subset_names))
+
+  select_from_count = get_subsets_line_nrs_count(
+    default_params.dataset, default_params.from_subset_names)
 
   if params.count_whole:
     line_nrs_to_count = default_params.dataset.get_line_nrs()
@@ -52,14 +55,14 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
 
   # counter = Counter(tqdm(units, desc="Calculating counts", unit=" unit(s)"))
 
-  counters: Dict[LineNr, Counter] = {}
-  for line_nr in tqdm(line_nrs_to_count, desc="Calculating counts", unit=TQDM_LINE_UNIT, total=line_nrs_to_count_total):
-    line_counts = Counter(split_adv(params.lines[line_nr], params.ssep))
-    counters[line_nr] = line_counts
-
+  # counters: Dict[LineNr, Counter] = {}
   total_counter = Counter()
-  for counter in tqdm(counters.values(), desc="Summing counts", unit=TQDM_LINE_UNIT):
-    total_counter.update(counter)
+  for line_nr in tqdm(line_nrs_to_count, desc="Calculating counts", unit=TQDM_LINE_UNIT, total=line_nrs_to_count_total):
+    # line_counts = Counter(split_adv(params.lines[line_nr], params.ssep))
+    total_counter.update(split_adv(params.lines[line_nr], params.ssep))
+    # counters[line_nr] = line_counts
+
+  # for counter in tqdm(counters.values(), desc="Summing counts", unit=TQDM_LINE_UNIT):
 
   most_common_word, most_common_occ = total_counter.most_common(1)[0]
   logger.debug(f"Most common word: {most_common_word} (#{most_common_occ})")
@@ -100,21 +103,49 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
     logger.info("Upper and lower bound are equal therefore nothing can be selected!")
     return False
 
-  result: Subset = OrderedSet()
   if params.mode == "all":
-    method = all
+    method = np.all
   elif params.mode == "any":
-    method = any
+    method = np.any
   else:
     assert False
 
-  for line_nr in tqdm(select_from_nrs, desc="Filtering", unit=TQDM_LINE_UNIT):
-    counts = counters[line_nr]
-    word_counts = list(total_counter[unit] for unit in counts.keys())
-    match = method(from_count_incl <= count < to_count_excl for count in word_counts)
-    if match:
-      result.add(line_nr)
-      logger.info(f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")
+  min_max_counts = np.zeros((select_from_count, 2), dtype=get_int_dtype_from_n(most_common_occ))
+
+  select_from_nrs_tqdm = tqdm(select_from_nrs, desc="Filtering", unit=TQDM_LINE_UNIT)
+  for line_index, line_nr in enumerate(select_from_nrs_tqdm):
+    # counts = counters[line_nr]
+    units = split_adv(params.lines[line_nr], params.ssep)
+    word_counts = {total_counter[unit] for unit in units}
+    min_max_counts[line_index, 0] = min(word_counts)
+    min_max_counts[line_index, 1] = max(word_counts)
+
+  logger.debug("Filtering with numpy...")
+  #res = min_max_counts[from_count_incl <= min_max_counts < to_count_excl]
+  a = method(from_count_incl <= min_max_counts, axis=1)
+  b = method(min_max_counts < to_count_excl, axis=1)
+  d = np.flatnonzero(a & b)
+  del a
+  del b
+
+  selected_line_nrs = (select_from_nrs[line_index] for line_index in d)
+  selected_line_nrs_tqdm = tqdm(
+    selected_line_nrs, desc="Getting line numbers", unit=TQDM_LINE_UNIT, total=len(d))
+
+  result: Subset = OrderedSet()
+  for line_nr in selected_line_nrs_tqdm:
+    result.add(line_nr)
+    logger.info(f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")
+  del d
+
+  # a = np.flatnonzero(from_count_incl <= min_max_counts)
+  # b = np.flatnonzero(min_max_counts < to_count_excl)
+  # x = np.any((from_count_incl <= min_max_counts) & (min_max_counts < to_count_excl), axis=0)
+  # res = np.flatnonzero(x, axis=1)
+  # match = method(from_count_incl <= count < to_count_excl for count in word_counts)
+  # if match:
+  #   result.add(line_nr)
+  #   logger.info(f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")
 
   changed_anything = False
   if len(result) > 0:

@@ -43,6 +43,7 @@ CLI to select lines of a text file.
 - select/sort randomly
 - add tests
 - refactoring
+- outsourcing greedy- and KLD-iterator
 
 ## Installation
 

@@ -10,7 +10,7 @@ from text_selection_core.validation import ValidationErrBase
 
 
 def get_init_parser(parser: ArgumentParser):
-  parser.description = "This command reads the lines of a textfile and initializes a dataset from it."
+  parser.description = "This command reads the lines of a text file and initializes a dataset from it."
   add_file_arguments(parser)
   parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="SUBSET",
                       help="name of the initial subset containing all line numbers")

@@ -3,11 +3,11 @@ from logging import Logger
 from ordered_set import OrderedSet
 
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import Dataset, LineNrs, Subset, SubsetName, move_lines_to_subset
+from text_selection_core.types import (Dataset, LineNrs, Subset, SubsetName, move_lines_to_subset)
 from text_selection_core.validation import ensure_line_nrs_exist
 
 
-def select_nrs(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logger: Logger) -> ExecutionResult:
+def filter_nrs(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logger: Logger) -> ExecutionResult:
   if error := ensure_line_nrs_exist(dataset, nrs):
     return error
 
@@ -29,3 +29,4 @@ def select_nrs(dataset: Dataset, to_subset_name: SubsetName, nrs: LineNrs, logge
     logger.info(f"{len(nrs) - len(result)} were already selected.")
 
   return changed_anything
+

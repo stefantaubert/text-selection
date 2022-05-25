@@ -9,37 +9,38 @@ CLI to select lines of a text file.
 ## Features
 
 - dataset
-  - create dataset from text
-  - getting statistics
+  - `create`: create a dataset based on a text file
+  - `export-statistics`: exporting statistics to a CSV
 - subsets
-  - add subsets
-  - remove subsets
-  - select entries by line number
-  - select entries FIFO-style
-  - select entries greedy-style
-  - select entries greedy-style epoch-based
-  - select entries kld-style
-  - filter duplicates
-  - filter lines via regex
-  - filter lines via count of units
-  - filter lines by weight
-  - filter lines by unit vocabulary
-  - filter lines by line text
-  - filter lines by unit frequencies per line
-  - sort entries by line number
-  - sort entries by text
-  - reverse entries
-  - sort subsets after weights
-  - export subsets lines
-- subset
-  - rename subset
+  - `add`: add subsets
+  - `remove`: remove subsets
+  - `rename`: rename subset
+  - `select-all`: select all lines
+  - `select-fifo`: select lines FIFO-style
+  - `select-greedily`: select lines greedily regarding units
+  - `select-greedily-ep`: select lines greedily regarding units (epoch-based)
+  - `select-uniformly`: select lines with units uniformly distributed
+  - `filter-duplicates`: filter duplicate lines
+  - `filter-by-regex`: filter lines by regex
+  - `filter-by-text`: filter lines by text
+  - `filter-by-weight`: filter lines by weight
+  - `filter-by-vocabulary`: filter lines by unit vocabulary
+  - `filter-by-count`: filter lines by global unit frequencies
+  - `filter-by-unit-freq`: filter lines by unit frequencies per line
+  - `filter-by-line-nr`: filter lines by line number
+  - `sort-by-line-nr`: sort lines by line number
+  - `sort-by-text`: sort lines by text
+  - `sort-by-weight`: sort lines by weights
+  - `reverse`: reverse lines
+  - `export`: export lines
 - weights
-  - create uniform weights
-  - create weights from unit count
-  - divide weights
+  - `create-uniform`: create uniform weights
+  - `create-from-count`: create weights from unit count
+  - `divide`: divide weights
 
 ## Roadmap
 
+- select/sort randomly
 - add tests
 - refactoring
 

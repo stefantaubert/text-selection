@@ -1,11 +1,9 @@
 from logging import Logger, getLogger
-from typing import Literal
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
-from text_selection_core.algorithms.fifo import (get_fifo_original_positions_iterator,
-                                                 get_fifo_subset_iterator)
+from text_selection_core.algorithms.fifo import get_fifo_subset_iterator
 from text_selection_core.common import (SelectionDefaultParameters, WeightSelectionParameters,
                                         validate_selection_default_parameters,
                                         validate_weights_parameters)
@@ -15,11 +13,8 @@ from text_selection_core.types import (Subset, create_subset_if_it_not_exists,
                                        get_subsets_line_nrs_gen, move_lines_to_subset)
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
-line_nr_mode = "line-nr"
-subset_mode = "subset"
 
-
-def select_fifo(default_params: SelectionDefaultParameters, weight_params: WeightSelectionParameters, mode: Literal["line-nr", "subset"], logger: Logger) -> ExecutionResult:
+def select_fifo(default_params: SelectionDefaultParameters, weight_params: WeightSelectionParameters, logger: Logger) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error
 
@@ -42,13 +37,7 @@ def select_fifo(default_params: SelectionDefaultParameters, weight_params: Weigh
         from_ids, to_subset, weight_params.weights, weight_params.target, weight_params.target_incl_selection)
     logger.debug(f"Selected target from percent: {weight_params.target}")
 
-  if mode == subset_mode:
-    iterator = get_fifo_subset_iterator(from_ids)
-  elif mode == line_nr_mode:
-    original_line_nrs = OrderedSet(default_params.dataset.get_line_nrs())
-    iterator = get_fifo_original_positions_iterator(from_ids, original_line_nrs)
-  else:
-    assert False
+  iterator = get_fifo_subset_iterator(from_ids)
 
   weights_iterator = WeightsIterator(
     iterator, weight_params.weights, weight_params.target, initial_weights, logger)

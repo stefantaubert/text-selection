@@ -2,44 +2,41 @@ import math
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-from ordered_set import OrderedSet
 
 from text_selection.selection import SelectionMode
-from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, parse_existing_file,
-                                                parse_non_empty_or_whitespace, parse_positive_float,
+from text_selection_cli.argparse_helper import (parse_existing_file, parse_positive_float,
                                                 parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_dry_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments,
-                                             add_mp_group, add_to_subset_argument)
+                                             add_mp_group)
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_dataset)
 from text_selection_core.common import SelectionDefaultParameters, WeightSelectionParameters
-from text_selection_core.selection.fifo_selection import line_nr_mode, select_fifo, subset_mode
+from text_selection_core.selection.all_selection import select_all
+from text_selection_core.selection.fifo_selection import select_fifo
 from text_selection_core.selection.greedy_selection import (GreedySelectionParameters,
                                                             select_greedy, select_greedy_epochs)
 from text_selection_core.selection.kld_selection import KldSelectionParameters, select_kld
-from text_selection_core.selection.nr_selection import select_nrs
 from text_selection_core.validation import ValidationErrBase
 
 
-def get_nr_selection_parser(parser: ArgumentParser):
-  parser.description = "Select lines."
+def get_select_all_parser(parser: ArgumentParser):
+  parser.description = "Select all lines."
   add_dataset_argument(parser)
-  add_to_subset_argument(parser)
-  parser.add_argument("lines", type=parse_positive_integer, nargs="+", metavar="LINE-NUMBER",
-                      help="lines to select", action=ConvertToOrderedSetAction)
+  add_from_and_to_subsets_arguments(parser)
   add_dry_argument(parser)
-  return select_nrs_from_ns
+  return select_all_nrs_from_ns
 
 
-def select_nrs_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
+def select_all_nrs_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
   dataset = try_load_dataset(ns.dataset, logger)
   if isinstance(dataset, ValidationErrBase):
     return dataset
 
-  line_numbers_zero_based = OrderedSet(nr - 1 for nr in ns.ids)
-  changed_anything = select_nrs(dataset, ns.to_subset, line_numbers_zero_based, flogger)
+  default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
+  changed_anything = select_all(default_params, flogger)
+
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 
@@ -54,8 +51,6 @@ def get_fifo_selection_parser(parser: ArgumentParser):
   parser.description = "Select lines by FIFO principle."
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
-  parser.add_argument("--mode", type=parse_non_empty_or_whitespace, metavar="MODE",
-                      help="mode", default="subset", choices=[subset_mode, line_nr_mode])
   add_termination_criteria_arguments(parser)
   add_dry_argument(parser)
   return select_fifo_from_ns
@@ -73,7 +68,7 @@ def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
-  changed_anything = select_fifo(default_params, weights_params, ns.mode, flogger)
+  changed_anything = select_fifo(default_params, weights_params, flogger)
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 
@@ -97,7 +92,7 @@ def add_termination_criteria_arguments(parser: ArgumentParser) -> None:
 
 
 def get_greedy_selection_parser(parser: ArgumentParser):
-  parser.description = "Select lines by greedy principle."
+  parser.description = "Select lines by greedy principle (iteration-wise)."
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser, True)
@@ -143,7 +138,7 @@ def greedy_selection_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
 
 
 def get_greedy_selection_epoch_parser(parser: ArgumentParser):
-  parser.description = "Select lines by greedy principle."
+  parser.description = "Select lines by greedy principle (epoch-wise)."
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser, True)
@@ -190,7 +185,7 @@ def greedy_selection_epoch_ns(ns: Namespace, logger: Logger, flogger: Logger) ->
 
 
 def get_kld_selection_parser(parser: ArgumentParser):
-  parser.description = "Select lines by KLD principle."
+  parser.description = "Select lines in the optimal way to obtain an uniform unit distribution."
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser, True)

@@ -13,7 +13,7 @@ from typing import Callable, Dict, Generator, List, Tuple
 from text_selection_cli.argparse_helper import get_optional, parse_path
 from text_selection_cli.datasets import get_init_parser
 from text_selection_cli.export import get_export_txt_parser
-from text_selection_cli.filtering import (get_duplicate_selection_parser,
+from text_selection_cli.filtering import (get_duplicate_selection_parser, get_line_nr_filter_parser,
                                           get_line_unit_frequency_parser,
                                           get_regex_match_selection_parser,
                                           get_string_filter_parser, get_unit_frequency_parser,
@@ -26,8 +26,8 @@ from text_selection_cli.logging_configuration import (configure_root_logger, get
 from text_selection_cli.selection import (get_fifo_selection_parser,
                                           get_greedy_selection_epoch_parser,
                                           get_greedy_selection_parser, get_kld_selection_parser,
-                                          get_nr_selection_parser)
-from text_selection_cli.sorting import (get_fifo_sorting_parser, get_reverse_sorting_parser,
+                                          get_select_all_parser)
+from text_selection_cli.sorting import (get_line_nr_sorting_parser, get_reverse_sorting_parser,
                                         get_text_sorting_parser, get_weight_sorting_parser)
 from text_selection_cli.statistics import get_statistics_generation_parser
 from text_selection_cli.subset import get_subset_renaming_parser
@@ -37,9 +37,9 @@ from text_selection_cli.weights import (get_uniform_weights_creation_parser,
                                         get_word_count_weights_creation_parser)
 from text_selection_core.validation import ValidationErrBase
 
-prog_name = "text-selection"
+PROG_NAME = "text-selection"
 
-__version__ = version(prog_name)
+__version__ = version(PROG_NAME)
 
 INVOKE_HANDLER_VAR = "invoke_handler"
 
@@ -60,52 +60,44 @@ def formatter(prog):
 
 
 def get_dataset_parsers() -> Parsers:
-  yield "create-from-text", "create dataset from text", get_init_parser
-  yield "get-stats", "getting statistics", get_statistics_generation_parser
+  yield "create", "create a dataset based on a text file", get_init_parser
+  yield "export-statistics", "exporting statistics to a CSV", get_statistics_generation_parser
 
 
 def get_weights_parsers() -> Parsers:
   yield "create-uniform", "create uniform weights", get_uniform_weights_creation_parser
-  yield "create-count", "create weights from unit count", get_word_count_weights_creation_parser
+  yield "create-from-count", "create weights from unit count", get_word_count_weights_creation_parser
   yield "divide", "divide weights", get_weights_division_parser
-
-
-def get_subset_parsers() -> Parsers:
-  yield "rename", "rename subset", get_subset_renaming_parser
 
 
 def get_subsets_parsers() -> Parsers:
   yield "add", "add subsets", get_subsets_creation_parser
   yield "remove", "remove subsets", get_subsets_removal_parser
-  yield "select-lines", "select entries by line number", get_nr_selection_parser
-  yield "select-fifo", "select entries FIFO-style", get_fifo_selection_parser
-  yield "select-greedy", "select entries greedy-style", get_greedy_selection_parser
-  yield "select-greedy-epochs", "select entries greedy-style epoch-based", get_greedy_selection_epoch_parser
-  yield "select-kld", "select entries kld-style", get_kld_selection_parser
-  yield "filter-duplicates", "filter duplicates", get_duplicate_selection_parser
-  yield "filter-regex", "filter lines via regex", get_regex_match_selection_parser
-  yield "filter-count", "filter lines via count of units", get_unit_frequency_parser
+  yield "rename", "rename subset", get_subset_renaming_parser
+  yield "select-all", "select all lines", get_select_all_parser
+  yield "select-fifo", "select lines FIFO-style", get_fifo_selection_parser
+  yield "select-greedily", "select lines greedily regarding units", get_greedy_selection_parser
+  yield "select-greedily-ep", "select lines greedily regarding units (epoch-based)", get_greedy_selection_epoch_parser
+  yield "select-uniformly", "select lines with units uniformly distributed", get_kld_selection_parser
+  yield "filter-duplicates", "filter duplicate lines", get_duplicate_selection_parser
+  yield "filter-by-regex", "filter lines by regex", get_regex_match_selection_parser
+  yield "filter-by-text", "filter lines by text", get_string_filter_parser
   yield "filter-by-weight", "filter lines by weight", get_weight_filtering_parser
   yield "filter-by-vocabulary", "filter lines by unit vocabulary", get_vocabulary_filtering_parser
-  yield "filter-by-text", "filter lines by line text", get_string_filter_parser
+  yield "filter-by-count", "filter lines by global unit frequencies", get_unit_frequency_parser
   yield "filter-by-unit-freq", "filter lines by unit frequencies per line", get_line_unit_frequency_parser
-  yield "sort-by-line-nr", "sort entries by line number", get_fifo_sorting_parser
-  yield "sort-by-text", "sort entries by text", get_text_sorting_parser
-  yield "sort-reverse", "reverse entries", get_reverse_sorting_parser
-  yield "sort-after-weights", "sort subsets after weights", get_weight_sorting_parser
-  yield "export", "export subsets lines", get_export_txt_parser
-
-
-# def get_ngrams_parsers() -> Parsers:
-#   # yield "create", "create n-grams", get_n_grams_extraction_parser
-#   pass
+  yield "filter-by-line-nr", "filter lines by line number", get_line_nr_filter_parser
+  yield "sort-by-line-nr", "sort lines by line number", get_line_nr_sorting_parser
+  yield "sort-by-text", "sort lines by text", get_text_sorting_parser
+  yield "sort-by-weight", "sort lines by weights", get_weight_sorting_parser
+  yield "reverse", "reverse lines", get_reverse_sorting_parser
+  yield "export", "export lines", get_export_txt_parser
 
 
 def get_parsers() -> Dict[str, Tuple[Parsers, str]]:
   parsers: Dict[str, Tuple[Parsers, str]] = {
     "dataset": (get_dataset_parsers(), "dataset commands"),
     "subsets": (get_subsets_parsers(), "subsets commands"),
-    "subset": (get_subset_parsers(), "subset commands"),
     "weights": (get_weights_parsers(), "weights commands"),
   }
   return parsers
@@ -116,17 +108,17 @@ def print_features():
   for parser_name, (methods, help_str) in parsers.items():
     print(f"- {parser_name}")
     for command, description, method in methods:
-      print(f"  - {description}")
+      print(f"  - `{command}`: {description}")
 
 
 def _init_parser():
   main_parser = ArgumentParser(
     formatter_class=formatter,
-    description="This program provides methods to modify TextGrids (.TextGrid) and their corresponding audios (.wav).",
+    description="CLI to select lines of a text file.",
   )
   main_parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
   subparsers = main_parser.add_subparsers(help="description")
-  default_log_path = Path(gettempdir()) / f"{prog_name}.log"
+  default_log_path = Path(gettempdir()) / f"{PROG_NAME}.log"
 
   parsers = get_parsers()
   for parser_name, (methods, help_str) in parsers.items():
@@ -236,15 +228,13 @@ def run_prod():
 
 
 def debug_file_exists():
-  return (Path(gettempdir()) / f"{prog_name}-debug").is_file()
+  return (Path(gettempdir()) / f"{PROG_NAME}-debug").is_file()
 
 
 def create_debug_file():
   if not debug_file_exists():
-    (Path(gettempdir()) / f"{prog_name}-debug").write_text("", "UTF-8")
+    (Path(gettempdir()) / f"{PROG_NAME}-debug").write_text("", "UTF-8")
 
 
 if __name__ == "__main__":
-  print_features()
-  create_debug_file()
-  run()
+  run_prod()

@@ -11,7 +11,7 @@ from text_selection_core.validation import ValidationErrBase
 
 
 def get_subsets_creation_parser(parser: ArgumentParser):
-  parser.description = "This command adds subsets."
+  parser.description = "Add subsets."
   add_dataset_argument(parser)
   parser.add_argument("names", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="names of subsets that should be added", action=ConvertToOrderedSetAction)
@@ -36,7 +36,7 @@ def add_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionR
 
 
 def get_subsets_removal_parser(parser: ArgumentParser):
-  parser.description = "This command removes subsets."
+  parser.description = "Remove subsets."
   add_dataset_argument(parser)
   parser.add_argument("names", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="names of subsets that should be removed (Note: at least one subset needs to be left after removal)", action=ConvertToOrderedSetAction)

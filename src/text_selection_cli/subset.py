@@ -10,7 +10,7 @@ from text_selection_core.validation import ValidationErrBase
 
 
 def get_subset_renaming_parser(parser: ArgumentParser):
-  parser.description = "This command rename a subset."
+  parser.description = "Rename a subset."
   add_dataset_argument(parser)
   parser.add_argument("name", type=parse_non_empty_or_whitespace, metavar="SUBSET",
                       help="subset that should be renamed")

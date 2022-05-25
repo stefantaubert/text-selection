@@ -1,4 +1,3 @@
-
 from argparse import ArgumentParser
 from multiprocessing import cpu_count
 
@@ -10,8 +9,6 @@ from text_selection_cli.argparse_helper import (ConvertToOrderedSetAction, get_o
 DEFAULT_N_JOBS = cpu_count()
 DEFAULT_CHUNKSIZE = 1_000_000
 DEFAULT_MAXTASKSPERCHILD = None
-
-parse_weights_name = parse_non_empty_or_whitespace
 
 
 def add_from_and_to_subsets_arguments(parser: ArgumentParser) -> None:
@@ -42,8 +39,8 @@ def add_dataset_argument(parser: ArgumentParser) -> None:
 def add_file_arguments(parser: ArgumentParser, include_sep: bool = False) -> None:
   parser.add_argument("file", type=parse_existing_file, metavar="FILE-PATH",
                       help="name of the file containing the lines")
-  parser.add_argument("--lsep", type=parse_non_empty, default="\n",
-                      help="line separator")
+  parser.add_argument("--lsep", type=parse_non_empty, metavar="STRING",
+                      default="\n", help="line separator")
   if include_sep:
     add_sep_argument(parser)
   add_encoding_argument(parser, "encoding of file")
@@ -75,28 +72,6 @@ def add_chunksize_argument(parser: ArgumentParser, target: str = "files", defaul
 def add_maxtasksperchild_argument(parser: ArgumentParser) -> None:
   parser.add_argument("-m", "--maxtasksperchild", type=get_optional(parse_positive_integer), metavar="COUNT",
                       help="amount of tasks per child", default=DEFAULT_MAXTASKSPERCHILD)
-
-
-# def add_string_format_argument(parser: ArgumentParser, target: str, short_name: str = "-f", name: str = '--formatting') -> None:
-#   names = OrderedDict((
-#     (StringFormat2.DEFAULT, "Normal"),
-#     (StringFormat2.SPACED, "Spaced"),
-#   ))
-
-#   values_to_names = dict(zip(
-#     names.values(),
-#     names.keys()
-#   ))
-
-#   help_str = f"formatting of text in {target}; use \'{names[StringFormat2.DEFAULT]}\' for normal text and \'{names[StringFormat2.SPACED]}\' for space separated symbols, i.e., words are separated by two spaces and characters are separated by one space. Example: {names[StringFormat2.DEFAULT]} -> |This text.|; {names[StringFormat2.SPACED]} -> |T␣h␣i␣s␣␣t␣e␣x␣t␣.|"
-#   parser.add_argument(
-#     short_name, name,
-#     metavar=list(names.values()),
-#     choices=StringFormat2,
-#     type=values_to_names.get,
-#     default=names[StringFormat2.DEFAULT],
-#     help=help_str,
-#   )
 
 
 def add_encoding_argument(parser: ArgumentParser, help_str: str) -> None:

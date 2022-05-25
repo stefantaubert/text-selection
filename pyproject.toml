@@ -87,20 +87,10 @@ max_line_length = 100
 [tool.isort]
 line_length = 100
 indent = 2
-known_first_party = [
-  "text_selection",
-  "text_selection_core",
-  "text_selection_cli",
-]
-known_third_party = [
-  "tqdm",
-  "ordered_set",
-]
 
 [tool.pyright]
 root = ["src"]
 include = ["src"]
-pythonVersion = "3.9"
 pythonPlatform = "All"
 typeCheckingMode = "off"
 stubPath = ""
@@ -111,8 +101,6 @@ exclude = [
   "**/*.egg-info",
   "**/*_debug",
 ]
-venvPath = "/home/mi/.local/share/virtualenvs"
-venv = "text-selection-AnI7IYeo"
 useLibraryCodeForTypes = true
 
 [build-system]

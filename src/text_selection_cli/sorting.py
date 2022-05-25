@@ -15,8 +15,8 @@ from text_selection_core.sorting.weights_sorting import sort_after_weights
 from text_selection_core.validation import ValidationErrBase
 
 
-def get_fifo_sorting_parser(parser: ArgumentParser):
-  parser.description = "Sort lines by FIFO principle."
+def get_line_nr_sorting_parser(parser: ArgumentParser):
+  parser.description = "Sort lines by line number (ascending)."
   add_dataset_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="subsets", action=ConvertToOrderedSetAction)
@@ -41,7 +41,7 @@ def sort_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Executi
 
 
 def get_reverse_sorting_parser(parser: ArgumentParser):
-  parser.description = "Reverse sorting."
+  parser.description = "Reverse line sorting."
   add_dataset_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="subsets", action=ConvertToOrderedSetAction)
@@ -66,7 +66,7 @@ def sort_reverse_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Exec
 
 
 def get_weight_sorting_parser(parser: ArgumentParser):
-  parser.description = "Reverse sorting."
+  parser.description = "Sort lines according to weights (ascending)."
   add_dataset_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="subsets", action=ConvertToOrderedSetAction)
@@ -97,7 +97,7 @@ def sort_after_weights_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Exe
 
 
 def get_text_sorting_parser(parser: ArgumentParser):
-  parser.description = "Sorting after text."
+  parser.description = "Sort lines according to their content (ascending)."
   add_dataset_argument(parser)
   parser.add_argument("subsets", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="subsets", action=ConvertToOrderedSetAction)

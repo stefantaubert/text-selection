@@ -1,4 +1,4 @@
-from logging import Logger, getLogger
+from logging import Logger
 from typing import Iterator
 
 from text_selection_core.types import DataWeights, LineNr, Weight

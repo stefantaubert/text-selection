@@ -1,5 +1,5 @@
 from logging import Logger, getLogger
-from typing import Generator, Iterator, Optional
+from typing import Optional
 
 from ordered_set import OrderedSet
 from tqdm import tqdm

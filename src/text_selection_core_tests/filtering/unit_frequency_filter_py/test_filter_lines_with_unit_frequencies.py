@@ -5,7 +5,6 @@ from logging import getLogger
 from ordered_set import OrderedSet
 
 from text_selection_core.common import SelectionDefaultParameters
-from text_selection_core.filtering.duplicates_filter import filter_duplicates
 from text_selection_core.filtering.unit_frequency_filter import (CountFilterParameters,
                                                                  filter_lines_with_unit_frequencies)
 from text_selection_core.types import Dataset, move_lines_to_subset

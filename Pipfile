@@ -15,6 +15,7 @@ autoflake = "*"
 twine = "*"
 
 [packages]
+scipy = "*"
 ordered-set = ">=4.1.0"
 tqdm = "*"
 numpy = "*"

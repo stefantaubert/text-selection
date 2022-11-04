@@ -174,7 +174,7 @@ def get_unit_frequency_parser(parser: ArgumentParser):
   parser.add_argument("--all", action="store_true",
                       help="calculate occurrences in the total dataset; otherwise only the occurrences from the FROM-SUBSETs are counted")
   parser.add_argument("--percent", action="store_true",
-                      help="calculate min/max as quantile boundaries in % (0-100)")
+                      help="calculate min/max as quantile boundaries in percent (0-100)")
   add_dry_argument(parser)
   return filter_unit_counts_ns
 

@@ -38,7 +38,7 @@ def test_trigram_empty__returns_no_trigram():
 
 
 def test_trigram_a__returns__aaa():
-  result = get_all_ngrams_iterator(OrderedSet(("a",)), n_gram=2)
+  result = get_all_ngrams_iterator(OrderedSet(("a",)), n_gram=3)
   assert list(result) == [("a", "a", "a")]
 
 

@@ -25,31 +25,6 @@ def test_8x3_all_combinations__return_correct_order():
     data_indices=data_indices,
     key_selector=FirstKeySelector(),
     preselection=preselection,
-    cover_per_epoch=1,
-  )
-
-  result = OrderedSet(iterator)
-
-  assert result == OrderedSet((7, 3, 4, 5, 2, 6, 1, 0))
-
-
-def test_8x3():
-  data = np.array([
-    [0, 0, 0],  # 0
-    [0, 0, 1],  # 1
-    [2, 0, 1],  # 1
-    [0, 2, 1],  # 1
-    [1, 1, 1],  # 1
-  ])
-  data_indices = OrderedSet(range(len(data)))
-  preselection = np.array(
-    [0, 0, 0]
-  )
-  iterator = GreedyIterator(
-    data=data,
-    data_indices=data_indices,
-    key_selector=FirstKeySelector(),
-    preselection=preselection,
   )
 
   result = OrderedSet(iterator)

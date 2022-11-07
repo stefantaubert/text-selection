@@ -1,3 +1,4 @@
+import hashlib
 from logging import Logger, getLogger
 from typing import Optional
 
@@ -13,7 +14,7 @@ from text_selection_core.types import (Lines, Subset, get_subsets_line_nrs_count
 from text_selection_core.validation import ensure_lines_count_matches_dataset
 
 
-def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, logger: Optional[Logger]) -> ExecutionResult:
+def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, encoding: str, logger: Optional[Logger]) -> ExecutionResult:
   if logger is None:
     logger = getLogger(__name__)
 
@@ -33,12 +34,17 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
   line_nrs = tqdm(select_from_line_nrs, desc="Filtering duplicates",
                   unit=TQDM_LINE_UNIT, total=select_from_count)
   for line_nr in line_nrs:
-    item = lines[line_nr]
-    if item in collected:
+    # TODO think of using hash of line instead of line
+    line = lines[line_nr]
+    line_hash = hashlib.sha256(line.encode(encoding)).hexdigest()
+    if line_hash in collected:
       result.add(line_nr)
       logger.info(f"Filtered L-{line_nr+1}: \"{lines[line_nr]}\".")
     else:
-      collected.add(item)
+      collected.add(line_hash)
+    del line
+    del line_hash
+    del line_nr
   del collected
 
   if changed_anything := len(result) > 0:

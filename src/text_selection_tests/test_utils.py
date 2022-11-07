@@ -80,30 +80,30 @@ def test_get_first_percent_100percent__adds_all():
   assert OrderedSet([1, 2, 3, 4, 5, 6, 7]) == res
 
 
-def test_get_filtered_ngrams_numbers__returns_ordered_dict():
-  data = OrderedDict([
-    (1, ["a", "b"]),
-    (3, ["e", "f"]),
-    (2, ["c", "d"]),
-    (5, ["i", "j"]),
-    (4, ["g", "a"]),
-  ])
+# def test_get_filtered_ngrams_numbers__returns_ordered_dict():
+#   data = OrderedDict([
+#     (1, ["a", "b"]),
+#     (3, ["e", "f"]),
+#     (2, ["c", "d"]),
+#     (5, ["i", "j"]),
+#     (4, ["g", "a"]),
+#   ])
 
-  res = get_filtered_ngrams_numbers(
-    data=data,
-    ignore_symbols=None,
-    n_gram=1,
-  )
+#   res = get_filtered_ngrams_numbers(
+#     data=data,
+#     ignore_symbols=None,
+#     n_gram=1,
+#   )
 
-  assert_result = OrderedDict([
-    (1, (0, 1)),
-    (3, (2, 3)),
-    (2, (4, 5)),
-    (5, (6, 7)),
-    (4, (8, 0)),
-  ])
+#   assert_result = OrderedDict([
+#     (1, (0, 1)),
+#     (3, (2, 3)),
+#     (2, (4, 5)),
+#     (5, (6, 7)),
+#     (4, (8, 0)),
+#   ])
 
-  assert res == assert_result
+#   assert res == assert_result
 
 
 def test_get_filtered_ngrams__returns_ordered_dict():

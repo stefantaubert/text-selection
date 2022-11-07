@@ -1,7 +1,8 @@
 from ordered_set import OrderedSet
-from text_selection.greedy_kld_export import (
-    greedy_kld_uniform_ngrams_default, greedy_kld_uniform_ngrams_parts,
-    greedy_kld_uniform_ngrams_seconds_with_preselection)
+
+from text_selection.greedy_kld_export import (greedy_kld_uniform_ngrams_default,
+                                              greedy_kld_uniform_ngrams_parts,
+                                              greedy_kld_uniform_ngrams_seconds_with_preselection)
 from text_selection.utils import *
 
 
@@ -17,6 +18,9 @@ def test_greedy_kld_uniform_ngrams__one_gramas__selects_best_fitting_first():
     data=data,
     n_gram=1,
     ignore_symbols=None,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([2, 4, 1, 3]) == res
@@ -33,6 +37,9 @@ def test_greedy_kld_uniform_ngrams__two_grams_all_equal__return_same_order():
     data=data,
     n_gram=2,
     ignore_symbols=None,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([1, 2, 3]) == res
@@ -60,7 +67,11 @@ def test_sort_greedy_kld_until_with_preselection__without_preselection():
     seconds=target_duration,
     preselection=preselection,
     ignore_symbols={"b"},
+    duration_boundary=(0, 2.0),
     n_gram=1,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([5, 7]) == res
@@ -90,6 +101,10 @@ def test_sort_greedy_kld_until_with_preselection__with_preselection():
     preselection=preselection,
     ignore_symbols={"b"},
     n_gram=1,
+    duration_boundary=(0, 2.0),
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([7]) == res
@@ -121,6 +136,10 @@ def test_sort_greedy_kld_until_with_preselection__with_preselection_and_one_utte
     preselection=preselection,
     ignore_symbols={"b", "d"},
     n_gram=1,
+    duration_boundary=(0, 2.0),
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([7, 6]) == res
@@ -150,6 +169,10 @@ def test_sort_greedy_kld_until_with_preselection__only_ignored_symbols():
     preselection=preselection,
     ignore_symbols={"b"},
     n_gram=1,
+    duration_boundary=(0, 2.0),
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([6]) == res
@@ -169,6 +192,9 @@ def test_greedy_kld_uniform_ngrams_parts():
     ignore_symbols={},
     take_per_part=1,
     parts_count=2,
+    chunksize=1,
+    maxtasksperchild=None,
+    n_jobs=1,
   )
 
   assert OrderedSet([1, 3, 2, 4]) == res

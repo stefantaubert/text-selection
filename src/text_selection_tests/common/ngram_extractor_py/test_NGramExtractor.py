@@ -2,6 +2,8 @@
 from collections import OrderedDict
 
 import numpy as np
+from ordered_set import OrderedSet
+
 from text_selection.common.ngram_extractor import NGramExtractor
 
 
@@ -26,7 +28,7 @@ def test_component():
     ignore_symbols={"c"},
   )
 
-  result = x.predict({4, 6})
+  result = x.predict(OrderedSet((4, 6)))
 
   np.testing.assert_array_equal(result, np.array([
     #a, b, d, x

@@ -29,7 +29,7 @@ def remove_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logg
 
   for name in names:
     if len(dataset.subsets[name]) > 0:
-      return ValidationErr(ErrorType.SUBSET_NOT_EMPTY)
+      return ValidationErr(ErrorType.SUBSET_NOT_EMPTY, name)
     dataset.subsets.pop(name)
 
   return True

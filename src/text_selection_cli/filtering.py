@@ -49,7 +49,7 @@ def select_duplicates_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Exec
     return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  changed_anything = filter_duplicates(default_params, lines, flogger)
+  changed_anything = filter_duplicates(default_params, lines, ns.encoding, flogger)
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 

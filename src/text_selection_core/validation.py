@@ -16,6 +16,7 @@ class ErrorType(IntEnum):
   INVALID_PERCENT = 5
   NON_DISTINCT_SUBSETS = 6
   LINE_NRS_NOT_EXIST = 7
+  SUBSET_NOT_EMPTY = 8
 
 
 _DEFAULT_ERROR_PATTERNS = {
@@ -35,6 +36,7 @@ _DEFAULT_ERROR_PATTERNS = {
     "The subsets need to be distinct!",
   ErrorType.LINE_NRS_NOT_EXIST:
     "The line number(s) {0} do(es) not exist in the dataset!",
+  ErrorType.SUBSET_NOT_EMPTY: "The subset \"{0}\" which should be removed needs to be empty before removal!"
 }
 
 

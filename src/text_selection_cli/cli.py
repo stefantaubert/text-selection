@@ -221,7 +221,8 @@ def parse_args(args: List[str]) -> None:
 
   if log_to_file:
     # path not encapsulated in "" because it is only console out
-    root_logger.info(f"Written log to: {ns.log.absolute()}")
+    root_logger.info(f"Log: \"{ns.log.absolute()}\".")
+    root_logger.info("Writing remaining buffered log lines...")
 
 
 def run():

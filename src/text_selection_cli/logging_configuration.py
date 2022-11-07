@@ -1,7 +1,7 @@
 import logging
 import os
 from logging import DEBUG, Formatter, Handler, Logger, LogRecord, StreamHandler, getLogger
-from logging.handlers import QueueHandler
+from logging.handlers import MemoryHandler, QueueHandler
 from pathlib import Path
 from queue import Queue
 from typing import Dict, Generator, List, Tuple
@@ -87,49 +87,6 @@ def init_and_return_loggers(name: str) -> Tuple[Logger, Logger]:
   return flogger, logger
 
 
-def init_file_stem_loggers(file_stems: OrderedSet[str]) -> Dict[str, Queue]:
-  logging_queues = dict.fromkeys(file_stems)
-  for k in file_stems:
-    logger = getLogger(k)
-    logger.propagate = False
-    q = Queue(-1)
-    logging_queues[k] = q
-    handler = QueueHandler(q)
-    logger.addHandler(handler)
-
-  return logging_queues
-
-
-def init_file_stem_logger_lists(file_stems: OrderedSet[str]) -> Dict[str, List[Tuple[int, str]]]:
-  logging_queues = dict.fromkeys(file_stems)
-  for k in file_stems:
-    logging_queues[k] = []
-  return logging_queues
-
-
-def get_file_stem_loggers(file_stems: OrderedSet[str]) -> Generator[Logger, None, None]:
-  for k in file_stems:
-    logger = getLogger(k)
-    yield logger
-
-
-def write_file_stem_loggers_to_file_logger(queues: Dict[str, Queue]) -> None:
-  flogger = get_file_logger()
-  for k, q in queues.items():
-    flogger.info(f"Log messages for file: {k}")
-    entries = list(q.queue)
-    for x in entries:
-      flogger.handle(x)
-
-
-def write_file_stem_logger_lists_to_file_logger(lists: Dict[str, List[Tuple[int, str]]]) -> None:
-  flogger = get_file_logger()
-  for k, l in lists.items():
-    flogger.info(f"Log messages for file: {k}")
-    for lvl, msg in l:
-      flogger.log(lvl, msg)
-
-
 def set_console_formatter(handler: Handler) -> None:
   logging_formatter = ConsoleFormatter()
   handler.setFormatter(logging_formatter)
@@ -189,4 +146,32 @@ def try_init_file_logger(path: Path, debug: bool = False) -> bool:
   level = logging.DEBUG if debug else logging.INFO
   fh.setLevel(level)
   flogger.addHandler(fh)
+  return True
+
+
+def try_init_file_buffer_logger(path: Path, debug: bool = False, buffer_capacity: int = 1000):
+  if path.is_dir():
+    logger = getLogger(__name__)
+    logger.error("Logging path is a directory!")
+    return False
+  flogger = get_file_logger()
+  assert len(flogger.handlers) == 0
+  try:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_file():
+      os.remove(path)
+    path.write_text("")
+    fh = logging.FileHandler(path)
+  except Exception as ex:
+    logger = getLogger(__name__)
+    logger.error("Logfile couldn't be created!")
+    logger.exception(ex)
+    return False
+
+  set_logfile_formatter(fh)
+
+  level = logging.DEBUG if debug else logging.INFO
+  fh.setLevel(level)
+  mh = MemoryHandler(buffer_capacity, logging.ERROR, fh, True)
+  flogger.addHandler(mh)
   return True

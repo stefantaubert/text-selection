@@ -10,7 +10,7 @@ from tempfile import gettempdir
 from time import perf_counter
 from typing import Callable, Dict, Generator, List, Tuple
 
-from text_selection_cli.argparse_helper import get_optional, parse_path
+from text_selection_cli.argparse_helper import get_optional, parse_path, parse_positive_integer
 from text_selection_cli.datasets import get_init_parser
 from text_selection_cli.export import get_export_txt_parser
 from text_selection_cli.filtering import (get_duplicate_selection_parser, get_line_nr_filter_parser,
@@ -21,7 +21,9 @@ from text_selection_cli.filtering import (get_duplicate_selection_parser, get_li
                                           get_weight_filtering_parser)
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
-                                                      init_and_return_loggers, try_init_file_logger)
+                                                      init_and_return_loggers,
+                                                      try_init_file_buffer_logger,
+                                                      try_init_file_logger)
 from text_selection_cli.selection import (get_fifo_selection_parser,
                                           get_greedy_selection_epoch_parser,
                                           get_greedy_selection_parser, get_kld_selection_parser,
@@ -46,6 +48,7 @@ CONSOLE_PNT_GREEN = "\x1b[1;49;32m"
 CONSOLE_PNT_RED = "\x1b[1;49;31m"
 CONSOLE_PNT_RST = "\x1b[0m"
 
+DEFAULT_LOGGING_BUFFER_CAP = 1000000000
 
 Parsers = Generator[Tuple[str, str, Callable], None, None]
 
@@ -134,6 +137,8 @@ def _init_parser():
       logging_group = method_parser.add_argument_group("logging arguments")
       logging_group.add_argument("--log", type=get_optional(parse_path), metavar="FILE",
                                  nargs="?", const=None, help="path to write the log", default=default_log_path)
+      logging_group.add_argument("--buffer-capacity", type=parse_positive_integer, default=DEFAULT_LOGGING_BUFFER_CAP,
+                                 metavar="CAPACITY", help="amount of logging lines that should be buffered before they are written to the log-file")
       logging_group.add_argument("--debug", action="store_true",
                                  help="include debugging information in log")
 
@@ -167,7 +172,9 @@ def parse_args(args: List[str]) -> None:
   delattr(ns, INVOKE_HANDLER_VAR)
   log_to_file = ns.log is not None
   if log_to_file:
-    log_to_file = try_init_file_logger(ns.log, local_debugging or ns.debug)
+    # log_to_file = try_init_file_logger(ns.log, local_debugging or ns.debug)
+    log_to_file = try_init_file_buffer_logger(
+      ns.log, local_debugging or ns.debug, ns.buffer_capacity)
     if not log_to_file:
       root_logger.warning("Logging to file is not possible.")
 

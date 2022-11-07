@@ -12,8 +12,8 @@ from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import TQDM_LINE_UNIT, ExecutionResult
 from text_selection_core.helper import get_int_dtype_from_n, get_percent_str, split_adv
-from text_selection_core.types import (Lines, Subset, get_subsets_line_nrs_count, get_subsets_line_nrs_gen,
-                                       move_lines_to_subset)
+from text_selection_core.types import (Lines, Subset, get_subsets_line_nrs_count,
+                                       get_subsets_line_nrs_gen, move_lines_to_subset)
 from text_selection_core.validation import ensure_lines_count_matches_dataset
 
 
@@ -127,16 +127,29 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
   d = np.flatnonzero(a & b)
   del a
   del b
+  """ 
+    logger.info("Getting line numbers...")
+    select_from_nrs_array = np.array(select_from_nrs)
+    selected_line_nrs_array = select_from_nrs_array[d]
+    del d
+    del select_from_nrs_array
+    logger.debug("Creating set...")
+    result = OrderedSet(selected_line_nrs_array)
+    del selected_line_nrs_array
 
+    logger.debug("Logging results...")
+    for line_nr in result:
+      logger.info(f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")
+ """
   selected_line_nrs = (select_from_nrs[line_index] for line_index in d)
-  selected_line_nrs_tqdm = tqdm(
-    selected_line_nrs, desc="Getting line numbers", unit=TQDM_LINE_UNIT, total=len(d))
-
-  result: Subset = OrderedSet()
-  for line_nr in selected_line_nrs_tqdm:
-    result.add(line_nr)
-    logger.info(f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")
+  result: Subset = OrderedSet(selected_line_nrs)
+  del selected_line_nrs
   del d
+
+  with tqdm(result, desc="Logging filtered lines", unit=TQDM_LINE_UNIT, total=len(result)) as line_nrs:
+    for line_nr in line_nrs:
+      logger.info(f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")
+      del line_nr
 
   # a = np.flatnonzero(from_count_incl <= min_max_counts)
   # b = np.flatnonzero(min_max_counts < to_count_excl)
@@ -153,4 +166,5 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
       f"Filtered {len(result)} out of {len(select_from_nrs)} lines ({get_percent_str(len(result),len(select_from_nrs))}). {len(select_from_nrs)-len(result)} lines remain.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
+  del result
   return changed_anything

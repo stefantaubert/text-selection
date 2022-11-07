@@ -26,7 +26,7 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
   select_from_count = get_subsets_line_nrs_count(
     default_params.dataset, default_params.from_subset_names)
   re_pattern = re.compile(pattern)
-  logger.debug(f"Pattern: {re_pattern}")
+  logger.debug(f"Pattern: {re_pattern.pattern}")
   
   result: Subset = OrderedSet()
   select_from_nrs = tqdm(select_from_nrs, desc="Filtering",

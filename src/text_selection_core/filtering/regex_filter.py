@@ -46,15 +46,20 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
   for line_nr, match in get_matching_lines_match(lines, select_from_nrs, re_pattern):
     result.add(line_nr)
     logger.info(f"Filtered L-{line_nr+1}: \"{lines[line_nr]}\".")
+    del line_nr
     for group in match.groups():
       if group is not None:
+        logger.info(f"Matched: \"{group}\"")
         unique_matches.add(group)
+      del group
 
   if len(unique_matches) > 0:
     logger.info(f"Matched the following texts (#{len(unique_matches)}):")
   for unique_match in sorted(unique_matches):
     logger.info(f"- \"{unique_match}\"")
-
+    del unique_match
+  del unique_matches
+  
   changed_anything = False
   if len(result) > 0:
     logger.info(

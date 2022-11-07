@@ -14,7 +14,7 @@ from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_n
 from text_selection_core.validation import ensure_lines_count_matches_dataset
 
 
-def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, encoding: str, logger: Optional[Logger]) -> ExecutionResult:
+def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, logger: Optional[Logger]) -> ExecutionResult:
   if logger is None:
     logger = getLogger(__name__)
 

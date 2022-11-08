@@ -40,6 +40,22 @@ def test_find_component():
   ))
 
 
+def test_find_component_multiple_groups():
+  lines = ["It as In memory o April twenty-first on it but us don't need th things to make we remember it tho we re wonderful glad t ave em from th doctor"]
+  ds = Dataset(len(lines), "base")
+  sel_param = SelectionDefaultParameters(ds, OrderedSet(("base",)), "test")
+
+  changed_anything = filter_regex_pattern(
+    sel_param, lines, "[^:] ([b-z])(([^a-zA-Z'])|($))", "find", getLogger())
+
+  assert isinstance(changed_anything, bool)
+  assert changed_anything
+  assert ds.subsets == OrderedDict((
+    ("base", OrderedSet()),
+    ("test", OrderedSet((0,))),
+  ))
+
+
 def test_component_no_group():
   lines = ["x y z", "a bb", "bb b c", ""]
   ds = Dataset(len(lines), "base")

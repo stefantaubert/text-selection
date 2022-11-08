@@ -90,5 +90,12 @@ def get_matching_lines_match(lines: Lines, line_nrs: Iterator[LineNr], pattern: 
 def get_matching_lines_find(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[Tuple[LineNr, List[str]], None, None]:
   for line_nr in line_nrs:
     if len(matches := pattern.findall(lines[line_nr])) > 0:
-      matches = [m for m in matches if m != ""]
-      yield line_nr, matches
+      all_matches = []
+      for m in matches:
+        if isinstance(m, tuple):
+          all_matches.extend(m)
+        else:
+          assert isinstance(m, str)
+          all_matches.append(m)
+      all_matches = [m for m in all_matches if m != ""]
+      yield line_nr, all_matches

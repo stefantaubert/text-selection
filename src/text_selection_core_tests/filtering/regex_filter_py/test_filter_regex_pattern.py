@@ -26,7 +26,7 @@ def test_match_component():
 
 
 def test_find_component():
-  lines = ["x y z", "aa a xx", "bb b c", ""]
+  lines = ["x y z", "aa a aa aa xx", "bb b c", ""]
   ds = Dataset(len(lines), "base")
   sel_param = SelectionDefaultParameters(ds, OrderedSet(("base",)), "test")
 

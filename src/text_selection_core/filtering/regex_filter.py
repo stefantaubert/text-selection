@@ -1,7 +1,8 @@
 import re
+from collections import Counter
 from logging import Logger
 from re import Match
-from typing import Generator, Iterator, Set, Tuple
+from typing import Generator, Iterator, List, Set, Tuple
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
@@ -45,7 +46,8 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
   assert method is not None
 
   result: Subset = OrderedSet()
-  unique_matches = set()
+  # unique_matches = set()
+  matches_counter = Counter()
   with tqdm(select_from_nrs, desc="Filtering", unit=TQDM_LINE_UNIT, total=select_from_count) as select_from_nrs:
     for line_nr, matched_strs in method(lines, select_from_nrs, re_pattern):
       result.add(line_nr)
@@ -54,15 +56,16 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
       for match in matched_strs:
         logger.info(f"Matched: \"{match}\"")
         del match
-      unique_matches |= matched_strs
+      matches_counter.update(matched_strs)
+      # unique_matches |= matched_strs
       del matched_strs
 
-  if len(unique_matches) > 0:
-    logger.info(f"Matched the following texts (#{len(unique_matches)}):")
-  for unique_match in sorted(unique_matches):
-    logger.info(f"- \"{unique_match}\"")
+  if len(matches_counter) > 0:
+    logger.info(f"Matched the following texts (#{len(matches_counter)}):")
+  for unique_match, match_count in sorted(matches_counter.items(), key=lambda kv: (-kv[1], kv[0])):
+    logger.info(f"- \"{unique_match}\" (#{match_count})")
     del unique_match
-  del unique_matches
+  del matches_counter
 
   changed_anything = False
   if len(result) > 0:
@@ -73,21 +76,19 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
   return changed_anything
 
 
-def get_matching_lines_match(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[Tuple[LineNr, Set[str]], None, None]:
+def get_matching_lines_match(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[Tuple[LineNr, List[str]], None, None]:
   for line_nr in line_nrs:
     if (match := pattern.match(lines[line_nr])) is not None:
-      unique_matches = set()
+      matches = []
       for group in match.groups():
         if group is not None and group != "":
-          unique_matches.add(group)
+          matches.append(group)
         del group
-      yield line_nr, unique_matches
+      yield line_nr, matches
 
 
-def get_matching_lines_find(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[Tuple[LineNr, Set[str]], None, None]:
+def get_matching_lines_find(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[Tuple[LineNr, List[str]], None, None]:
   for line_nr in line_nrs:
     if len(matches := pattern.findall(lines[line_nr])) > 0:
-      unique_matches = set(matches)
-      if "" in unique_matches:
-        unique_matches.remove("")
-      yield line_nr, unique_matches
+      matches = [m for m in matches if m != ""]
+      yield line_nr, matches

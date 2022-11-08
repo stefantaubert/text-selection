@@ -1,7 +1,7 @@
 import re
 from logging import Logger
 from re import Match
-from typing import Generator, Iterator, Tuple
+from typing import Generator, Iterator, Set, Tuple
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
@@ -16,7 +16,7 @@ from text_selection_core.validation import (ErrorType, ValidationErr,
                                             ensure_lines_count_matches_dataset)
 
 
-def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Lines, pattern: str, logger: Logger) -> ExecutionResult:
+def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Lines, pattern: str, mode: str, logger: Logger) -> ExecutionResult:
   if error := validate_selection_default_parameters(default_params):
     return error
 
@@ -35,23 +35,27 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
 
   logger.debug(f"Pattern: {re_pattern.pattern}")
 
-  result: Subset = OrderedSet()
-  select_from_nrs = tqdm(select_from_nrs, desc="Filtering",
-                         unit=TQDM_LINE_UNIT, total=select_from_count)
-  # for line_nr in get_matching_lines(lines, select_from_nrs, re_pattern):
-  #   result.add(line_nr)
-  #   logger.info(f"Filtered L-{line_nr+1}: \"{lines[line_nr]}\".")
+  method = None
+  if mode == "match":
+    method = get_matching_lines_match
+  elif mode == "find":
+    method = get_matching_lines_find
+  else:
+    assert False
+  assert method is not None
 
+  result: Subset = OrderedSet()
   unique_matches = set()
-  for line_nr, match in get_matching_lines_match(lines, select_from_nrs, re_pattern):
-    result.add(line_nr)
-    logger.info(f"Filtered L-{line_nr+1}: \"{lines[line_nr]}\".")
-    del line_nr
-    for group in match.groups():
-      if group is not None:
-        logger.info(f"Matched: \"{group}\"")
-        unique_matches.add(group)
-      del group
+  with tqdm(select_from_nrs, desc="Filtering", unit=TQDM_LINE_UNIT, total=select_from_count) as select_from_nrs:
+    for line_nr, matched_strs in method(lines, select_from_nrs, re_pattern):
+      result.add(line_nr)
+      logger.info(f"Filtered L-{line_nr+1}: \"{lines[line_nr]}\".")
+      del line_nr
+      for match in matched_strs:
+        logger.info(f"Matched: \"{match}\"")
+        del match
+      unique_matches |= matched_strs
+      del matched_strs
 
   if len(unique_matches) > 0:
     logger.info(f"Matched the following texts (#{len(unique_matches)}):")
@@ -59,7 +63,7 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
     logger.info(f"- \"{unique_match}\"")
     del unique_match
   del unique_matches
-  
+
   changed_anything = False
   if len(result) > 0:
     logger.info(
@@ -69,13 +73,21 @@ def filter_regex_pattern(default_params: SelectionDefaultParameters, lines: Line
   return changed_anything
 
 
-def get_matching_lines(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[LineNr, None, None]:
+def get_matching_lines_match(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[Tuple[LineNr, Set[str]], None, None]:
   for line_nr in line_nrs:
     if (match := pattern.match(lines[line_nr])) is not None:
-      yield line_nr
+      unique_matches = set()
+      for group in match.groups():
+        if group is not None and group != "":
+          unique_matches.add(group)
+        del group
+      yield line_nr, unique_matches
 
 
-def get_matching_lines_match(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[Tuple[LineNr, Match], None, None]:
+def get_matching_lines_find(lines: Lines, line_nrs: Iterator[LineNr], pattern: re.Pattern) -> Generator[Tuple[LineNr, Set[str]], None, None]:
   for line_nr in line_nrs:
-    if (match := pattern.match(lines[line_nr])) is not None:
-      yield line_nr, match
+    if len(matches := pattern.findall(lines[line_nr])) > 0:
+      unique_matches = set(matches)
+      if "" in unique_matches:
+        unique_matches.remove("")
+      yield line_nr, unique_matches

@@ -10,12 +10,27 @@ from text_selection_core.types import Dataset
 from text_selection_core.validation import ValidationErr
 
 
-def test_component():
+def test_match_component():
   lines = ["x y z", "aa a xx", "bb b c", ""]
   ds = Dataset(len(lines), "base")
   sel_param = SelectionDefaultParameters(ds, OrderedSet(("base",)), "test")
 
-  changed_anything = filter_regex_pattern(sel_param, lines, ".*([a|b]+).*", getLogger())
+  changed_anything = filter_regex_pattern(sel_param, lines, ".*([ab]+).*", "match", getLogger())
+
+  assert isinstance(changed_anything, bool)
+  assert changed_anything
+  assert ds.subsets == OrderedDict((
+    ("base", OrderedSet((0, 3))),
+    ("test", OrderedSet((1, 2))),
+  ))
+
+
+def test_find_component():
+  lines = ["x y z", "aa a xx", "bb b c", ""]
+  ds = Dataset(len(lines), "base")
+  sel_param = SelectionDefaultParameters(ds, OrderedSet(("base",)), "test")
+
+  changed_anything = filter_regex_pattern(sel_param, lines, "[ab]+", "find", getLogger())
 
   assert isinstance(changed_anything, bool)
   assert changed_anything
@@ -30,7 +45,7 @@ def test_component_no_group():
   ds = Dataset(len(lines), "base")
   sel_param = SelectionDefaultParameters(ds, OrderedSet(("base",)), "test")
 
-  changed_anything = filter_regex_pattern(sel_param, lines, ".*a.*", getLogger())
+  changed_anything = filter_regex_pattern(sel_param, lines, ".*a.*", "match", getLogger())
 
   assert isinstance(changed_anything, bool)
   assert changed_anything

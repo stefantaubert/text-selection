@@ -92,8 +92,10 @@ def get_regex_match_selection_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser)
-  parser.add_argument("pattern", type=parse_non_empty, metavar="REGEX",
+  parser.add_argument("pattern", type=parse_non_empty, metavar="PATTERN",
                       help="to subset")
+  parser.add_argument("--mode", type=str, choices=["find", "match"], metavar="MODE", default="find",
+                      help="mode how the pattern should be searched: match -> if the whole line matches the PATTERN the line will be filtered; find -> if at least one match for the PATTERN is found in the line it will be filtered")
   add_dry_argument(parser)
   return regex_match_selection
 
@@ -108,7 +110,7 @@ def regex_match_selection(ns: Namespace, logger: Logger, flogger: Logger) -> Exe
     return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  changed_anything = filter_regex_pattern(default_params, lines, ns.pattern, flogger)
+  changed_anything = filter_regex_pattern(default_params, lines, ns.pattern, ns.mode, flogger)
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 

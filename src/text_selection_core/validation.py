@@ -18,6 +18,7 @@ class ErrorType(IntEnum):
   LINE_NRS_NOT_EXIST = 7
   SUBSET_NOT_EMPTY = 8
   INVALID_PATTERN = 9
+  WEIGHTS_INVALID = 10
 
 
 _DEFAULT_ERROR_PATTERNS = {
@@ -39,6 +40,7 @@ _DEFAULT_ERROR_PATTERNS = {
     "The line number(s) {0} do(es) not exist in the dataset!",
   ErrorType.SUBSET_NOT_EMPTY: "The subset \"{0}\" which should be removed needs to be empty before removal!",
   ErrorType.INVALID_PATTERN: "Regex pattern is invalid! Details: {0}",
+  ErrorType.WEIGHTS_INVALID: "Weights couldn't be parsed. Details: {0}",
 }
 
 

@@ -1,11 +1,34 @@
 from logging import Logger
+from typing import List, Union
 
 import numpy as np
 from tqdm import tqdm
 
 from text_selection_core.globals import TQDM_LINE_UNIT
 from text_selection_core.helper import get_float_dtype_from_n, get_int_dtype_from_n
-from text_selection_core.types import DataWeights, Lines
+from text_selection_core.types import Dataset, DataWeights, Lines
+from text_selection_core.validation import (ErrorType, ValidationErr,
+                                            ensure_lines_count_matches_dataset,
+                                            ensure_weight_line_count_matches_dataset)
+
+
+def get_from_lines(dataset: Dataset, lines: List[str]) -> Union[ValidationErr, DataWeights]:
+  if error := ensure_lines_count_matches_dataset(dataset, lines):
+    return error
+
+  try:
+    weights = [float(line) for line in lines]
+  except ValueError as error:
+    return ValidationErr(ErrorType.WEIGHTS_INVALID, error.args[0])
+
+  for weight in weights:
+    if not weight >= 0:
+      return ValidationErr(ErrorType.WEIGHTS_INVALID, "Weights need to be greater than or equal to zero.")
+  all_integer = all(x.is_integer() for x in weights)
+  get_max_method = get_int_dtype_from_n if all_integer else get_float_dtype_from_n
+  max_n = max(weights)
+  result = np.array(weights, dtype=get_max_method(max_n))
+  return result
 
 
 def get_uniform_weights(line_nrs: range, val: int, logger: Logger) -> DataWeights:

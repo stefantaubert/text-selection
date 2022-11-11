@@ -34,7 +34,7 @@ from text_selection_cli.statistics import get_statistics_generation_parser
 from text_selection_cli.subset import get_subset_renaming_parser
 from text_selection_cli.subsets import get_subsets_creation_parser, get_subsets_removal_parser
 from text_selection_cli.weights import (get_uniform_weights_creation_parser,
-                                        get_weights_division_parser,
+                                        get_weights_division_parser, get_weights_from_file_parser,
                                         get_word_count_weights_creation_parser)
 from text_selection_core.validation import ValidationErrBase
 
@@ -67,6 +67,7 @@ def get_dataset_parsers() -> Parsers:
 
 
 def get_weights_parsers() -> Parsers:
+  yield "create-from-file", "create weights from file", get_weights_from_file_parser
   yield "create-uniform", "create uniform weights", get_uniform_weights_creation_parser
   yield "create-from-count", "create weights from unit count", get_word_count_weights_creation_parser
   yield "divide", "divide weights", get_weights_division_parser

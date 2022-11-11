@@ -3,13 +3,43 @@ from logging import Logger
 
 from text_selection_cli.argparse_helper import (parse_existing_file, parse_path,
                                                 parse_positive_float, parse_positive_integer)
-from text_selection_cli.default_args import add_dataset_argument, add_file_arguments
+from text_selection_cli.default_args import (add_dataset_argument, add_encoding_argument,
+                                             add_file_arguments)
 from text_selection_cli.io_handling import (try_load_data_weights, try_load_dataset, try_load_file,
                                             try_save_data_weights)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.validation import ValidationErrBase
 from text_selection_core.weights.calculation import (divide_weights, get_count_weights,
-                                                     get_uniform_weights)
+                                                     get_from_lines, get_uniform_weights)
+
+
+def get_weights_from_file_parser(parser: ArgumentParser):
+  parser.description = "Creates weights from a text file containing weights."
+  add_dataset_argument(parser)
+  parser.add_argument("file", type=parse_path, metavar="TEXT-PATH",
+                      help="input path to load the weights (.txt)")
+  parser.add_argument("output", type=parse_path, metavar="OUTPUT-PATH",
+                      help="output path to save the weights (.npy)")
+  add_encoding_argument(parser, "encoding of file")
+  return get_weights_from_file_ns
+
+
+def get_weights_from_file_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
+  dataset = try_load_dataset(ns.dataset, logger)
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
+
+  logger.info("Loading weights...")
+  lines = try_load_file(ns.file, ns.encoding, "\n", logger)
+  if isinstance(lines, ValidationErrBase):
+    return lines
+
+  weights = get_from_lines(dataset, lines)
+
+  if error := try_save_data_weights(ns.output, weights, logger):
+    return error
+
+  return None
 
 
 def get_uniform_weights_creation_parser(parser: ArgumentParser):
@@ -17,7 +47,7 @@ def get_uniform_weights_creation_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   parser.add_argument("--val", type=parse_positive_integer, help="uniform value", default=1)
   parser.add_argument("output", type=parse_path, metavar="OUTPUT-PATH",
-                      help="output path to save the weights")
+                      help="output path to save the weights (.npy)")
   return create_uniform_weights_ns
 
 

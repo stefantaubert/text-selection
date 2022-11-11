@@ -2,7 +2,6 @@ import math
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 
-
 from text_selection.selection import SelectionMode
 from text_selection_cli.argparse_helper import (parse_existing_file, parse_positive_float,
                                                 parse_positive_integer)
@@ -83,8 +82,8 @@ def add_termination_criteria_arguments(parser: ArgumentParser) -> None:
   group = parser.add_argument_group("termination criteria arguments")
   group.add_argument("weights", type=parse_existing_file, metavar="WEIGHTS-PATH",
                      help="weights path")
-  group.add_argument("--limit", type=parse_positive_float, metavar="FLOAT",
-                     help="weights limit", default=math.inf)
+  group.add_argument("limit", type=parse_positive_float, metavar="LIMIT",
+                     help="weights limit")
   group.add_argument("-i", "--limit-include-already-selected", action="store_true",
                      help="include already selected lines for limit")
   group.add_argument("-p", "--limit-percent", action="store_true",

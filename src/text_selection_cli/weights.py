@@ -45,7 +45,8 @@ def get_weights_from_file_ns(ns: Namespace, logger: Logger, flogger: Logger) -> 
 def get_uniform_weights_creation_parser(parser: ArgumentParser):
   parser.description = "Creates uniform weights (i.e., each line get the same weight)."
   add_dataset_argument(parser)
-  parser.add_argument("--val", type=parse_positive_integer, help="uniform value", default=1)
+  parser.add_argument("val", type=parse_positive_integer, metavar="VALUE",
+                      help="value that will be assigned")
   parser.add_argument("output", type=parse_path, metavar="OUTPUT-PATH",
                       help="output path to save the weights (.npy)")
   return create_uniform_weights_ns

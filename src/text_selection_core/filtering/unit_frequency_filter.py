@@ -120,6 +120,7 @@ def filter_lines_with_unit_frequencies(default_params: SelectionDefaultParameter
     min_max_counts[line_index, 0] = min(word_counts)
     min_max_counts[line_index, 1] = max(word_counts)
 
+  # TODO log the units that caused the filtering
   logger.debug("Filtering with numpy...")
   #res = min_max_counts[from_count_incl <= min_max_counts < to_count_excl]
   a = method(from_count_incl <= min_max_counts, axis=1)

@@ -38,15 +38,23 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
   select_from_count = get_subsets_line_nrs_count(
     default_params.dataset, default_params.from_subset_names)
 
-  result: Subset = OrderedSet()
-  select_from_nrs = tqdm(select_from_nrs, desc="Filtering",
+  select_from_nrs = tqdm(select_from_nrs, desc="Preparing",
                          unit=TQDM_LINE_UNIT, total=select_from_count)
-  # TODO use numpy for filtering!
-  # x = np.argwhere(params.from_weight_incl <= params.weights & params.weights < params.to_weight_excl)
-  # lines = np.nonzero(x)
-  for line_nr in get_matching_lines(params.weights, select_from_nrs,
-                                    params.from_weight_incl, params.to_weight_excl):
-    result.add(line_nr)
+  select_from_nrs_list = list(select_from_nrs)
+  del select_from_nrs
+  logger.debug("Creating temporary numpy array...")
+  select_from_nrs_arr = np.array(select_from_nrs_list)
+  del select_from_nrs_list
+  logger.debug("Selecting from array...")
+  select_from_subarray = params.weights[select_from_nrs_arr]
+  lines_np = np.flatnonzero((params.from_weight_incl <= select_from_subarray)
+                            & (select_from_subarray < params.to_weight_excl))
+  lines = select_from_nrs_arr[lines_np]
+  # lines = get_matching_lines(params.weights, select_from_nrs,
+  #                            params.from_weight_incl, params.to_weight_excl)
+  result: Subset = OrderedSet(lines)
+
+  for line_nr in result:
     logger.info(f"Filtered L-{line_nr+1} with weight: {params.weights[line_nr]}.")
 
   changed_anything = False
@@ -58,7 +66,7 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
   return changed_anything
 
 
-def get_matching_lines(weights: Weight, line_nrs: Iterator[LineNr], from_weight_incl: Weight, to_weight_excl: Weight) -> Generator[LineNr, None, None]:
-  for line_nr in line_nrs:
-    if from_weight_incl <= weights[line_nr] < to_weight_excl:
-      yield line_nr
+# def get_matching_lines(weights: Weight, line_nrs: Iterator[LineNr], from_weight_incl: Weight, to_weight_excl: Weight) -> Generator[LineNr, None, None]:
+#   for line_nr in line_nrs:
+#     if from_weight_incl <= weights[line_nr] < to_weight_excl:
+#       yield line_nr

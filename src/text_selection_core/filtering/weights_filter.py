@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from logging import Logger
 from typing import Generator, Iterator
 
+import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
@@ -23,7 +24,6 @@ class WeightsFilterParameters():
 
 
 def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFilterParameters, logger: Logger) -> ExecutionResult:
-  # TODO use numpy for filtering!
   assert 0 <= params.from_weight_incl < params.to_weight_excl
 
   if error := validate_selection_default_parameters(default_params):
@@ -41,6 +41,9 @@ def filter_weights(default_params: SelectionDefaultParameters, params: WeightsFi
   result: Subset = OrderedSet()
   select_from_nrs = tqdm(select_from_nrs, desc="Filtering",
                          unit=TQDM_LINE_UNIT, total=select_from_count)
+  # TODO use numpy for filtering!
+  # x = np.argwhere(params.from_weight_incl <= params.weights & params.weights < params.to_weight_excl)
+  # lines = np.nonzero(x)
   for line_nr in get_matching_lines(params.weights, select_from_nrs,
                                     params.from_weight_incl, params.to_weight_excl):
     result.add(line_nr)

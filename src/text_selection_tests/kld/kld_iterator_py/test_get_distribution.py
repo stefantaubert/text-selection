@@ -1,4 +1,5 @@
 import numpy as np
+
 from text_selection.kld.kld_iterator import get_distribution
 
 
@@ -80,8 +81,10 @@ def test_s1_zero__returns_nan():
 
 
 def test_s2_zero__returns_nan():
+  np.seterr(invalid="print")
   counts = np.array([0, 0], dtype=np.uint16)
   result = get_distribution(counts, axis=0)
+  assert np.geterr()["invalid"] == "print"
   np.testing.assert_array_equal(result, np.array([np.nan, np.nan]))
 
 

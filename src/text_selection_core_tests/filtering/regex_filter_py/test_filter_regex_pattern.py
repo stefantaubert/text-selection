@@ -76,7 +76,7 @@ def test_invalid_regex():
   ds = Dataset(len(lines), "base")
   sel_param = SelectionDefaultParameters(ds, OrderedSet(("base",)), "test")
 
-  changed_anything = filter_regex_pattern(sel_param, lines, ".*a).*", getLogger())
+  changed_anything = filter_regex_pattern(sel_param, lines, ".*a).*", "match", getLogger())
 
   assert isinstance(changed_anything, ValidationErr)
   assert changed_anything.default_message == "Regex pattern is invalid! Details: unbalanced parenthesis at position 3"

@@ -39,6 +39,8 @@ def select_kld(default_params: SelectionDefaultParameters, params: KldSelectionP
   if error := ensure_lines_count_matches_dataset(default_params.dataset, params.lines):
     return error
 
+  # Disable -> "RuntimeWarning: invalid value encountered in true_divide"
+  np.seterr(invalid="ignore")
   from_line_nrs = OrderedSet(get_subsets_line_nrs_gen(default_params.dataset,
                                                       default_params.from_subset_names))
 

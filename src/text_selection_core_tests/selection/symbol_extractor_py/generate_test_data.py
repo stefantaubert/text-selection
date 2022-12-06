@@ -147,4 +147,4 @@ if __name__ == "__main__":
   # generate_small_set()
   # load_small_test_set()
   generate_big_set()
-  load_big_test_set()
+  # load_big_test_set()

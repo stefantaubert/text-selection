@@ -179,6 +179,11 @@ def get_distribution(counts_or_weights: np.ndarray, axis: int) -> np.ndarray:
   # new_dist = 1.0 * counts / np.sum(counts, axis=axis, keepdims=True)
   # new_dist: np.ndarray = np.array(counts / np.sum(counts, axis=axis, keepdims=True), dtype=np.float64)
   sum_counts = np.sum(counts_or_weights, axis=axis, dtype=np.float64, keepdims=True)
+  # could return nan, is OK
+  # Disable -> "RuntimeWarning: invalid value encountered in true_divide"
+  # old_val = np.geterr()["invalid"]
+  # np.seterr(invalid="ignore")
   new_dist = np.divide(counts_or_weights, sum_counts, dtype=np.float64)
+  # np.seterr(invalid=old_val)
   del sum_counts
   return new_dist

@@ -160,7 +160,7 @@ def parse_args(args: List[str]) -> None:
     ns = parser.parse_args(args)
   except SystemExit:
     # invalid command supplied
-    return
+    sys.exit(1)
 
   if local_debugging:
     root_logger.debug(f"Parsed arguments: {str(ns)}")
@@ -202,7 +202,9 @@ def parse_args(args: List[str]) -> None:
 
   #success, changed_anything = invoke_handler(ns, cmd_logger, cmd_flogger)
   result = invoke_handler(ns, cmd_logger, cmd_flogger)
+  exit_code = 0
   if isinstance(result, ValidationErrBase):
+    exit_code = 1
     cmd_logger.error(f"Validation error: {result.default_message}")
     if log_to_file:
       root_logger.error("Not everything was successful! See log for details.")
@@ -219,11 +221,11 @@ def parse_args(args: List[str]) -> None:
 
   duration = perf_counter() - start
   flogger.debug(f"Total duration (s): {duration}")
-
   if log_to_file:
     # path not encapsulated in "" because it is only console out
     root_logger.info(f"Log: \"{ns.log.absolute()}\".")
     root_logger.info("Writing remaining buffered log lines...")
+  sys.exit(exit_code)
 
 
 def run():

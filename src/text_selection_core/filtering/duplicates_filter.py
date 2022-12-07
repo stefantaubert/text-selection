@@ -14,7 +14,7 @@ from text_selection_core.types import (LineNr, Lines, Subset, get_subsets_line_n
 from text_selection_core.validation import ensure_lines_count_matches_dataset
 
 
-def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, logger: Optional[Logger]) -> ExecutionResult:
+def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, limit: Optional[int], logger: Optional[Logger]) -> ExecutionResult:
   if logger is None:
     logger = getLogger(__name__)
 
@@ -29,9 +29,19 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
   select_from_count = get_subsets_line_nrs_count(
     default_params.dataset, default_params. from_subset_names)
 
+  if limit is None:
+    limit = select_from_count
+  tqdm_total = min(limit, select_from_count)
+
+  if tqdm_total != select_from_count:
+    assert limit is not None
+    logger.info(f"Limit to first {limit} lines.")
+
   with tqdm(select_from_line_nrs, desc="Filtering duplicates",
-            unit=TQDM_LINE_UNIT, total=select_from_count) as line_nrs:
-    result: Subset = filter_without_hash(line_nrs, lines, logger)
+            unit=TQDM_LINE_UNIT, total=tqdm_total) as line_nrs:
+    result: Subset = filter_without_hash(line_nrs, lines, limit, logger)
+
+  del lines
 
   if changed_anything := len(result) > 0:
     logger.info(
@@ -39,6 +49,8 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
   else:
     logger.info("No duplicate lines exist!")
+
+  del result
 
   return changed_anything
 
@@ -61,11 +73,13 @@ def filter_duplicates(default_params: SelectionDefaultParameters, lines: Lines, 
 #   del collected
 
 
-def filter_without_hash(line_nrs: Iterable[LineNr], lines: Lines, logger: Logger) -> Subset:
+def filter_without_hash(line_nrs: Iterable[LineNr], lines: Lines, limit: int, logger: Logger) -> Subset:
   # @100mio lines ~5 GB ram usage
   result: Subset = OrderedSet()
   collected = set()
-  for line_nr in line_nrs:
+  for i, line_nr in enumerate(line_nrs):
+    if i >= limit:
+      break
     line = lines[line_nr]
     if line in collected:
       result.add(line_nr)
@@ -74,5 +88,8 @@ def filter_without_hash(line_nrs: Iterable[LineNr], lines: Lines, logger: Logger
       collected.add(line)
     del line
     del line_nr
+    del i
+  del i
+  del line_nr
   del collected
   return result

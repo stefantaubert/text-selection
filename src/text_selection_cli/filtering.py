@@ -35,6 +35,8 @@ def get_duplicate_selection_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
   add_file_arguments(parser)
+  parser.add_argument("--limit", type=get_optional(parse_positive_integer),
+                      help="limit duplicate filtering to the first N lines to limit memory usage", metavar="N", default=None)
   add_dry_argument(parser)
   return select_duplicates_ns
 
@@ -49,7 +51,9 @@ def select_duplicates_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Exec
     return lines
 
   default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
-  changed_anything = filter_duplicates(default_params, lines, flogger)
+  changed_anything = filter_duplicates(default_params, lines, ns.limit, flogger)
+  del lines
+
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 

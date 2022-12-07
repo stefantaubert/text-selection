@@ -79,6 +79,8 @@ def filter_without_hash(line_nrs: Iterable[LineNr], lines: Lines, limit: int, lo
   collected = set()
   for i, line_nr in enumerate(line_nrs):
     if i >= limit:
+      del i
+      del line_nr
       break
     line = lines[line_nr]
     if line in collected:
@@ -89,7 +91,5 @@ def filter_without_hash(line_nrs: Iterable[LineNr], lines: Lines, limit: int, lo
     del line
     del line_nr
     del i
-  del i
-  del line_nr
   del collected
   return result

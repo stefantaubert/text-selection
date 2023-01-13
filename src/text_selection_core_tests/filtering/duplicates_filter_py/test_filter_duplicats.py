@@ -14,7 +14,7 @@ def test_component():
   lines = ["a", "a", "b"]
   sel_param = SelectionDefaultParameters(ds, OrderedSet(("base",)), "test")
 
-  changed_anything = filter_duplicates(sel_param, lines, getLogger())
+  changed_anything = filter_duplicates(sel_param, lines, None, getLogger())
 
   assert isinstance(changed_anything, bool)
   assert changed_anything

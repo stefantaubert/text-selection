@@ -1,7 +1,7 @@
 [project]
 name = "text-selection"
-version = "0.0.1"
-description = "CLI to select lines of a text file."
+version = "0.0.2"
+description = "Command-line interface (CLI) to select lines of a text file."
 readme = "README.md"
 requires-python = ">=3.6"
 license = {text = "MIT"}
@@ -60,11 +60,12 @@ include = [
   "text_selection_core",
   "text_selection_core.*",
   "text_selection_cli",
+  "text_selection_tests",
+  "text_selection_tests",
+  "text_selection_core_tests",
 ]
 exclude = [
-  "text_selection_tests",
   "text_selection_debug",
-  "text_selection_core_tests",
   "text_selection_core_debug",
   "text_selection_cli_debug",
   "text_selection_cli_tests",
@@ -89,6 +90,36 @@ max_line_length = 100
 [tool.isort]
 line_length = 100
 indent = 2
+known_first_party = [
+  "textgrid_tools",
+  "textgrid_tools_cli"
+]
+known_third_party = [
+  "scipy",
+  "numpy",
+  "tqdm",
+  "TextGrid",
+  "pandas",
+  "ordered_set",
+  "matplotlib",
+  "pronunciation_dictionary"
+]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py{38,39,310,311}
+isolated_build = True
+
+[testenv]
+deps = 
+  pytest
+commands = 
+  pytest
+  text-selection-cli
+  text-selection-cli -v
+  text-selection-cli -h
+"""
 
 [tool.pyright]
 root = ["src"]

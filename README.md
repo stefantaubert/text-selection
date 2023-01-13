@@ -2,9 +2,13 @@
 
 [![PyPI](https://img.shields.io/pypi/v/text-selection.svg)](https://pypi.python.org/pypi/text-selection)
 [![PyPI](https://img.shields.io/pypi/pyversions/text-selection.svg)](https://pypi.python.org/pypi/text-selection)
-[![MIT](https://img.shields.io/github/license/stefantaubert/text-selection.svg)](https://github.com/stefantaubert/text-selection/blob/main/LICENSE)
+[![MIT](https://img.shields.io/github/license/stefantaubert/text-selection.svg)](https://github.com/stefantaubert/text-selection/blob/master/LICENSE)
+[![PyPI](https://img.shields.io/pypi/wheel/text-selection.svg)](https://pypi.python.org/pypi/text-selection/#files)
+![PyPI](https://img.shields.io/pypi/implementation/text-selection.svg)
+[![PyPI](https://img.shields.io/github/commits-since/stefantaubert/text-selection/latest/master.svg)](https://github.com/stefantaubert/text-selection/compare/v0.0.2...master)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7534707.svg)](https://doi.org/10.5281/zenodo.7534707)
 
-CLI to select lines of a text file.
+Command-line interface (CLI) to select lines of a text file.
 
 ## Features
 

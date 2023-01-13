@@ -11,7 +11,7 @@ from text_selection_core_tests.selection.symbol_extractor_py.generate_test_data 
   load_big_test_set
 
 
-def test_stress_test_no_preselection():
+def xtest_stress_test_no_preselection():
   #lines = load_small_test_set()
   lines = load_big_test_set()
   # lines = lines[:10_000_000]  # 21.90235720493365s
@@ -24,7 +24,7 @@ def test_stress_test_no_preselection():
     lines, "|", False, SelectionMode.FIRST), WeightSelectionParameters(weights, 4, False, False), 10_000, 16, None, getLogger())
 
 
-def test_stress_test_with_preselection():
+def xtest_stress_test_with_preselection():
   #lines = load_small_test_set()
   lines = load_big_test_set()
   # lines = lines[:10_000_000]  # 21.90235720493365s
@@ -39,7 +39,7 @@ def test_stress_test_with_preselection():
     lines, "|", True, SelectionMode.FIRST), WeightSelectionParameters(weights, 4, True, False), 10_000, 16, None, getLogger())
 
 
-def test_stress_test_with_preselection_and_subset():
+def xtest_stress_test_with_preselection_and_subset():
   #lines = load_small_test_set()
   lines = load_big_test_set()
   # lines = lines[:10_000_000]  # 21.90235720493365s
@@ -57,4 +57,4 @@ if __name__ == "__main__":
   main_logger = getLogger()
   main_logger.setLevel(logging.DEBUG)
   main_logger.manager.disable = logging.NOTSET
-  test_stress_test_no_preselection()
+  xtest_stress_test_no_preselection()

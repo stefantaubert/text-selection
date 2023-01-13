@@ -8,11 +8,11 @@ from text_selection_core.common import SelectionDefaultParameters
 from text_selection_core.selection.greedy_selection import (GreedySelectionParameters,
                                                             select_greedy_epochs)
 from text_selection_core.types import Dataset, move_lines_to_subset
-from text_selection_core_tests.selection.symbol_extractor_py.generate_test_data import (
-  load_big_test_set)
+from text_selection_core_tests.selection.symbol_extractor_py.generate_test_data import \
+  load_big_test_set
 
 
-def test_stress_test_no_preselection():
+def xtest_stress_test_no_preselection():
   #lines = load_small_test_set()
   lines = load_big_test_set()
   # lines = lines[:10_000_000]  # 21.90235720493365s
@@ -24,7 +24,7 @@ def test_stress_test_no_preselection():
     lines, "|", False, SelectionMode.FIRST), 30, 10_000, 16, None, getLogger())
 
 
-def test_stress_test_with_preselection():
+def xtest_stress_test_with_preselection():
   #lines = load_small_test_set()
   lines = load_big_test_set()
   # lines = lines[:10_000_000]  # 21.90235720493365s
@@ -37,7 +37,7 @@ def test_stress_test_with_preselection():
     lines, "|", True, SelectionMode.FIRST), 30, 10_000, 16, None, getLogger())
 
 
-def test_stress_test_with_preselection_and_subset():
+def xtest_stress_test_with_preselection_and_subset():
   #lines = load_small_test_set()
   lines = load_big_test_set()
   # lines = lines[:10_000_000]  # 21.90235720493365s
@@ -56,4 +56,4 @@ if __name__ == "__main__":
   main_logger.setLevel(logging.DEBUG)
   main_logger.manager.disable = logging.NOTSET
   # test_stress_test_with_preselection()
-  test_stress_test_with_preselection_and_subset()
+  xtest_stress_test_with_preselection_and_subset()

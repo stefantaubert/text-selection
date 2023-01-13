@@ -3,6 +3,7 @@ from typing import OrderedDict as OrderedDictType
 from typing import Set, TypeVar
 
 from ordered_set import OrderedSet
+
 from text_selection.cover_methods import cover_default
 from text_selection.utils import values_to_set
 

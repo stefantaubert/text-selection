@@ -1,4 +1,5 @@
 import numpy as np
+
 from text_selection.common.helper import get_empty_columns
 
 

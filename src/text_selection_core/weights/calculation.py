@@ -8,8 +8,7 @@ from text_selection_core.globals import TQDM_LINE_UNIT
 from text_selection_core.helper import get_float_dtype_from_n, get_int_dtype_from_n
 from text_selection_core.types import Dataset, DataWeights, Lines
 from text_selection_core.validation import (ErrorType, ValidationErr,
-                                            ensure_lines_count_matches_dataset,
-                                            ensure_weight_line_count_matches_dataset)
+                                            ensure_lines_count_matches_dataset)
 
 
 def get_from_lines(dataset: Dataset, lines: List[str]) -> Union[ValidationErr, DataWeights]:

@@ -1,5 +1,6 @@
 
 import numpy as np
+
 from text_selection.kld.kld_iterator import get_minimum_indices
 
 

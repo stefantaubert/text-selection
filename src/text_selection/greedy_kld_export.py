@@ -5,12 +5,11 @@ from typing import Set
 
 from ordered_set import OrderedSet
 
-from text_selection.greedy_kld_applied import (
-    greedy_kld_uniform_count, greedy_kld_uniform_default,
-    greedy_kld_uniform_iterations, greedy_kld_uniform_parts,
-    greedy_kld_uniform_seconds, greedy_kld_uniform_seconds_with_preselection)
-from text_selection.utils import (DurationBoundary, filter_data_durations,
-                                  get_filtered_ngrams)
+from text_selection.greedy_kld_applied import (greedy_kld_uniform_count, greedy_kld_uniform_default,
+                                               greedy_kld_uniform_iterations,
+                                               greedy_kld_uniform_parts, greedy_kld_uniform_seconds,
+                                               greedy_kld_uniform_seconds_with_preselection)
+from text_selection.utils import DurationBoundary, filter_data_durations, get_filtered_ngrams
 
 
 def greedy_kld_uniform_ngrams_parts(data: OrderedDictType[int, List[str]], n_gram: int, ignore_symbols: Optional[Set[str]], parts_count: int, take_per_part: int, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int]) -> OrderedSet[int]:

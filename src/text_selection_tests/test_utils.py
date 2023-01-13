@@ -1,4 +1,5 @@
 import pytest
+
 from text_selection.utils import *
 
 

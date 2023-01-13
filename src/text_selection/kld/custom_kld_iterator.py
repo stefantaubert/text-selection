@@ -3,6 +3,7 @@ from typing import Iterable, Iterator
 
 import numpy as np
 from ordered_set import OrderedSet
+
 from text_selection.kld.optimized_kld_iterator import OptimizedKldIterator
 from text_selection.selection import KeySelector
 

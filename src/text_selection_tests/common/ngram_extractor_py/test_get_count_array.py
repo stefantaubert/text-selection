@@ -1,6 +1,7 @@
 
 import numpy as np
 from ordered_set import OrderedSet
+
 from text_selection.common.ngram_extractor import get_count_array
 
 

@@ -3,8 +3,9 @@ from typing import Dict, Set
 
 import numpy as np
 from ordered_set import OrderedSet
-from text_selection.utils import DurationBoundary
 from tqdm import tqdm
+
+from text_selection.utils import DurationBoundary
 
 
 def get_duration_keys(durations: Dict[int, float], keys: Set[int], boundary: DurationBoundary) -> OrderedSet[int]:

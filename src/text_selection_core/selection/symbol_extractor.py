@@ -8,8 +8,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
-from text_selection_core.globals import TQDM_LINE_UNIT
 
+from text_selection_core.globals import TQDM_LINE_UNIT
 from text_selection_core.helper import get_chunks, get_int_dtype_from_n, split_adv, xtqdm
 from text_selection_core.types import Lines, Subset
 

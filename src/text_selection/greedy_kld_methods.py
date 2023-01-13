@@ -11,8 +11,7 @@ from ordered_set import OrderedSet
 from scipy.stats import entropy
 from tqdm import tqdm, trange
 
-from text_selection.selection import (SelectionMode, order_keys, select_first,
-                                      select_key)
+from text_selection.selection import SelectionMode, order_keys, select_first, select_key
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")

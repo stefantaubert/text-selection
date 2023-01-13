@@ -1,4 +1,5 @@
 from logging import Logger
+
 from ordered_set import OrderedSet
 
 from text_selection_core.algorithms.reverse import get_reverse_iterator

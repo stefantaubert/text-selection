@@ -1,8 +1,7 @@
 import re
 from collections import Counter
 from logging import Logger
-from re import Match
-from typing import Generator, Iterator, List, Set, Tuple
+from typing import Generator, Iterator, List, Tuple
 
 from ordered_set import OrderedSet
 from tqdm import tqdm

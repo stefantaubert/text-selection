@@ -22,8 +22,7 @@ from text_selection_cli.filtering import (get_duplicate_selection_parser, get_li
 from text_selection_cli.globals import ExecutionResult
 from text_selection_cli.logging_configuration import (configure_root_logger, get_file_logger,
                                                       init_and_return_loggers,
-                                                      try_init_file_buffer_logger,
-                                                      try_init_file_logger)
+                                                      try_init_file_buffer_logger)
 from text_selection_cli.selection import (get_fifo_selection_parser,
                                           get_greedy_selection_epoch_parser,
                                           get_greedy_selection_parser, get_kld_selection_parser,

@@ -9,8 +9,9 @@ from typing import Set, Tuple
 
 import numpy as np
 from ordered_set import OrderedSet
-from text_selection.utils import get_chunksize, log_mp_params
 from tqdm import tqdm
+
+from text_selection.utils import get_chunksize, log_mp_params
 
 NGramNr = int
 NGramNrs = np.ndarray

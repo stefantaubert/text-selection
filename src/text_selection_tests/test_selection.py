@@ -2,9 +2,9 @@
 from collections import OrderedDict
 
 from ordered_set import OrderedSet
-from text_selection.selection import (SelectionMode, select_first, select_key,
-                                      select_last, select_longest,
-                                      select_shortest)
+
+from text_selection.selection import (SelectionMode, select_first, select_key, select_last,
+                                      select_longest, select_shortest)
 
 
 def test_select_longest__selects_longest():

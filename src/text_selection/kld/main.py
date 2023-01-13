@@ -3,6 +3,8 @@ from typing import Dict, Optional, Set, Tuple
 
 import numpy as np
 from ordered_set import OrderedSet
+from tqdm import tqdm
+
 from text_selection.common.durations_iterator import UntilProxyIterator
 from text_selection.common.filter_durations import get_duration_keys
 from text_selection.common.helper import get_ngram_counts
@@ -11,7 +13,6 @@ from text_selection.kld.custom_kld_iterator import CustomKldIterator
 from text_selection.kld.kld_iterator import get_uniform_weights
 from text_selection.selection import FirstKeySelector
 from text_selection.utils import DurationBoundary
-from tqdm import tqdm
 
 
 def greedy_kld_uniform_ngrams_seconds_with_preselection_perf(data: Dict[int, Tuple[str, ...]], select_from_keys: OrderedSet[int], preselection_keys: Set[int], n_gram: int, ignore_symbols: Optional[Set[str]], select_from_durations_s: Dict[int, float], seconds: float, duration_boundary: DurationBoundary, n_jobs: int, maxtasksperchild: Optional[int], chunksize: Optional[int], batches: Optional[int]) -> OrderedSet[int]:

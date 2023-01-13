@@ -3,7 +3,7 @@ name = "text-selection"
 version = "0.0.2"
 description = "Command-line interface (CLI) to select lines of a text file."
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.8, <4"
 license = {text = "MIT"}
 authors = [
   {name = "Stefan Taubert", email = "pypi@stefantaubert.com"}
@@ -30,11 +30,10 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.6",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
@@ -61,8 +60,9 @@ include = [
   "text_selection_core.*",
   "text_selection_cli",
   "text_selection_tests",
-  "text_selection_tests",
+  "text_selection_tests.*",
   "text_selection_core_tests",
+  "text_selection_core_tests.*",
 ]
 exclude = [
   "text_selection_debug",

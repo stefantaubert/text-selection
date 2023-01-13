@@ -1,8 +1,8 @@
 from typing import OrderedDict
 
 from ordered_set import OrderedSet
-from text_selection.greedy.main import \
-    greedy_uniform_ngrams_seconds_with_preselection_perf
+
+from text_selection.greedy.main import greedy_uniform_ngrams_seconds_with_preselection_perf
 
 
 def test_component():

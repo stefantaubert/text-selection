@@ -4,10 +4,10 @@ from typing import Dict, List, Optional, OrderedDict, TypeVar, Union
 
 from ordered_set import OrderedSet
 
-from text_selection.greedy_kld_methods import (
-    get_uniform_distribution, sort_greedy_kld, sort_greedy_kld_iterations,
-    sort_greedy_kld_until, sort_greedy_kld_until_with_preselection,
-    sort_kld_parts)
+from text_selection.greedy_kld_methods import (get_uniform_distribution, sort_greedy_kld,
+                                               sort_greedy_kld_iterations, sort_greedy_kld_until,
+                                               sort_greedy_kld_until_with_preselection,
+                                               sort_kld_parts)
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")

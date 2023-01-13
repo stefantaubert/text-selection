@@ -1,4 +1,3 @@
-import math
 from argparse import ArgumentParser, Namespace
 from logging import Logger
 

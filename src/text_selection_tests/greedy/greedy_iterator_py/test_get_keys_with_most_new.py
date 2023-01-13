@@ -1,5 +1,6 @@
 import numpy as np
 from ordered_set import OrderedSet
+
 from text_selection.greedy.greedy_iterator import get_keys_with_most_new
 
 

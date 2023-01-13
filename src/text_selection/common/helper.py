@@ -3,6 +3,7 @@ from typing import Dict, Optional, Set, Tuple
 import numpy as np
 from numpy import ndarray
 from ordered_set import OrderedSet
+
 from text_selection.common.ngram_extractor import NGramExtractor
 
 

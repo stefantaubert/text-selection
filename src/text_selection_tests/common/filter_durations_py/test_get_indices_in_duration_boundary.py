@@ -1,6 +1,6 @@
 import numpy as np
-from text_selection.common.filter_durations import \
-    get_indices_in_duration_boundary
+
+from text_selection.common.filter_durations import get_indices_in_duration_boundary
 
 
 def test_empty():

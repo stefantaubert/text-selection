@@ -5,7 +5,7 @@ from ordered_set import OrderedSet
 from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import ExecutionResult
-from text_selection_core.types import (get_subsets_line_nrs, move_lines_to_subset)
+from text_selection_core.types import get_subsets_line_nrs, move_lines_to_subset
 
 
 def select_all(default_params: SelectionDefaultParameters, logger: Logger) -> ExecutionResult:

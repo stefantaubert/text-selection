@@ -1,5 +1,6 @@
 import numpy as np
 from ordered_set import OrderedSet
+
 from text_selection.kld.kld_iterator import KldIterator
 from text_selection.selection import FirstKeySelector
 

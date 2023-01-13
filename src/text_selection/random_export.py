@@ -4,16 +4,11 @@ from typing import Set
 
 from ordered_set import OrderedSet
 
-from text_selection.random_applied import (get_n_divergent_random_seconds,
-                                           get_random_count,
-                                           get_random_count_cover,
-                                           get_random_cover_default,
-                                           get_random_default,
-                                           get_random_iterations,
-                                           get_random_iterations_cover,
-                                           get_random_percent,
-                                           get_random_percent_cover,
-                                           get_random_seconds,
+from text_selection.random_applied import (get_n_divergent_random_seconds, get_random_count,
+                                           get_random_count_cover, get_random_cover_default,
+                                           get_random_default, get_random_iterations,
+                                           get_random_iterations_cover, get_random_percent,
+                                           get_random_percent_cover, get_random_seconds,
                                            get_random_seconds_cover)
 from text_selection.utils import get_filtered_ngrams
 

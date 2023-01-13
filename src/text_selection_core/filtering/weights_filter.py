@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from logging import Logger
-from typing import Generator, Iterator
 
 import numpy as np
 from ordered_set import OrderedSet
@@ -10,9 +9,8 @@ from text_selection_core.common import (SelectionDefaultParameters,
                                         validate_selection_default_parameters)
 from text_selection_core.globals import TQDM_LINE_UNIT, ExecutionResult
 from text_selection_core.helper import get_percent_str
-from text_selection_core.types import (DataWeights, LineNr, Subset, Weight,
-                                       get_subsets_line_nrs_count, get_subsets_line_nrs_gen,
-                                       move_lines_to_subset)
+from text_selection_core.types import (DataWeights, Subset, Weight, get_subsets_line_nrs_count,
+                                       get_subsets_line_nrs_gen, move_lines_to_subset)
 from text_selection_core.validation import ensure_weight_line_count_matches_dataset
 
 

@@ -38,6 +38,7 @@ Command-line interface (CLI) to select lines of a text file.
   - `reverse`: reverse lines
   - `export`: export lines
 - weights
+  - `create-from-file`: create weights from file
   - `create-uniform`: create uniform weights
   - `create-from-count`: create weights from unit count
   - `divide`: divide weights

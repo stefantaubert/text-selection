@@ -157,16 +157,17 @@ def parse_args(args: List[str]) -> None:
 
   try:
     ns = parser.parse_args(args)
-  except SystemExit:
-    # invalid command supplied
-    sys.exit(1)
+  except SystemExit as error:
+    error_code = error.args[0]
+    # -v -> 0; invalid arg -> 2
+    sys.exit(error_code)
 
   if local_debugging:
     root_logger.debug(f"Parsed arguments: {str(ns)}")
 
   if not hasattr(ns, INVOKE_HANDLER_VAR):
     parser.print_help()
-    return
+    sys.exit(0)
 
   invoke_handler: Callable[..., ExecutionResult] = getattr(ns, INVOKE_HANDLER_VAR)
   delattr(ns, INVOKE_HANDLER_VAR)
@@ -199,7 +200,7 @@ def parse_args(args: List[str]) -> None:
   start = perf_counter()
   cmd_flogger, cmd_logger = init_and_return_loggers(__name__)
 
-  #success, changed_anything = invoke_handler(ns, cmd_logger, cmd_flogger)
+  # success, changed_anything = invoke_handler(ns, cmd_logger, cmd_flogger)
   result = invoke_handler(ns, cmd_logger, cmd_flogger)
   exit_code = 0
   if isinstance(result, ValidationErrBase):

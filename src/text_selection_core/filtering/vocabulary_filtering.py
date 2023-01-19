@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from functools import partial
 from logging import Logger
-from typing import Literal, Set, Union
+from math import isinf
+from typing import Callable, List, Literal, Set, Union
 
 from ordered_set import OrderedSet
 from tqdm import tqdm
@@ -40,21 +42,23 @@ def filter_lines_with_vocabulary_frequencies(default_params: SelectionDefaultPar
     logger.info("Nothing to select from.")
     return False
 
+  if params.mode == "iv":
+    method = get_match_iv_method(params.from_count_incl, params.to_count_excl)
+  elif params.mode == "oov":
+    method = get_match_oov_method(params.from_count_incl, params.to_count_excl)
+  else:
+    assert False
+
   select_from_nrs = tqdm(select_from_nrs, desc="Filtering",
                          unit=TQDM_LINE_UNIT, total=select_from_count)
   result = OrderedSet()
   for line_nr in select_from_nrs:
     words = split_adv(params.lines[line_nr], params.ssep)
-    if params.mode == "iv":
-      count = sum(1 for word in words if word in params.vocabulary)
-    elif params.mode == "oov":
-      count = sum(1 for word in words if word not in params.vocabulary)
-    else:
-      assert False
-
-    if params.from_count_incl <= count < params.to_count_excl:
+    match = method(words, params.vocabulary)
+    del words
+    if match:
       logger.info(
-        f"Filtered L-{line_nr+1} containing {count} {params.mode}: \"{params.lines[line_nr]}\".")
+        f"Filtered L-{line_nr+1}: \"{params.lines[line_nr]}\".")
       result.add(line_nr)
 
   changed_anything = False
@@ -64,3 +68,95 @@ def filter_lines_with_vocabulary_frequencies(default_params: SelectionDefaultPar
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)
     changed_anything = True
   return changed_anything
+
+
+def get_match_iv_method(from_incl: int, to_excl: Union[int, float]) -> Callable[[List[str], Set[str]], bool]:
+  if from_incl == 1 and isinf(to_excl):
+    return matches_any_iv
+
+  if from_incl > 1 and isinf(to_excl):
+    res = partial(
+      matches_iv_count,
+      count=from_incl,
+    )
+    return res
+
+  res = partial(
+    matches_iv_boundary,
+    from_incl=from_incl,
+    to_excl=to_excl,
+  )
+  return res
+
+
+def get_match_oov_method(from_incl: int, to_excl: Union[int, float]) -> Callable[[List[str], Set[str]], bool]:
+  if from_incl == 1 and isinf(to_excl):
+    return matches_any_oov
+
+  if from_incl > 1 and isinf(to_excl):
+    res = partial(
+      matches_oov_count,
+      count=from_incl,
+    )
+    return res
+
+  res = partial(
+    matches_oov_boundary,
+    from_incl=from_incl,
+    to_excl=to_excl,
+  )
+  return res
+
+
+def matches_any_iv(words: List[str], vocabulary: Set[str]) -> bool:
+  result = any(word in vocabulary for word in words)
+  return result
+
+
+def matches_any_oov(words: List[str], vocabulary: Set[str]) -> bool:
+  result = any(word not in vocabulary for word in words)
+  return result
+
+
+def matches_oov_count(words: List[str], vocabulary: Set[str], count: int) -> bool:
+  counter = 0
+  for word in words:
+    if word not in vocabulary:
+      counter += 1
+    if counter >= count:
+      del counter
+      return True
+  if counter >= count:
+    del counter
+    return True
+  del counter
+  return False
+
+
+def matches_iv_count(words: List[str], vocabulary: Set[str], count: int) -> bool:
+  counter = 0
+  for word in words:
+    if word in vocabulary:
+      counter += 1
+    if counter >= count:
+      del counter
+      return True
+  if counter >= count:
+    del counter
+    return True
+  del counter
+  return False
+
+
+def matches_oov_boundary(words: List[str], vocabulary: Set[str], from_incl: int, to_excl: Union[int, float]) -> bool:
+  counter = sum(1 for word in words if word not in vocabulary)
+  result = from_incl <= counter < to_excl
+  del counter
+  return result
+
+
+def matches_iv_boundary(words: List[str], vocabulary: Set[str], from_incl: int, to_excl: Union[int, float]) -> bool:
+  counter = sum(1 for word in words if word in vocabulary)
+  result = from_incl <= counter < to_excl
+  del counter
+  return result

@@ -326,6 +326,8 @@ def filter_by_vocabulary_ns(ns: Namespace, logger: Logger, flogger: Logger) -> E
     lines, ns.sep, ns.min_count, ns.max_count, vocabulary, ns.mode)
   changed_anything = filter_lines_with_vocabulary_frequencies(
     default_params, params, flogger)
+  del lines
+  del vocabulary
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 

@@ -26,7 +26,7 @@ from text_selection_cli.logging_configuration import (configure_root_logger, get
 from text_selection_cli.selection import (get_fifo_selection_parser,
                                           get_greedy_selection_epoch_parser,
                                           get_greedy_selection_parser, get_kld_selection_parser,
-                                          get_select_all_parser)
+                                          get_random_selection_parser, get_select_all_parser)
 from text_selection_cli.sorting import (get_line_nr_sorting_parser, get_reverse_sorting_parser,
                                         get_text_sorting_parser, get_weight_sorting_parser)
 from text_selection_cli.statistics import get_statistics_generation_parser
@@ -81,6 +81,7 @@ def get_subsets_parsers() -> Parsers:
   yield "select-greedily", "select lines greedily regarding units", get_greedy_selection_parser
   yield "select-greedily-ep", "select lines greedily regarding units (epoch-based)", get_greedy_selection_epoch_parser
   yield "select-uniformly", "select lines with units uniformly distributed", get_kld_selection_parser
+  yield "select-randomly", "select lines randomly", get_random_selection_parser
   yield "filter-duplicates", "filter duplicate lines", get_duplicate_selection_parser
   yield "filter-by-regex", "filter lines by regex", get_regex_match_selection_parser
   yield "filter-by-text", "filter lines by text", get_string_filter_parser

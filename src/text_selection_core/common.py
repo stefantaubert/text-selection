@@ -32,8 +32,8 @@ class SortingDefaultParameters():
 
 
 def validate_selection_default_parameters(params: SelectionDefaultParameters) -> Optional[ValidationErr]:
-  # if error := ensure_subsets_exist(params.dataset, params.from_subset_names):
-  #   return error
+  if error := ensure_subsets_exist(params.dataset, params.from_subset_names):
+    return error
 
   # if error := SubsetNotExistsError.validate(params.dataset, params.to_subset_name):
   #   return error

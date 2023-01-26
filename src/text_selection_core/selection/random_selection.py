@@ -1,25 +1,16 @@
-from dataclasses import dataclass
 from logging import Logger, getLogger
-from typing import Optional
 
-import numpy as np
 from ordered_set import OrderedSet
 from tqdm import tqdm
 
-from text_selection.common.mapping_iterator import map_indices
-from text_selection.kld.custom_kld_iterator import CustomKldIterator
-from text_selection.kld.kld_iterator import get_uniform_weights
 from text_selection.random.random_iterator import RandomIterator
-from text_selection.selection import SelectionMode
 from text_selection_core.common import (SelectionDefaultParameters, WeightSelectionParameters,
-                                        get_selector, validate_selection_default_parameters,
+                                        validate_selection_default_parameters,
                                         validate_weights_parameters)
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.helper import get_initial_weights, get_target_weights_from_percent
-from text_selection_core.selection.symbol_extractor import get_array_mp
-from text_selection_core.types import (Lines, Subset, create_subset_if_it_not_exists,
+from text_selection_core.types import (Subset, create_subset_if_it_not_exists,
                                        get_subsets_line_nrs_gen, move_lines_to_subset)
-from text_selection_core.validation import ensure_lines_count_matches_dataset
 from text_selection_core.weights.weights_iterator import WeightsIterator
 
 

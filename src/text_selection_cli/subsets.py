@@ -40,7 +40,7 @@ def get_subsets_removal_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   parser.add_argument("names", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="names of subsets that should be removed (Note: at least one subset needs to be left after removal)", action=ConvertToOrderedSetAction)
-  return add_subsets_ns
+  return remove_subsets_ns
 
 
 def remove_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:

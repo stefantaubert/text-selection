@@ -11,7 +11,7 @@ class ErrorType(IntEnum):
   LINES_MISMATCH = 0
   WEIGHTS_LINES_MISMATCH = 1
   SUBSET_ALREADY_EXISTS = 2
-  IS_LAST_SUBSET = 3
+  ALL_WOULD_BE_REMOVED = 3
   SUBSET_NOT_EXIST = 4
   INVALID_PERCENT = 5
   NON_DISTINCT_SUBSETS = 6
@@ -28,8 +28,8 @@ _DEFAULT_ERROR_PATTERNS = {
     "Weights dimension does not match with dataset lines count ({0} vs. {1})!",
   ErrorType.SUBSET_ALREADY_EXISTS:
     "The subset \"{0}\" already exists!",
-  ErrorType.IS_LAST_SUBSET:
-    "The last subset could not be removed!",
+  ErrorType.ALL_WOULD_BE_REMOVED:
+    "All subsets couldn't be removed!",
   ErrorType.SUBSET_NOT_EXIST:
     "The subset \"{0}\" does not exist!",
   ErrorType.INVALID_PERCENT:
@@ -109,9 +109,9 @@ def ensure_subsets_exist(dataset: Dataset, subsets: OrderedSet[SubsetName]) -> O
   return None
 
 
-def ensure_not_only_one_subset_exists(dataset: Dataset) -> Optional[ValidationErr]:
-  if len(dataset) == 1:
-    return ValidationErr(ErrorType.IS_LAST_SUBSET)
+def ensure_not_only_n_subsets_exists(dataset: Dataset, n: int) -> Optional[ValidationErr]:
+  if len(dataset.subsets) == n:
+    return ValidationErr(ErrorType.ALL_WOULD_BE_REMOVED)
   return None
 
 

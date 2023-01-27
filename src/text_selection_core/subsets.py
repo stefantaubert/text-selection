@@ -5,7 +5,7 @@ from ordered_set import OrderedSet
 from text_selection_core.globals import ExecutionResult
 from text_selection_core.types import Dataset, SubsetName
 from text_selection_core.validation import (ErrorType, ValidationErr,
-                                            ensure_not_only_one_subset_exists, ensure_subset_exists,
+                                            ensure_not_only_n_subsets_exists, ensure_subset_exists,
                                             ensure_subset_not_already_exists, ensure_subsets_exist,
                                             ensure_subsets_not_already_exist)
 
@@ -24,7 +24,7 @@ def remove_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logg
   if error := ensure_subsets_exist(dataset, names):
     return error
 
-  if error := ensure_not_only_one_subset_exists(dataset):
+  if error := ensure_not_only_n_subsets_exists(dataset, n=len(names)):
     return error
 
   for name in names:

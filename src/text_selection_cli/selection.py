@@ -2,7 +2,8 @@ from argparse import ArgumentParser, Namespace
 from logging import Logger
 
 from text_selection.selection import SelectionMode
-from text_selection_cli.argparse_helper import (parse_existing_file, parse_positive_float,
+from text_selection_cli.argparse_helper import (get_optional, parse_existing_file,
+                                                parse_non_negative_integer, parse_positive_float,
                                                 parse_positive_integer)
 from text_selection_cli.default_args import (add_dataset_argument, add_dry_argument,
                                              add_file_arguments, add_from_and_to_subsets_arguments,
@@ -16,6 +17,7 @@ from text_selection_core.selection.fifo_selection import select_fifo
 from text_selection_core.selection.greedy_selection import (GreedySelectionParameters,
                                                             select_greedy, select_greedy_epochs)
 from text_selection_core.selection.kld_selection import KldSelectionParameters, select_kld
+from text_selection_core.selection.random_selection import select_random
 from text_selection_core.validation import ValidationErrBase
 
 
@@ -67,6 +69,40 @@ def select_fifo_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> Execu
   weights_params = WeightSelectionParameters(
     weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
   changed_anything = select_fifo(default_params, weights_params, flogger)
+  if isinstance(changed_anything, ValidationErrBase):
+    return changed_anything
+
+  if changed_anything and not ns.dry:
+    if error := try_save_dataset(ns.dataset, dataset, logger):
+      return error
+
+  return changed_anything
+
+
+def get_random_selection_parser(parser: ArgumentParser):
+  parser.description = "Select lines randomly."
+  add_dataset_argument(parser)
+  add_from_and_to_subsets_arguments(parser)
+  add_termination_criteria_arguments(parser)
+  parser.add_argument("--seed", type=get_optional(parse_non_negative_integer),
+                      metavar="SEED", help="seed for randomness", default=None)
+  add_dry_argument(parser)
+  return select_random_from_ns
+
+
+def select_random_from_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionResult:
+  dataset = try_load_dataset(ns.dataset, logger)
+  if isinstance(dataset, ValidationErrBase):
+    return dataset
+
+  weights = try_load_data_weights(ns.weights, logger)
+  if isinstance(weights, ValidationErrBase):
+    return weights
+
+  default_params = SelectionDefaultParameters(dataset, ns.from_subsets, ns.to_subset)
+  weights_params = WeightSelectionParameters(
+    weights, ns.limit, ns.limit_include_already_selected, ns.limit_percent)
+  changed_anything = select_random(default_params, weights_params, ns.seed, flogger)
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 

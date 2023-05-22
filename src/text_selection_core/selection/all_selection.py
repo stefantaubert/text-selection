@@ -14,7 +14,8 @@ def select_all(default_params: SelectionDefaultParameters, logger: Logger) -> Ex
 
   result = OrderedSet(get_subsets_line_nrs(default_params.dataset,
                                            default_params.from_subset_names))
-
+  
+  changed_anything = False
   if len(result) > 0:
     logger.info(f"Selected {len(result)} lines.")
     move_lines_to_subset(default_params.dataset, result, default_params.to_subset_name, logger)

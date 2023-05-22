@@ -10,14 +10,19 @@ from text_selection_core.validation import (ErrorType, ValidationErr,
                                             ensure_subsets_not_already_exist)
 
 
-def add_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logger) -> ExecutionResult:
-  if error := ensure_subsets_not_already_exist(dataset, names):
+def add_subsets(dataset: Dataset, names: OrderedSet[SubsetName], skip_existing: bool, logger: Logger) -> ExecutionResult:
+  if not skip_existing and (error := ensure_subsets_not_already_exist(dataset, names)):
     return error
 
+  changed_anything = False
   for name in names:
+    if skip_existing and name in dataset.subsets:
+      logger.info(f"Skipped existing set \"{name}\".")
+      continue
     dataset.subsets[name] = OrderedSet()
+    changed_anything = True
 
-  return True
+  return changed_anything
 
 
 def remove_subsets(dataset: Dataset, names: OrderedSet[SubsetName], logger: Logger) -> ExecutionResult:

@@ -15,6 +15,7 @@ def get_subsets_creation_parser(parser: ArgumentParser):
   add_dataset_argument(parser)
   parser.add_argument("names", type=parse_non_empty_or_whitespace, nargs="+", metavar="SUBSET",
                       help="names of subsets that should be added", action=ConvertToOrderedSetAction)
+  parser.add_argument("--skip-existing", action="store_true", help="allow sets to exist")
   return add_subsets_ns
 
 
@@ -24,7 +25,7 @@ def add_subsets_ns(ns: Namespace, logger: Logger, flogger: Logger) -> ExecutionR
     return dataset
 
   logger.info("Adding subset(s)...")
-  changed_anything = add_subsets(dataset, ns.names, flogger)
+  changed_anything = add_subsets(dataset, ns.names, ns.skip_existing, flogger)
   if isinstance(changed_anything, ValidationErrBase):
     return changed_anything
 

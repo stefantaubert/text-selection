@@ -1,6 +1,6 @@
 [project]
 name = "text-selection"
-version = "0.0.2"
+version = "0.0.3"
 description = "Command-line interface (CLI) to select lines of a text file."
 readme = "README.md"
 requires-python = ">=3.8, <4"

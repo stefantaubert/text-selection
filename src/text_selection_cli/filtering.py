@@ -126,6 +126,7 @@ def regex_match_selection(ns: Namespace, logger: Logger, flogger: Logger) -> Exe
 
 
 def get_string_filter_parser(parser: ArgumentParser):
+  # TODO is also possible via regex?
   parser.description = "Filter lines that match a specific text."
   add_dataset_argument(parser)
   add_from_and_to_subsets_arguments(parser)
